@@ -1,4 +1,7 @@
 function R = CenterOfMass3(img)
+% Finds center of mass of a 3D volume matrix img where mass at each point
+% is given by the corresponding element of img. Uses the centroid formula
+% in 3 dimensions. 
 
     rbound = size(img); dbound = rbound(1); hbound = rbound(3); 
     rbound = rbound(2);

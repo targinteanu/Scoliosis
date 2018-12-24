@@ -1,3 +1,6 @@
+% obtains center-of-mass and spinous process data from specified patients'
+% segmented vertebrae, plots the results, and gets twist and writhe. 
+
 fp = uigetdir; 
 load([fp, '\vertebrae.mat']);
 

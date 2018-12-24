@@ -1,4 +1,11 @@
 function Twist = getTwist(cm, sp, range)
+% gets Twist of a curve whose points are given by cm with a vector field
+% whose coordinates are given by sp, using discrete approximations of
+% integrals and derivatives. 
+% Coordinates are rows of cm and sp.
+% Each vector in sp corresponds to the point in the same row of cm. 
+% range: an optional input vector that specifies which rows of cm and sp to
+% use. If unspecified, Twist will be evaluated from the start to end of cm.
 
 if nargin == 2
     range = 2:length(cm(:,1));

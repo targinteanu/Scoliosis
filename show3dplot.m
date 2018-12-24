@@ -1,3 +1,7 @@
+% shows 3D plots of selected patients demonstrating spine centerline and
+% orientation of spinous processes. Also returns twist and writhe.
+% Vertebrae of selected patients must be segmented previously. 
+
 fp = uigetdir; 
 load([fp, '\vertebrae.mat']);
 exist([fp, '\points.mat'], 'file')

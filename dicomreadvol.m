@@ -1,4 +1,9 @@
 function [V, imwidth, imheight, imdepth] = dicomreadvol(filepath)
+% Constructs a volume matrix from a series of dicom images, e.g. MRI or CT.
+% Input a directory folder where all images are located as a string. 
+% Outputs: 
+%  V: volume matrix obtained by stacking the images 
+%  imwidth, imheight, imdepth: dimensions of the volume matrix 
 
 filebase = '\IM-0001-'; fileend = '-0001.dcm';
 i = 1; 

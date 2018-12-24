@@ -1,4 +1,9 @@
 function Writhe = getWrithe(cm, range)
+% gets Writhe of a curve whose points are given by cm, using using discrete
+% approximations of integrals and derivatives.
+% Coordinates are rows of cm and sp.
+% range: an optional input vector that specifies which rows of cm to
+% use. If unspecified, Writhe will be evaluated from the start to end of cm.
 
 if nargin == 1
     range = 2:length(cm(:,1));
