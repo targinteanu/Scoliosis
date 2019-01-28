@@ -13,15 +13,6 @@ Writhe = 0;
 for i = range
 %    for j = range
     for j = range(1):(i-1)
-        %{
-        r13 = cm(j-1,:) - cm(i-1,:);
-        r14 = cm(j,:)   - cm(i-1,:);
-        r23 = cm(j-1,:) - cm(i,:);
-        r24 = cm(j,:)   - cm(i,:);
-        
-        r34 = cm(j,:)   - cm(j-1,:);
-        r12 = cm(i,:)   - cm(i-1,:);
-        %}
         
         p1 = cm(i-1,:); p2 = cm(i,:); 
         p3 = cm(j-1,:); p4 = cm(j,:);
@@ -40,31 +31,14 @@ for i = range
             end
         end
         
-        %{
-        Omega = 0;
-        for k = [1 2 3 4]
-            for l = [2 3 4 1]
-                Omega = Omega + asin(n(k,:) * n(l,:)');
-            end
-        end
-        %}
-        
-        %%{
         N = n([2 3 4 1],:);
         as = diag(n*N');
-        %{
-        idx = find(imag(asin(as)));
-        if ~isempty(idx)
-            [i, j]
-            [n(idx,:); N(idx,:)]
-        end
-        %}
+
         Omega = sum(asin(as));
         Omega = Omega*sign( (cross(r34,r12)) *r13');
         if abs(real(Omega)) > 1e-8
             [i j]
         end
-        %}
         
         Writhe = Writhe + Omega;
     end
