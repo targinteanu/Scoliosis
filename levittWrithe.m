@@ -25,27 +25,31 @@ for i = range
         n(2,:) = cross(r14, r24);
         n(3,:) = cross(r24, r23);
         n(4,:) = cross(r23, r13);
+        
+        rows_to_remove = zeros(4, 1);
         for k = 1:4
             if norm(n(k,:))
+                % normalize 
                 n(k,:) = n(k,:)/norm(n(k,:));
+            else
+                % mark for removal 
+                rows_to_remove(k) = k;
             end
         end
+        n = n([1:(min(rows_to_remove)-1), (max(rows_to_remove)+1):end], :);
         
-        N = n([2 3 4 1],:);
-        as = diag(n*N');
+        N = n([2:end 1],:);
+        as = diag(n*N'); angles = asin(as) + pi/2;
 
-        Omega = sum(asin(as));
+        Omega = sum(angles) - 2*pi;
         Omega = Omega*sign( (cross(r34,r12)) *r13');
-        if abs(real(Omega)) > 1e-8
-            [i j]
-        end
         
         Writhe = Writhe + Omega;
     end
 end
 %Writhe = Writhe/(4*pi);
 Writhe = Writhe/(2*pi);
-if abs(imag(Writhe)) > 9e-9
+if abs(imag(Writhe)) > 9e-8
     disp('Error: non-real Writhe')
 else
     Writhe = real(Writhe);
