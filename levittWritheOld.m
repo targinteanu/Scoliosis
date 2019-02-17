@@ -1,4 +1,4 @@
-function Writhe = levittWrithe(cm, range)
+function Writhe = levittWritheOld(cm, range)
 % gets Writhe of a curve whose points are given by cm, using approximation
 % derived by Levitt (https://doi.org/10.1016%2Fs0022-2836%2883%2980129-6)
 % Coordinates are rows of cm and sp.
@@ -6,12 +6,15 @@ function Writhe = levittWrithe(cm, range)
 % use. If unspecified, Writhe will be evaluated from the start to end of cm.
 
 if nargin == 1
-    range = 1:length(cm(:,1));
+    range = 2:length(cm(:,1));
 end
 
+range = range(2:end);
+
 Writhe = 0;
-for i = range(2:(end-2))
-    for j = (i+2):range(end)
+for i = range
+%    for j = range
+    for j = range(1):(i-1)
         
         p1 = cm(i-1,:); p2 = cm(i,:); 
         p3 = cm(j-1,:); p4 = cm(j,:);
@@ -25,12 +28,17 @@ for i = range(2:(end-2))
         n(3,:) = cross(r24, r23);
         n(4,:) = cross(r23, r13);
         
+        rows_to_remove = zeros(4, 1);
         for k = 1:4
             if norm(n(k,:))
                 % normalize 
                 n(k,:) = n(k,:)/norm(n(k,:));
+            else
+                % mark for removal 
+                rows_to_remove(k) = k;
             end
         end
+        n = n([1:(min(rows_to_remove)-1), (max(rows_to_remove)+1):end], :);
         
         N = n([2:end 1],:);
         as = diag(n*N'); angles = asin(as) + pi/2;
@@ -41,6 +49,7 @@ for i = range(2:(end-2))
         Writhe = Writhe + Omega;
     end
 end
+%Writhe = Writhe/(4*pi);
 Writhe = Writhe/(2*pi);
 if abs(imag(Writhe)) > 9e-8
     disp('Error: non-real Writhe')
