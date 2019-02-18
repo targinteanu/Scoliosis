@@ -6,7 +6,7 @@ function Writhe = levittWritheOld(cm, range)
 % use. If unspecified, Writhe will be evaluated from the start to end of cm.
 
 if nargin == 1
-    range = 2:length(cm(:,1));
+    range = 1:length(cm(:,1));
 end
 
 range = range(2:end);
