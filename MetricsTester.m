@@ -1,3 +1,5 @@
+% Test metrics on a helix 
+
 r = @(s) [cos(s/sqrt(2)), sin(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) [-sin(s/sqrt(2)), cos(s/sqrt(2)), 1]/sqrt(2);
 ddr = @(s) [-cos(s/sqrt(2)), -sin(s/sqrt(2)), 0]/2;
