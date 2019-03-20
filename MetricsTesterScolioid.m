@@ -1,6 +1,6 @@
 % test metrics on a scoliosis-like 3D polynomial 
 
-%% build and plot a random scoliotic spine-like curve 
+%% build a random scoliotic spine-like curve 
 
 tmax = 58; max_kyphotic_imbalance = .05; max_lordotic_imbalance = .01;
 coeffs_cor = [-.0123; .00015; 0] + [.0001;.000001;.0000001].*randn(3,1); 
@@ -18,8 +18,13 @@ ddr = @(t) [((0:3).*(1:4).*t.^[0 0:2])*coeffs_cor, ...
 dddr = @(t) [([0 0:2].*(0:3).*(1:4).*t.^[0 0 0:1])*coeffs_cor, ...
     ([0 0:2].*(0:3).*(1:4).*t.^[0 0 0:1])*coeffs_sag, zeros(size(t))];
 
+ds = @(t) arrayfun(@(tt) norm(dr(tt)), t);
+smax = integral(ds, 0, tmax);
+
 numvertebrae = 24;
-coarse = linspace(0, tmax, numvertebrae)'; fine = (0:.1:tmax)';
+coarse_s = linspace(0, smax, numvertebrae)'; 
+coarse = linspace(0, tmax, numvertebrae)';
+fine = (0:.1:tmax)';
 discrete_approx_coarse = r(coarse);
 discrete_approx_fine = r(fine);
 
@@ -69,6 +74,8 @@ Torsion_diff_est_fine = getTorsion(discrete_approx_fine);
 q = 3; 
 vertebrae = (1+q):(numvertebrae-q);
 concavities = zeros(size(vertebrae));
+concavity_true = ddr(fine);
+concavity_true = diag(concavity_true*concavity_true').^.5;
     Torsion_lewiner_coarse = zeros(size(vertebrae));
     for vertebra = vertebrae
         [Torsion_lewiner_coarse(vertebra-q),~,concavity] = ...
@@ -86,10 +93,52 @@ legend('lewiner', 'actual', 'fine diff est', 'coarse diff est', 'Location', 'sou
 xlabel('vertebra'); ylabel('torsion');
 title('Comparing methods of estimating Torsion');
 ax(2) = subplot(2,1,2); 
-plot(vertebrae, concavities); grid on;
+plot(vertebrae, concavities); grid on; hold on; 
+plot(fine*numvertebrae/tmax, concavity_true);
 xlabel('vertebra'); ylabel('|| d^2r / dt^2 ||'); 
-title('Lewiner second derivative');
+title('Second derivative');
+legend('Lewiner', 'actual');
 linkaxes(ax, 'x'); clear ax;
+
+%[~, neutral] = min(concavities); neutral = vertebrae(neutral);
+%[~, neutral_true] = min(concavity_true); neutral_true = fine(neutral_true);
+neutral = (concavities(2:(end-1)) < concavities(1:(end-2))) & ...
+    (concavities(2:(end-1)) < concavities(3:end)); 
+neutral = find([0 neutral]); neutral = vertebrae(neutral);
+ct = concavity_true'; 
+neutral_true = (ct(2:(end-1)) < ct(1:(end-2))) & (ct(2:(end-1)) < ct(3:end));
+neutral_true = find([0 neutral_true]);
+while (length(neutral_true) > length(neutral))
+    [~, elim] = max(ct(neutral_true)); elim = neutral_true(elim);
+    ct = ct([1:(elim-1) (elim+1):end]);
+    neutral_true = (ct(2:17) < ct(1:16)) & (ct(2:17) < ct(3:18));
+    neutral_true = find([0 neutral_true]);
+end
+neutral_true = fine(neutral_true)';
+
+tdc = Torsion_diff_est_coarse; 
+neutral_diff = (tdc(2:(end-1)) < tdc(1:(end-2))) & (tdc(2:(end-1)) < tdc(3:end));
+neutral_diff = find([0 neutral_diff]);
+while (length(neutral_diff) > length(neutral))
+    [~, elim] = max(tdc(neutral_coarse)); elim = neutral_coarse(elim);
+    tdc = tdc([1:(elim-1) (elim+1):end]);
+    neutral_diff = (tdc(2:(end-1)) < tdc(1:(end-2))) & (tdc(2:(end-1)) < tdc(3:end));
+    neutral_diff = find([0 neutral_diff]);
+end
+
+[~, apex] = max(concavities); apex = vertebrae(apex);
+q = abs(apex - neutral); q = min(q, numvertebrae-neutral);
+
+torsion_kadoury = arrayfun(@(i) lewinerTorsion(discrete_approx_coarse, ...
+    neutral(i), q(i)), 1:length(q));
+torsion_actual = arrayfun(@(v) torsion(v, dr, ddr, dddr), neutral_true);
+torsion_diff = Torsion_diff_est_coarse(neutral_diff);
+
+figure; bar([torsion_actual; torsion_diff; torsion_kadoury]);
+xticklabels({'actual', 'coarse diff', 'kadoury'});
+grid on;
+xlabel('Estimation Method'); ylabel('Torsion Estimates'); 
+title('Comparing methods of estimating Torsion');
 
 %% get accuracies 
 
