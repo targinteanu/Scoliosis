@@ -1,5 +1,5 @@
 load('spines_XYZ.mat')
-idx = 14;
+idx = 20;
 
     xyz = spinesXYZ{idx, 2:end};
     x = xyz(1:3:end); 
@@ -8,7 +8,8 @@ idx = 14;
     
 cm = [x; y; z]';
 
-figure; plot3(x,y,z,'-o'); grid on;
+figure; plot3(x,y,z,'-o'); grid on; view([90 0])
+title(num2str(idx));
 
 %%
 range = 2:length(cm);
@@ -49,7 +50,10 @@ for i = range
     end
 end
 
-figure; heatmap(M);
+zerolim = 5e-4; M = M.*(abs(M) > zerolim);
+figure; heatmap(sign(M));
+%figure; heatmap(M);
+title(num2str(idx));
 
 %%
 writheTop = zeros(1, 17); writheBot = writheTop; writheCro = writheTop;
@@ -58,4 +62,20 @@ for p = 2:(length(x)-1)
     writheBot(p) = levittWrithe(cm, p:17);
     writheCro(p) = (levittWrithe(cm) - writheTop(p) - writheBot(p))/2;
 end
-figure; plot([writheTop; writheBot; writheCro]')
+%figure; plot([writheTop; writheBot; writheCro]')
+figure; plot(writheTop + writheBot);
+title(num2str(idx));
+
+%%
+writheTop2 = zeros(17, 17); writheBot2 = writheTop2; writheMid2 = writheTop2; writheCro2 = writheTop2;
+for p = 2:(length(x)-1)
+    for q = p:(length(x)-1)
+        writheTop2(p,q) = levittWrithe(cm, 1:p); 
+        writheMid2(p,q) = levittWrithe(cm, p:q);
+        writheBot2(p,q) = levittWrithe(cm, q:17);
+        writheCro2(p,q) = (levittWrithe(cm) - writheTop2(p,q) - writheBot2(p,q) - writheMid2(p,q))/2;
+    end
+end
+%figure; plot([writheTop2; writheBot2; writheMid2]')
+figure; heatmap(abs(writheTop2 + writheMid2 + writheBot2));
+title(num2str(idx));

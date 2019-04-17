@@ -32,14 +32,14 @@ figure('Position', [50 100 1400 800]);
 ax(1) = subplot(1, 2, 1);
 plot3(discrete_approx_fine(:,1), discrete_approx_fine(:,2), discrete_approx_fine(:,3)); hold on;
 plot3(discrete_approx_coarse(:,1), discrete_approx_coarse(:,2), discrete_approx_coarse(:,3), '-o');
-grid on;
+grid on; view([90 0])
 xlabel('cor'); ylabel('sag'); zlabel('ax');
 ax(2) = subplot(1, 2, 2);
 plot3(discrete_approx_fine(:,2), -discrete_approx_fine(:,1), discrete_approx_fine(:,3)); hold on;
 plot3(discrete_approx_coarse(:,2), -discrete_approx_coarse(:,1), discrete_approx_coarse(:,3), '-o');
-grid on;
+grid on; view([0 0 90])
 xlabel('sag'); ylabel('cor'); zlabel('ax');
-linkprop(ax, {'CameraPosition', 'CameraUpVector', 'PlotBoxAspectRatio'});
+%linkprop(ax, {'CameraPosition', 'CameraUpVector', 'PlotBoxAspectRatio'});
 clear ax;
 
 %% get Writhe estimates 
@@ -140,8 +140,14 @@ grid on;
 xlabel('Estimation Method'); ylabel('Torsion Estimates'); 
 title('Comparing methods of estimating Torsion');
 
-%% get accuracies 
-
+%% top and bottom writhe
+writheTop = zeros(1, 17); writheBot = writheTop; writheCro = writheTop;
+for p = 2:(length(cm)-1)
+    writheTop(p) = levittWrithe(cm, 1:p); 
+    writheBot(p) = levittWrithe(cm, p:17);
+    writheCro(p) = (levittWrithe(cm) - writheTop(p) - writheBot(p))/2;
+end
+figure; plot([writheTop; writheBot; writheCro]')
 
 %% supporting functions 
 function tau = torsion(t, dr, ddr, dddr)
