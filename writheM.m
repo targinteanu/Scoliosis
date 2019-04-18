@@ -1,10 +1,3 @@
-    xyz = spinesXYZ{idx, 2:end};
-    x = xyz(1:3:end); 
-    y = xyz(2:3:end); 
-    z = xyz(3:3:end); 
-    
-cm = [x; y; z]';
-
 range = 2:length(cm);
 M = zeros(length(cm));
 
@@ -43,4 +36,4 @@ for i = range
     end
 end
 
-zerolim = 1e-5; M = M.*(abs(M) > zerolim);
+%zerolim = 1e-5; M = M.*(abs(M) > zerolim);
