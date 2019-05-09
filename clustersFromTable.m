@@ -5,7 +5,7 @@
 load('spines_XYZ.mat');
 
 N = 33;
-writhes = zeros(N,1); torsions = zeros(N,1); 
+writhes = zeros(N,1); abswrithes = zeros(N,1); torsions = zeros(N,1); 
 for idx = 1:N
     % get center points 
     xyz = spinesXYZ{idx, 2:end};
@@ -16,6 +16,7 @@ for idx = 1:N
     
     % get writhe 
     writhes(idx) = levittWrithe(cm);
+    abswrithes(idx) = levittWritheAbs(cm);
     
     % get torsion 
     q = 2; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
@@ -24,5 +25,12 @@ for idx = 1:N
     [~,tauvert] = max(abs(tau)); torsions(idx) = tau(tauvert); % maximum torsion
 end
 
-figure; plot(writhes, torsions, '.'); grid on;
-xlabel('Writhe'); ylabel('Max Torsion');
+% report magnitude only, not direction 
+writhes = abs(writhes); torsions = abs(torsions);
+
+%%
+figure; scatter(writhes, torsions, '.k'); grid on;
+xlabel('Writhe'); ylabel('Max Torsion'); 
+
+lbl = arrayfun(@(idx) num2str(idx), 1:N, 'UniformOutput', 0);
+text(writhes, torsions, lbl);

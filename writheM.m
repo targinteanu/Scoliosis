@@ -1,10 +1,13 @@
 range = 2:length(cm);
+%range = 1:length(cm);
 M = zeros(length(cm));
 
 for i = range
     for j = range
+%for i = range(2:(end-2))
+%    for j = (i+2):range(end)
         
-        if abs(i-j) > 2
+        if abs(i-j) > 1
         
         p1 = cm(i-1,:); p2 = cm(i,:); 
         p3 = cm(j-1,:); p4 = cm(j,:);
