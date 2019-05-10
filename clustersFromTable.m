@@ -34,3 +34,39 @@ xlabel('Writhe'); ylabel('Max Torsion');
 
 lbl = arrayfun(@(idx) num2str(idx), 1:N, 'UniformOutput', 0);
 text(writhes, torsions, lbl);
+
+figure; scatter(writhes, abswrithes, '.k'); grid on;
+xlabel('Writhe'); ylabel('Abs Writhe'); 
+text(writhes, abswrithes, lbl);
+
+%%
+load('spines_XYZ.mat');
+N = 33;
+XYZ = spinesXYZ{1:end, 2:end};
+[C,S,~,~,PE] = pca(XYZ);
+PCcluster = kmeans(S(:,1:10), 5);
+newcluster = kmeans([writhes, abswrithes, torsions], 5);
+fullcluster = kmeans(XYZ, 5);
+cluster = PCcluster;
+
+XYZcell = arrayfun(@(idx) [XYZ(idx, 1:3:end); XYZ(idx, 2:3:end); XYZ(idx, 3:3:end)]', ...
+    1:N, 'UniformOutput', 0);
+avgspine = cell(1, 5); 
+figure; 
+for k = 1:length(avgspine)
+    spn = zeros(size(XYZcell{1}));
+    spines = XYZcell(cluster == k);
+    for i = 1:length(spines)
+        spn = spn + spines{i};
+    end
+    spn = spn/i;
+    for j = 1:3
+        subplot(1,3,j); 
+        plot3(spn(:,1), spn(:,2), spn(:,3), '-o'); 
+        grid on; hold on;
+    end
+    avgspine{k} = spn;
+end
+subplot(1,3,1); view([0 0]); 
+subplot(1,3,2); view([90 0]); 
+subplot(1,3,3); view([0 90]);
