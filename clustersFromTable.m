@@ -6,6 +6,7 @@ load('spines_XYZ.mat');
 
 N = 33;
 writhes = zeros(N,1); abswrithes = zeros(N,1); torsions = zeros(N,1); 
+torsionlocs = zeros(N,1);
 for idx = 1:N
     % get center points 
     xyz = spinesXYZ{idx, 2:end};
@@ -23,17 +24,22 @@ for idx = 1:N
     vertebrae = (1+q):(length(x)-q);
     tau = arrayfun(@(v) lewinerTorsion(cm, v, q), vertebrae);
     [~,tauvert] = max(abs(tau)); torsions(idx) = tau(tauvert); % maximum torsion
+    torsionlocs(idx) = tauvert+q;
 end
 
 % report magnitude only, not direction 
-writhes = abs(writhes); torsions = abs(torsions);
+%writhes = abs(writhes); 
+torsions = abs(torsions);
 
 %%
-figure; scatter(writhes, torsions, '.k'); grid on;
+figure; scatter(abswrithes, torsions, '.k'); grid on;
 xlabel('Writhe'); ylabel('Max Torsion'); 
 
+lbl = arrayfun(@(idx) num2str(torsionlocs(idx)), 1:N, 'UniformOutput', 0);
+text(abswrithes, torsions, lbl);
+
+%%
 lbl = arrayfun(@(idx) num2str(idx), 1:N, 'UniformOutput', 0);
-text(writhes, torsions, lbl);
 
 figure; scatter(writhes, abswrithes, '.k'); grid on;
 xlabel('Writhe'); ylabel('Abs Writhe'); 

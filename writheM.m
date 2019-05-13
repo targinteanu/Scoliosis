@@ -39,4 +39,5 @@ for i = range
     end
 end
 
+M = M/(4*pi);
 %zerolim = 1e-5; M = M.*(abs(M) > zerolim);

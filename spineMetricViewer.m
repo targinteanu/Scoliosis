@@ -21,7 +21,7 @@ subplot(1,4,4); plot(-wr, z((q+1):(end-q)), '-o'); grid on;
 
 %%
 load('spines_XYZ.mat');
-Idx = [16,9,6,19,15,7,5];
+Idx = [1,29];
 N = length(Idx);
 
 figure('Position', [50 50 1400 700]); 
