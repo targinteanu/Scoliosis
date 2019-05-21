@@ -7,9 +7,10 @@ writhe_preop = num(:,4);
 writhe_postop = num(:,5);
 nonsurg = isnan(writhe_postop);
 
-writhes = zeros(N,1); abswrithes = zeros(N,1); torsions = zeros(N,1); 
-torsionlocs = zeros(N,1);
+writhes = zeros(N,1); abswrithes = zeros(N,1); decompwrithes = zeros(1,N);
+torsions = zeros(N,1); torsionlocs = zeros(N,1);
 torsions2 = zeros(N,1); torsionlocs2 = zeros(N,1);
+twists = zeros(N,1); 
 for idx = 1:N
     % get center points 
     x = XYZ(idx, 1:3:51); 
@@ -17,12 +18,21 @@ for idx = 1:N
     z = XYZ(idx, 3:3:51); 
     cm = [x;y;z]';
     
+    % get rotation vectors 
+    theta = XYZ(idx, 52:end)'; 
+    rotvector = [cos(theta), sin(theta), zeros(size(theta))];
+        % this will be made orthogonal to dr in the twist function. 
+    
     % get writhe 
     writhes(idx) = levittWrithe(cm);
     abswrithes(idx) = levittWritheAbs(cm);
+    decompwrithes(idx) = decompWrithe(cm); 
+    
+    % get twist
+    twists(idx) = getTwist(cm, rotvector);
     
     % get torsion 
-    q = 2; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
+    q = 4; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
     vertebrae = (1+q):(length(x)-q);
     tau = arrayfun(@(v) lewinerTorsion(cm, v, q), vertebrae);
     [~,tauvert] = max(abs(tau)); torsions(idx) = tau(tauvert); % maximum torsion
@@ -31,7 +41,7 @@ for idx = 1:N
     % get second-largest torsion
     tau2 = tau([1:(tauvert-1), (tauvert+1):end]);
     [~,tauvert2] = max(abs(tau2)); torsions2(idx) = tau2(tauvert2); 
-    torsionlocs2(idx) = tauvert2 + q + tauvert2>tauvert;
+    torsionlocs2(idx) = tauvert2 + q + (tauvert2>=tauvert);
 end
 
 abstorsions = abs(torsions); abstorsions2 = abs(torsions2);
@@ -114,3 +124,11 @@ plot(sum(XYZ(find(shapecluster==2),1:3:51),2), ...
     sum(XYZ(find(shapecluster==2),2:3:51),2), '^r');
 xlabel('Sum of x-coordinates'); ylabel('Sum of y-coordinates');
 legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
+
+%%
+var1 = writhes; 
+var2 = twists;
+figure; 
+plot(var1(shapecluster == 1), var2(shapecluster == 1), 'ob'); 
+grid on; hold on; 
+plot(var1(shapecluster == 2), var2(shapecluster == 2), '^r'); 

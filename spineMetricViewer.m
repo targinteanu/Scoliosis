@@ -1,4 +1,4 @@
-%{
+%%{
 
 load('spines_XYZ.mat');
 
@@ -8,7 +8,7 @@ load('spines_XYZ.mat');
     z = xyz(3:3:end); 
     cm = [x;y;z]';
 
-%%
+%
 tau = zeros(1, length(x)-2*q); wr = tau;
 for t = 1:length(tau)
     tau(t) = lewinerTorsion(cm, t+q, q);
