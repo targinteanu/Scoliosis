@@ -9,45 +9,37 @@ if nargin == 1
     range = 1:length(cm(:,1));
 end
 
-Writhe = 0;
+%Writhe = 0;
 %for i = range(2:(end-2))
 %    for j = (i+2):range(end)
 i = range(2); 
 j = range(end);
         
-        p1 = cm(i-1,:); p2 = cm(i,:); 
-        p3 = cm(j-1,:); p4 = cm(j,:);
+        p5 = cm(i-1,:); p1 = cm(i,:); 
+        p6 = cm(j-1,:); p3 = cm(j,:);
         
-        r34 = p4-p3; r12 = p2-p1;
-        r13 = p3-p1; r14 = p4-p1; r23 = p3-p2; r24 = p4-p2;
+        u = p1-p5; v = p3-p6; r13 = p3-p1;
+        ang = @(a,b) acos(a*b'/(norm(a)*norm(b)));
         
-        n = zeros(4, 3);
-        n(1,:) = cross(r13, r14);
-        n(2,:) = cross(r14, r24);
-        n(3,:) = cross(r24, r23);
-        n(4,:) = cross(r23, r13);
-        
-        for k = 1:4
-            if norm(n(k,:))
-                % normalize 
-                n(k,:) = n(k,:)/norm(n(k,:));
-            end
-        end
-        
-        N = n([2:end 1],:);
-        as = diag(n*N'); angles = asin(as) + pi/2;
+        angles = zeros(1,3);
+        angles(1) = ang(cross(u,v), cross(r13,v)); 
+        angles(2) = ang(cross(u,v), cross(r13,u)); 
+        angles(3) = ang(cross(r13,v), cross(r13,u));
 
-        Omega = sum(angles) - 2*pi;
-        Omega = Omega*sign( (cross(r34,r12)) *r13');
+%        Omega = sum(angles) - 2*pi;
+%        Omega = Omega*sign( (cross(r34,r12)) *r13');
         
-        Writhe = Writhe + Omega;
+%        Writhe = Writhe + Omega;
 %    end
 %end
-Writhe = Writhe/(2*pi);
+Writhe = sum(angles)*sign( cross(v,u)*r13' )/(2*pi);
+
+%{
 if abs(imag(Writhe)) > 9e-8
     disp('Error: non-real Writhe')
 else
     Writhe = real(Writhe);
 end
+%}
 
 end
