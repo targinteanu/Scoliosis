@@ -7,7 +7,8 @@ writhe_preop = num(:,4);
 writhe_postop = num(:,5);
 nonsurg = isnan(writhe_postop);
 
-writhes = zeros(N,1); abswrithes = zeros(N,1); decompwrithes = zeros(1,N);
+writhes = zeros(N,1); abswrithes = zeros(N,1); 
+decompwrithes = zeros(N,1); crosswrithe = zeros(N,1); crosswrithes = zeros(N,2);
 torsions = zeros(N,1); torsionlocs = zeros(N,1);
 torsions2 = zeros(N,1); torsionlocs2 = zeros(N,1);
 twists = zeros(N,1); 
@@ -26,7 +27,8 @@ for idx = 1:N
     % get writhe 
     writhes(idx) = levittWrithe(cm);
     abswrithes(idx) = levittWritheAbs(cm);
-    decompwrithes(idx) = decompWrithe(cm); 
+%    decompwrithes(idx) = decompWrithe(cm); 
+    [crosswrithe(idx), crosswrithes(idx,:)] = crossWrithe(cm);
     
     % get twist
     twists(idx) = getTwist(cm, rotvector);
@@ -42,10 +44,13 @@ for idx = 1:N
     tau2 = tau([1:(tauvert-1), (tauvert+1):end]);
     [~,tauvert2] = max(abs(tau2)); torsions2(idx) = tau2(tauvert2); 
     torsionlocs2(idx) = tauvert2 + q + (tauvert2>=tauvert);
+    
+%    idx/N
 end
 
 abstorsions = abs(torsions); abstorsions2 = abs(torsions2);
 
+%{
 %% hypothesis test
 [h,p] = ttest(abs(writhes(~nonsurg)), abs(writhe_postop(~nonsurg)), 'Tail', 'right')
 figure; boxplot(abs([writhes(~nonsurg), writhe_postop(~nonsurg)]), ...
@@ -125,9 +130,11 @@ plot(sum(XYZ(find(shapecluster==2),1:3:51),2), ...
 xlabel('Sum of x-coordinates'); ylabel('Sum of y-coordinates');
 legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 
+%}
+
 %%
-var1 = writhes; 
-var2 = twists;
+var1 = abswrithes; 
+var2 = crosswrithe;
 figure; 
 plot(var1(shapecluster == 1), var2(shapecluster == 1), 'ob'); 
 grid on; hold on; 

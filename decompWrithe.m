@@ -12,34 +12,46 @@ end
 %Writhe = 0;
 %for i = range(2:(end-2))
 %    for j = (i+2):range(end)
-i = range(2); 
-j = range(end);
+I = range(2); 
+J = range(end);
         
-        p5 = cm(i-1,:); p1 = cm(i,:); 
-        p6 = cm(j-1,:); p3 = cm(j,:);
+        p1 = cm(I-1,:); p2 = cm(I,:); 
+        p3 = cm(J-1,:); p4 = cm(J,:);
+        u = p1-p2; u=u/norm(u); v = p4-p3; v = v/norm(v);
         
-        u = p1-p5; v = p3-p6; r13 = p3-p1;
-        ang = @(a,b) acos(a*b'/(norm(a)*norm(b)));
+%        u = p1-p5; v = p3-p6; r13 = p3-p1;
+%        ang = @(a,b) acos(a*b'/(norm(a)*norm(b)));
         
-        angles = zeros(1,3);
-        angles(1) = ang(cross(u,v), cross(r13,v)); 
-        angles(2) = ang(cross(u,v), cross(r13,u)); 
-        angles(3) = ang(cross(r13,v), cross(r13,u));
+r_inferior = @(t) u*t + p1;
+dr_inferior = @(t) u;
+r_superior = @(t) v*t + p4;
+dr_superior = @(t) v;
 
-%        Omega = sum(angles) - 2*pi;
-%        Omega = Omega*sign( (cross(r34,r12)) *r13');
-        
-%        Writhe = Writhe + Omega;
-%    end
-%end
-Writhe = sum(angles)*sign( cross(v,u)*r13' )/(2*pi);
+    function ddWr_ = ddWr(t1, t2, r1, r2, dr1, dr2)
+        t1 = t1'; t2 = t2';
+%        r12 = r1(t1) - r2(t2);
+        if length(t1) <= length(t2)
+            sz = size(t1); imax = length(t1);
+        else
+            sz = size(t2); imax = length(t2);
+        end
+        ddWr_ = zeros(sz);
+        for i = 1:imax
+            tt1 = t1(i); tt2 = t2(i); %rr12 = r12(i,:);
+            rr12 = r1(tt1) - r2(tt2);
+            if norm(rr12)
+                ddWr_(i) = (cross(dr1(tt1), dr2(tt2)) * rr12')/( norm(rr12)^3 );
+            else
+                ddWr_(i) = 0;
+            end
+        end
+        ddWr_ = ddWr_';
+        %figure; plot3(t1, t2, ddWr_, '.'); grid on; xlabel('t1'); ylabel('t2');
+    end
 
-%{
-if abs(imag(Writhe)) > 9e-8
-    disp('Error: non-real Writhe')
-else
-    Writhe = real(Writhe);
-end
-%}
+Wr_dec = integral2( @(t1,t2) ddWr(t1,t2, ...
+    r_inferior, r_superior, dr_inferior, dr_superior), ...
+    -Inf, 0, 0, Inf, 'Method', 'iterated');
+Writhe = Wr_dec/(2*pi);
 
 end
