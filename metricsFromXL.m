@@ -9,6 +9,7 @@ nonsurg = isnan(writhe_postop);
 
 writhes = zeros(N,1); abswrithes = zeros(N,1); 
 decompwrithes = zeros(N,1); crosswrithe = zeros(N,1); crosswrithes = zeros(N,2);
+topbottomwrithes = zeros(N,1);
 torsions = zeros(N,1); torsionlocs = zeros(N,1);
 torsions2 = zeros(N,1); torsionlocs2 = zeros(N,1);
 twists = zeros(N,1); 
@@ -29,6 +30,7 @@ for idx = 1:N
     abswrithes(idx) = levittWritheAbs(cm);
 %    decompwrithes(idx) = decompWrithe(cm); 
     [crosswrithe(idx), crosswrithes(idx,:)] = crossWrithe(cm);
+    topbottomwrithes(idx) = levittWrithe(cm, [1 2 16 17]);
     
     % get twist
     twists(idx) = getTwist(cm, rotvector);
@@ -133,8 +135,8 @@ legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 %}
 
 %%
-var1 = abswrithes; 
-var2 = crosswrithe;
+var1 = topbottomwrithes; 
+var2 = twists;
 figure; 
 plot(var1(shapecluster == 1), var2(shapecluster == 1), 'ob'); 
 grid on; hold on; 
