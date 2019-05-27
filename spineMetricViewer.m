@@ -45,14 +45,17 @@ text(x,y,z,vertnames);
 %subplot(1,4,3); plot([d1;d2;d3], z((q+1):(end-q)), '-o'); grid on;
 %title('Derivatives'); ylabel('z'); xlabel('derivatives'); ylim([0 1000]);
 %legend('1st', '2nd', '3rd');
-subplot(1,4,3); plot(d2, z((q+1):(end-q)), '-o'); grid on;
+subplot(1,4,3); plot(d1, z((q+1):(end-q)), '-o'); grid on;
+title('1st Derivative'); ylabel('z'); xlabel('2nd derivative'); ylim([0 1000]);
+text(d1, z((q+1):(end-q)), vertnames_part);
+subplot(1,4,4); plot(d2, z((q+1):(end-q)), '-o'); grid on;
 title('2nd Derivative'); ylabel('z'); xlabel('2nd derivative'); ylim([0 1000]);
 text(d2, z((q+1):(end-q)), vertnames_part);
-subplot(1,4,4); plot(tau, z((q+1):(end-q)), '-o'); grid on;
-title('Torsion'); ylabel('z'); xlabel('Torsion'); ylim([0 1000]);
+%subplot(1,4,4); plot(tau, z((q+1):(end-q)), '-o'); grid on;
+%title('Torsion'); ylabel('z'); xlabel('Torsion'); ylim([0 1000]);
 %subplot(1,4,4); plot(-wr, z((q+1):(end-q)), '-o'); grid on;
 %title('Writhe'); ylabel('z'); xlabel('Writhe'); ylim([0 1000]);
-text(tau, z((q+1):(end-q)), vertnames_part);
+%text(tau, z((q+1):(end-q)), vertnames_part);
 
 %}
 
