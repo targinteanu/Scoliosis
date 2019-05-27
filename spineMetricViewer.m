@@ -1,11 +1,24 @@
 %%{
-
+%{
 load('spines_XYZ.mat');
 
     xyz = spinesXYZ{idx, 2:end};
     x = xyz(1:3:end); 
     y = xyz(2:3:end); 
     z = xyz(3:3:end); 
+    cm = [x;y;z]';
+%}
+
+[num, txt] = xlsread('Writhe-pre-post.xlsx');
+XYZ = num(:, 6:end); 
+shapecluster = num(:,3); 
+writhe_preop = num(:,4); 
+writhe_postop = num(:,5);
+nonsurg = isnan(writhe_postop);
+    % get center points 
+    x = XYZ(idx, 1:3:51); 
+    y = XYZ(idx, 2:3:51); 
+    z = XYZ(idx, 3:3:51); 
     cm = [x;y;z]';
 
 %
