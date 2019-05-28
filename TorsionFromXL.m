@@ -29,16 +29,20 @@ for idx = 1:N
     q = 4; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
     vertebrae = (1+q):(17-q); 
     tau = zeros(size(vertebrae)); % local torsion at each point on the spine 
-    concavities = zeros(size(vertebrae));
+    d2 = zeros(size(vertebrae)); d1 = d2;
     for vertebra = vertebrae
-        [tau(vertebra-q), concavity] = lewinerTorsion(p, vertebra, q);
-        concavities(vertebra-q) = norm(concavity);
+        [tau(vertebra-q), d, dd] = lewinerTorsion(p, vertebra, q);
+        d2(vertebra-q) = norm(dd); d1(vertebra-q) = norm(d);
     end
     
     [~, maxIdx] = max(abs(tau)); 
     maxTorsions(idx) = tau(maxIdx); torsionlocs(idx) = vertebrae(maxIdx);
-    [~, neutral] = min(concavities); neutral = vertebrae(neutral);
-    [~, apex] = max(concavities); apex = vertebrae(apex);
+%    [~, neutral] = min(d2); neutral = vertebrae(neutral);
+%    [~, apex] = max(d2); apex = vertebrae(apex);
+    [~, apex] = min(d1(1:(end-2))); apex = vertebrae(apex); % exclude T12, L1
+    nverts = vertebrae(vertebrae >= apex);
+    [~, neutral] = min( d2(vertebrae >= apex) ); neutral = nverts(neutral);
+
     q = abs(apex - neutral); % size q based on apex-to-neutral 
     q = min([q, 17-neutral, neutral-1]); % do not go out of bounds above 17 or below 1
     %%

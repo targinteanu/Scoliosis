@@ -28,6 +28,7 @@ d1 = tau; d2 = d1; d3 = d1;
 for t = 1:length(tau)
     [tau(t),d,dd,ddd] = lewinerTorsion(cm, t+q, q);
     d1(t) = norm(d); d2(t) = norm(dd); d3(t) = norm(ddd);
+    %d1(t) = norm(d(1:2)); d2(t) = norm(dd(1:2)); d3(t) = norm(ddd(1:2));
     wr(t) = levittWrithe(cm, (0:(2*q)) + t);
 end
 
