@@ -135,8 +135,8 @@ legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 %}
 
 %%
-var1 = topbottomwrithes; 
-var2 = twists;
+var1 = Torsions; 
+var2 = abs(writhes);
 figure; 
 plot(var1(shapecluster == 1), var2(shapecluster == 1), 'ob'); 
 grid on; hold on; 
