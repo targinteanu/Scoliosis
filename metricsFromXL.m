@@ -1,12 +1,70 @@
-[num, txt] = xlsread('Writhe-pre-post.xlsx');
-XYZ = num(:, 6:end); 
+[num, txt] = xlsread('Writhe-pre-post_new-metrics.csv');
+XYZ = num(:, 13:end); 
 N = 32;
 
-shapecluster = num(:,3); 
-writhe_preop = num(:,4); 
-writhe_postop = num(:,5);
-nonsurg = isnan(writhe_postop);
+cluster_shape = num(:,1); cluster_writhe = num(:,2); 
+    cluster_tor = num(:,3); cluster_twist = num(:,4);
+%writhe_preop = num(:,4); 
+%writhe_postop = num(:,5);
+%nonsurg = isnan(writhe_postop);
 
+writhe = num(:,6); abswrithe = num(:,7); 
+tor1 = num(:,8); tor2 = num(:,9); torglob = num(:,10); 
+twist = num(:,11); writhetwist = num(:,12);
+
+%%
+var = {'manual', 'writhe', 'torsion', 'twist'}; 
+cluster = num(:,1:4);
+sp = 220; figure; 
+for v = 1:length(var)
+    %ax(v) = subplot(sp + v);
+    subplot(sp + v);
+    c = cluster(:,v);
+    %x = cell(1,2); y = cell(1,2); z = cell(1,2);
+    for group = 1:2
+        x = XYZ(c == group, 1:3:51);
+        y = XYZ(c == group, 2:3:51);
+        z = XYZ(c == group, 3:3:51);
+        
+        %errorbar(mean(x), mean(y), std(y),std(y), std(x),std(x), '-o'); 
+        plot3(mean(x), mean(y), mean(z), '-o'); 
+        hold on;
+    end
+    grid on; view([0,90]);
+    title(var{v}); 
+end
+%linkaxes(ax);
+
+%%
+varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
+X = num(:,6:12); 
+RHO = zeros(7); 
+RHO(1,:) = arrayfun(@(x) corr(X(:,x), writhe), 1:7); 
+RHO(2,:) = arrayfun(@(x) corr(X(:,x), abswrithe), 1:7); 
+RHO(3,:) = arrayfun(@(x) corr(X(:,x), tor1), 1:7); 
+RHO(4,:) = arrayfun(@(x) corr(X(:,x), tor2), 1:7); 
+RHO(5,:) = arrayfun(@(x) corr(X(:,x), torglob), 1:7); 
+RHO(6,:) = arrayfun(@(x) corr(X(:,x), twist), 1:7); 
+RHO(7,:) = arrayfun(@(x) corr(X(:,x), writhetwist), 1:7); 
+%RHO
+%cmp = [1 0 0; 1 1 1; 0 0 1];
+cmp = [linspace(1, 0), linspace(1, 0); 
+        linspace(1, 1), linspace(1, 1);
+        linspace(0, 1), linspace(1, 1)]';
+figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cmp); 
+title('correlation between variables');
+
+%%
+pat = zeros(4, length(varnames2));
+for r = 1:4
+    pat(r, :) = arrayfun(@(v) mean(X(cluster(:,r)==1,v)) > mean(X(cluster(:,r)==2,v)), ...
+        1:length(varnames2));
+end
+figure; heatmap(varnames2([1,6,5,3,4]), var, pat(:, [1,6,5,3,4]));
+
+%%
+
+%{
 writhes = zeros(N,1); abswrithes = zeros(N,1); 
 decompwrithes = zeros(N,1); crosswrithe = zeros(N,1); crosswrithes = zeros(N,2);
 topbottomwrithes = zeros(N,1);
@@ -49,8 +107,9 @@ for idx = 1:N
     
 %    idx/N
 end
+%}
 
-abstorsions = abs(torsions); abstorsions2 = abs(torsions2);
+%abstorsions = abs(torsions); abstorsions2 = abs(torsions2);
 
 %{
 %% hypothesis test
@@ -135,9 +194,21 @@ legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 %}
 
 %%
-var1 = Torsions; 
-var2 = abs(writhes);
+var1 = twist; 
+var2 = abs(torglob);
 figure; 
-plot(var1(shapecluster == 1), var2(shapecluster == 1), 'ob'); 
+plot(var1(cluster_shape == 1), var2(cluster_shape == 1), 'ob'); 
 grid on; hold on; 
-plot(var1(shapecluster == 2), var2(shapecluster == 2), '^r'); 
+plot(var1(cluster_shape == 2), var2(cluster_shape == 2), '^r'); 
+
+cluster_var12 = kmeans([var1 var2], 2);
+acc = cluster_shape == cluster_var12; acc = sum(acc)/length(acc); 
+acc = max(acc, 1-acc); 
+
+title(num2str(acc));
+
+%%
+var1 = twist; 
+cluster_var1 = kmeans(var1, 2); 
+acc = cluster_shape == cluster_var1; acc = sum(acc)/length(acc); 
+acc = max(acc, 1-acc)
