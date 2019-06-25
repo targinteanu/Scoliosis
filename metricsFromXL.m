@@ -48,11 +48,26 @@ RHO(6,:) = arrayfun(@(x) corr(X(:,x), twist), 1:7);
 RHO(7,:) = arrayfun(@(x) corr(X(:,x), writhetwist), 1:7); 
 %RHO
 %cmp = [1 0 0; 1 1 1; 0 0 1];
-cmp = [linspace(1, 0), linspace(1, 0); 
-        linspace(1, 1), linspace(1, 1);
-        linspace(0, 1), linspace(1, 1)]';
+cmp = [linspace(1, 1), linspace(1, 0); 
+        linspace(0, 1), linspace(1, 1);
+        linspace(1, 1), linspace(1, 1)]';
 figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cmp); 
 title('correlation between variables');
+
+%%
+varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
+group = 2;
+X = num(cluster_shape==group,6:12); 
+RHO = zeros(length(varnames2)); 
+for r = 1:length(varnames2)
+    RHO(r,:) = arrayfun(@(x) corr(X(:,x), X(:,r)), 1:length(varnames2)); 
+end
+
+cmp = [linspace(1, 1), linspace(1, 0); 
+        linspace(0, 1), linspace(1, 1);
+        linspace(1, 1), linspace(1, 1)]';
+figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cmp); 
+title(['correlation between variables group ' num2str(group)]);
 
 %%
 pat = zeros(4, length(varnames2));
