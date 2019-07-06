@@ -1,26 +1,26 @@
-function varargout = gui1(varargin)
-% GUI1 MATLAB code for gui1.fig
-%      GUI1, by itself, creates a new GUI1 or raises the existing
+function varargout = segmentCT(varargin)
+% segmentCT MATLAB code for segmentCT.fig
+%      segmentCT, by itself, creates a new segmentCT or raises the existing
 %      singleton*.
 %
-%      H = GUI1 returns the handle to a new GUI1 or the handle to
+%      H = segmentCT returns the handle to a new segmentCT or the handle to
 %      the existing singleton*.
 %
-%      GUI1('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in GUI1.M with the given input arguments.
+%      segmentCT('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in segmentCT.M with the given input arguments.
 %
-%      GUI1('Property','Value',...) creates a new GUI1 or raises the
+%      segmentCT('Property','Value',...) creates a new segmentCT or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before gui1_OpeningFcn gets called.  An
+%      applied to the GUI before segmentCT_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to gui1_OpeningFcn via varargin.
+%      stop.  All inputs are passed to segmentCT_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help gui1
+% Edit the above text to modify the response to help segmentCT
 
 % Last Modified by GUIDE v2.5 21-Oct-2018 18:58:39
 
@@ -28,8 +28,8 @@ function varargout = gui1(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @gui1_OpeningFcn, ...
-                   'gui_OutputFcn',  @gui1_OutputFcn, ...
+                   'gui_OpeningFcn', @segmentCT_OpeningFcn, ...
+                   'gui_OutputFcn',  @segmentCT_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -43,13 +43,13 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before gui1 is made visible.
-function gui1_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before segmentCT is made visible.
+function segmentCT_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to gui1 (see VARARGIN)
+% varargin   command line arguments to segmentCT (see VARARGIN)
 
 handles.cmap = lines; % colormap
 handles.currentvertebra = 1; % (none)
@@ -166,21 +166,21 @@ handles.disprange = n+1;
 handles.currentz = 1; 
 showimg(hObject, eventdata, handles);
 
-% Choose default command line output for gui1
+% Choose default command line output for segmentCT
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
 % This sets up the initial plot - only do when we are invisible
-% so window can get raised using gui1.
+% so window can get raised using segmentCT.
 
-% UIWAIT makes gui1 wait for user response (see UIRESUME)
+% UIWAIT makes segmentCT wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = gui1_OutputFcn(hObject, eventdata, handles)
+function varargout = segmentCT_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
