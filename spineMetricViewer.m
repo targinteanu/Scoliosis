@@ -9,16 +9,16 @@ load('spines_XYZ.mat');
     cm = [x;y;z]';
 %}
 
-[num, txt] = xlsread('Writhe-pre-post.xlsx');
-XYZ = num(:, 6:end); 
+%[num, txt] = xlsread('Writhe-pre-post.xlsx');
+%XYZ = num(:, 6:end); 
 shapecluster = num(:,3); 
 writhe_preop = num(:,4); 
 writhe_postop = num(:,5);
 nonsurg = isnan(writhe_postop);
     % get center points 
-    x = XYZ(idx, 1:3:51); 
-    y = XYZ(idx, 2:3:51); 
-    z = XYZ(idx, 3:3:51); 
+    x = mean(XYZ(cluster_shape==2, 1:3:51)); 
+    y = mean(XYZ(cluster_shape==2, 2:3:51)); 
+    z = mean(XYZ(cluster_shape==2, 3:3:51)); 
     cm = [x;y;z]';
 
 %
@@ -37,21 +37,23 @@ vertnames = [arrayfun(@(i) ['T' num2str(i)], 1:12, 'UniformOutput', 0), ...
 vertnames_part = vertnames((q+1):(end-q));
 
 figure('Position', [50 50 1400 700]); 
-subplot(1,4,1); plot3(x, y, z, '-o'); grid on; view([0 0]); 
+subplot(1,5,1); plot3(x, y, z, '-o'); grid on; view([0 0]); 
 title('sagittal'); xlabel('x'); ylabel('y'); zlabel('z'); 
 text(x,y,z,vertnames);
-subplot(1,4,2); plot3(x, y, z, '-o'); grid on; view([90 0]);
+subplot(1,5,2); plot3(x, y, z, '-o'); grid on; view([90 0]);
 title('coronal'); xlabel('x'); ylabel('y'); zlabel('z'); 
 text(x,y,z,vertnames);
 %subplot(1,4,3); plot([d1;d2;d3], z((q+1):(end-q)), '-o'); grid on;
 %title('Derivatives'); ylabel('z'); xlabel('derivatives'); ylim([0 1000]);
 %legend('1st', '2nd', '3rd');
-subplot(1,4,3); plot(d1, z((q+1):(end-q)), '-o'); grid on;
+subplot(1,5,3); plot(d1, z((q+1):(end-q)), '-o'); grid on;
 title('1st Derivative'); ylabel('z'); xlabel('2nd derivative'); ylim([0 1000]);
 text(d1, z((q+1):(end-q)), vertnames_part);
-subplot(1,4,4); plot(d2, z((q+1):(end-q)), '-o'); grid on;
+subplot(1,5,4); plot(d2, z((q+1):(end-q)), '-o'); grid on;
 title('2nd Derivative'); ylabel('z'); xlabel('2nd derivative'); ylim([0 1000]);
 text(d2, z((q+1):(end-q)), vertnames_part);
+subplot(1,5,5); plot(tau, z((q+1):(end-q)), '-o'); grid on;
+title('torsion'); ylabel('z'); xlabel('\tau'); ylim([0 1000]);
 %subplot(1,4,4); plot(tau, z((q+1):(end-q)), '-o'); grid on;
 %title('Torsion'); ylabel('z'); xlabel('Torsion'); ylim([0 1000]);
 %subplot(1,4,4); plot(-wr, z((q+1):(end-q)), '-o'); grid on;
