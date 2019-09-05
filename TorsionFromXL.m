@@ -74,15 +74,27 @@ for idx = 1:N
     dist_from_z = sqrt(x.^2 + y.^2);
     %%{
     % use findpeaks
-    [~, apexes, w, pp] = findpeaks(dist_from_z); 
-    % if there are more than 2, get rid of the farthest
-    while length(apexes) > 2
-        %[~,minIdx] = min(pp); 
-        [~,maxIdx] = max(abs(apexes - neutral));
-        apexes = apexes([1:(maxIdx-1), (maxIdx+1):end]);
-        w = w([1:(maxIdx-1), (maxIdx+1):end]);
-        pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
+    %[~, apexes, w, pp] = findpeaks(dist_from_z);
+    sides = {1:neutral, neutral:length(dist_from_z)};
+    apexes = [0 0];
+    for s = 1:length(sides)
+        %[~, ap, w, pp] = findpeaks(dist_from_z);
+        [~, ap, w, pp] = findpeaks(dist_from_z(sides{s}));
+        % if there are more than 2, get rid of the farthest
+        while length(ap) > 1
+            %[~,minIdx] = min(pp);
+            [~,maxIdx] = max(abs(ap - neutral));
+            ap = ap([1:(maxIdx-1), (maxIdx+1):end]);
+            w = w([1:(maxIdx-1), (maxIdx+1):end]);
+            pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
+        end
+        if isempty(ap)
+            apexes(s) = nan;
+        else
+            apexes(s) = ap;
+        end
     end
+    apexes(2) = apexes(2) + neutral - 1;
     %}
     %{
     % use max
@@ -91,7 +103,8 @@ for idx = 1:N
     %}
     apicals2(idx,:) = apexes;
     
-    if (length(apexes) > 1)
+    %if (length(apexes) > 1)
+    if ~sum(isnan(apexes))
         qq = abs(apexes - neutral);
         q3 = 2*lcm(qq(1),qq(2)) + 1;
         q2 = 2*qq(1)*qq(2) + 1;
@@ -126,6 +139,7 @@ for idx = 1:N
         newTorsions(idx) = lewinerTorsion(pinterp);
     end
     if debugmode
+        apexes = apexes(~isnan(apexes));
         figure; plot3(x, y, z, 'o'); hold on; grid on;
         plot3(x([neutral, apexes]), y([neutral, apexes]), z([neutral, apexes]), 'x');
         %plot3(xwin, ywin, zwin, '-+');
@@ -135,6 +149,7 @@ for idx = 1:N
     end
     
     if debugmode
+        apexes = apexes(~isnan(apexes));
         figure; plot(dist_from_z); grid on; hold on; 
         xlabel('vertebra'); ylabel('distance from z axis'); 
         plot(apexes, dist_from_z(apexes), 'o'); 
@@ -155,7 +170,8 @@ debugmode = true;
 checkTorsions = max(abs(Torsions - torglob))
 checkMaxTorsions = max(abs(maxTorsions - tor1))
 
-newTorsions(apicals2(:,1)==apicals2(:,2)) = nan;
+%newTorsions(apicals2(:,1)==apicals2(:,2)) = nan;
+newTorsions(isnan(sum(apicals2,2))) = nan;
 
 apicalsLow = neutrals - (apicals - neutrals);
 figure; plot(neutrals, '-k'); hold on; grid on;
