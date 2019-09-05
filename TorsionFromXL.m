@@ -26,6 +26,7 @@ neutrals = Torsions; apicals = neutrals; qs = neutrals;
 
 % trying different ways to get apicals 
 apicals2 = zeros(length(apicals), 2);
+newTorsions = Torsions;
 
 debugmode = false;
 
@@ -71,7 +72,8 @@ for idx = 1:N
     
     %% new ways of getting apicals
     dist_from_z = sqrt(x.^2 + y.^2);
-    %{
+    %%{
+    % use findpeaks
     [~, apexes, w, pp] = findpeaks(dist_from_z); 
     % if there are more than 2, get rid of the least prominent
     while length(apexes) > 2
@@ -81,9 +83,55 @@ for idx = 1:N
         pp = pp([1:(minIdx-1), (minIdx+1):end]);
     end
     %}
+    %{
+    % use max
     [~, apexes(1)] = max(dist_from_z(1:neutral));
     [~, apexes(2)] = max(dist_from_z(neutral:end)); apexes(2) = apexes(2) + neutral-1;
+    %}
     apicals2(idx,:) = apexes;
+    
+    if (length(apexes) > 1)
+        qq = abs(apexes - neutral);
+        q3 = 2*lcm(qq(1),qq(2)) + 1;
+        q2 = 2*qq(1)*qq(2) + 1;
+        
+        pwin = p(apexes(1):apexes(2),:);
+        zwin = linspace(pwin(1,3), pwin(end,3), q2);
+        xwin = spline(pwin(:,3), pwin(:,1), zwin);
+        ywin = spline(pwin(:,3), pwin(:,2), zwin);
+        %{
+        pinterp = zeros(size(p,1)*q3, 3);
+        for col = 1:3
+            pinterp(:,col) = interp(p(:,col), q3);
+        end
+        %}
+        
+%        pcran = p(apexes(1):neutral); pcaud = p(neutral:apexes(2));
+        qcran = qq(2); qcaud = qq(1);
+%        pcran_interp = zeros(size(pcran,1)*qcran, 3);
+%        pcaud_interp = zeros(size(pcaud,1)*qcaud, 3);
+        pcran_interp = zeros(size(p,1)*qcran, 3);
+        pcaud_interp = zeros(size(p,1)*qcaud, 3);
+        for col = 1:3
+            pcran_interp(:,col) = interp(p(:,col), qcran);
+            pcaud_interp(:,col) = interp(p(:,col), qcaud);
+        end
+        icran = ([apexes(1), neutral]-1)*qcran + 1;
+        icaud = ([neutral, apexes(2)]-1)*qcaud + 1;
+        pcran = pcran_interp(icran(1):icran(2), :);
+        pcaud = pcaud_interp(icaud(1):icaud(2), :);
+        pinterp = [pcran; pcaud(2:end,:)];
+        
+        newTorsions(idx) = lewinerTorsion(pinterp);
+    end
+    if debugmode
+        figure; plot3(x, y, z, 'o'); hold on; grid on;
+        plot3(x([neutral, apexes]), y([neutral, apexes]), z([neutral, apexes]), 'x');
+        %plot3(xwin, ywin, zwin, '-+');
+        plot3(pinterp(:,1), pinterp(:,2), pinterp(:,3), '.');
+        %plot3(pcran(:,1), pcran(:,2), pcran(:,3), '.');
+        %plot3(pcaud(:,1), pcaud(:,2), pcaud(:,3), '.');
+    end
     
     if debugmode
         figure; plot(dist_from_z); grid on; hold on; 
@@ -96,15 +144,17 @@ for idx = 1:N
 end
 %%
 
-figure; plot(Torsions, '.'); grid on; hold on; plot(maxTorsions, '.');
+figure; plot(Torsions, '.'); grid on; hold on; plot(maxTorsions, '.'); plot(newTorsions, '.');
 xlabel('patient'); ylabel('Torsion');
-legend('neutral-apical', 'maximum');
+legend('neutral-apical', 'maximum', 'new');
 
 %%
 debugmode = true;
 
 checkTorsions = max(abs(Torsions - torglob))
 checkMaxTorsions = max(abs(maxTorsions - tor1))
+
+newTorsions(apicals2(:,1)==apicals2(:,2)) = nan;
 
 apicalsLow = neutrals - (apicals - neutrals);
 figure; plot(neutrals, '-k'); hold on; grid on;
