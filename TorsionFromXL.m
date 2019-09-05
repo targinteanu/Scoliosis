@@ -75,12 +75,13 @@ for idx = 1:N
     %%{
     % use findpeaks
     [~, apexes, w, pp] = findpeaks(dist_from_z); 
-    % if there are more than 2, get rid of the least prominent
+    % if there are more than 2, get rid of the farthest
     while length(apexes) > 2
-        [~,minIdx] = min(pp); 
-        apexes = apexes([1:(minIdx-1), (minIdx+1):end]);
-        w = w([1:(minIdx-1), (minIdx+1):end]);
-        pp = pp([1:(minIdx-1), (minIdx+1):end]);
+        %[~,minIdx] = min(pp); 
+        [~,maxIdx] = max(abs(apexes - neutral));
+        apexes = apexes([1:(maxIdx-1), (maxIdx+1):end]);
+        w = w([1:(maxIdx-1), (maxIdx+1):end]);
+        pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
     end
     %}
     %{
