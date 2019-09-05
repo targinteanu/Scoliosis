@@ -9,6 +9,12 @@ function [Torsion, dr, ddr, dddr] = lewinerTorsion(p, t, q, w)
 
 if nargin < 4
     w = ones(length(p), 1);
+    if nargin < 2
+        % use the whole p matrix with the t point in the middle 
+        % p should have an odd number of entries 
+        t = ceil(size(p,1)/2);
+        q = t-1;
+    end
 end
 
 %%
