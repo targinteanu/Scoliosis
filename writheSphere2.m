@@ -25,7 +25,7 @@ for idx = fliplr(1:numplots)
     cursori{idx} = plot3(x([1,2])/500, y([1,2])/500, z([1,2])/500 - 1, '*k', 'LineWidth', 1.1);
     cursorj{idx} = plot3(x([1,2])/500, y([1,2])/500, z([1,2])/500 - 1, 'ok', 'LineWidth', 1.1);
     for iidx = 1:4
-        Rvector{iidx, idx} = plot3([1 0], [0 1], [0 0], 'k', 'LineWidth', 1.1);
+        Rvector{iidx, idx} = plot3([1 0], [0 1], [0 0], '--k', 'LineWidth', 1.1);
     end
 end
 grid off;
@@ -34,20 +34,11 @@ dirold = [0 0 -1];
 
 %%
 range = 2:length(cm);
-        frames = 20;
-        T = .1;
+        frames = 30;
+        T = .01;
 M = cell(1, frames*((length(cm)-1)^2));
 for i = range
     for j = range
-        
-        for idx = 1:numplots
-            cursori{idx}.XData = x([i-1,i])/500; 
-            cursori{idx}.YData = y([i-1,i])/500; 
-            cursori{idx}.ZData = z([i-1,i])/500 - 1;
-            cursorj{idx}.XData = x([j-1,j])/500; 
-            cursorj{idx}.YData = y([j-1,j])/500; 
-            cursorj{idx}.ZData = z([j-1,j])/500 - 1;
-        end
         
         if abs(i-j) > 2
         
@@ -61,10 +52,11 @@ for i = range
         r13 = r13/norm(r13); r14 = r14/norm(r14); r23 = r23/norm(r23); r24 = r24/norm(r24);
         
         %view(r13);
-        bigAngle = acos(r13*dirold');
+        dir = r13*[0,0,1;0,1,0;-1,0,0]; dir = dir/norm(dir);
+        bigAngle = acos(dir*dirold');
         smallAngle = bigAngle/frames;
         for f = 1:frames
-            newview = changeviews(dirold, r13, f*smallAngle, bigAngle);
+            newview = changeviews(dirold, dir, f*smallAngle, bigAngle);
             if norm(newview)
                 view(newview);
             end
@@ -75,26 +67,54 @@ for i = range
             M{ ((i-1)*(length(cm)-1) + j)*(f-1)*frames + f } = F.cdata;
         end
         
-        R = [r13; r14; r24; r23];
+        dirold = dir;
+        
+        for idx = 1:numplots
+            cursori{idx}.XData = x([i-1,i])/500; 
+            cursori{idx}.YData = y([i-1,i])/500; 
+            cursori{idx}.ZData = z([i-1,i])/500 - 1;
+            cursorj{idx}.XData = x([j-1,j])/500; 
+            cursorj{idx}.YData = y([j-1,j])/500; 
+            cursorj{idx}.ZData = z([j-1,j])/500 - 1;
+        end
+        
+        R = [r13; r14; r24; r23] + [p3;p4;p4;p3]/500 - [zeros(4,2), ones(4,1)];
         px = R(:,1); py = R(:,2); pz = R(:,3);
         colr = {'red', 'blue', 'green'};
         for idx = fliplr(1:numplots)
             subplot(1,numplots,idx);
             patch(px, py, pz, colr{sgn + 2});
+            
+            
+            Rvector{1,idx}.XData = [p1(1), p4(1), p4(1)]/500 + [0,0,r14(1)];
+            Rvector{1,idx}.YData = [p1(2), p4(2), p4(2)]/500 + [0,0,r14(2)];
+            Rvector{1,idx}.ZData = [p1(3), p4(3), p4(3)]/500 - 1 + [0,0,r14(3)];
+            
+            Rvector{2,idx}.XData = [p1(1), p3(1), p3(1)]/500 + [0,0,r13(1)];
+            Rvector{2,idx}.YData = [p1(2), p3(2), p3(2)]/500 + [0,0,r13(2)];
+            Rvector{2,idx}.ZData = [p1(3), p3(3), p3(3)]/500 - 1 + [0,0,r13(3)];
+            
+            Rvector{3,idx}.XData = [p2(1), p3(1), p3(1)]/500 + [0,0,r23(1)];
+            Rvector{3,idx}.YData = [p2(2), p3(2), p3(2)]/500 + [0,0,r23(2)];
+            Rvector{3,idx}.ZData = [p2(3), p3(3), p3(3)]/500 - 1 + [0,0,r23(3)];
+            
+            Rvector{4,idx}.XData = [p2(1), p4(1), p4(1)]/500 + [0,0,r24(1)];
+            Rvector{4,idx}.YData = [p2(2), p4(2), p4(2)]/500 + [0,0,r24(2)];
+            Rvector{4,idx}.ZData = [p2(3), p4(3), p4(3)]/500 - 1 + [0,0,r24(3)];
+            %{
             for iidx = 1:2
-                Rvector{iidx,idx}.XData = [0, px(iidx)] + x(i-1)/500;
-                Rvector{iidx,idx}.YData = [0, py(iidx)] + y(i-1)/500;
-                Rvector{iidx,idx}.ZData = [0, pz(iidx)] + z(i-1)/500 - 1;
+                Rvector{iidx,idx}.XData = [x(i-1)/500, px(iidx)];
+                Rvector{iidx,idx}.YData = [y(i-1)/500, py(iidx)];
+                Rvector{iidx,idx}.ZData = [z(i-1)/500 - 1, pz(iidx)];
             end
             for iidx = 3:4
-                Rvector{iidx,idx}.XData = [0, px(iidx)] + x(i)/500;
-                Rvector{iidx,idx}.YData = [0, py(iidx)] + y(i)/500;
-                Rvector{iidx,idx}.ZData = [0, pz(iidx)] + z(i)/500 - 1;
+                Rvector{iidx,idx}.XData = [x(i)/500, px(iidx)];
+                Rvector{iidx,idx}.YData = [y(i)/500, py(iidx)];
+                Rvector{iidx,idx}.ZData = [z(i)/500 - 1, pz(iidx)];
             end
+            %}
         end
-        
-        dirold = r13;
-        
+                
         pause(.25);
         
         end
