@@ -40,7 +40,7 @@ twist = num(:,11); writhetwist = num(:,12);
     
     x0 = x; y0 = y; z0 = z;
     intp = 4;
-    x = interp(x, intp); y = interp(y, intp); z = interp(z, intp);
+%    x = interp(x, intp); y = interp(y, intp); z = interp(z, intp);
     
     cm = [x;y;z]';
 

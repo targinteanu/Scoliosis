@@ -70,7 +70,7 @@ for idx = 1:N
     qs(idx) = q; neutrals(idx) = neutral; apicals(idx) = apex; 
     % store these to look at which vertebrae were selected as "neutral"/"apical"
     
-    %% new ways of getting apicals
+    %% get apicals from distance from z axis 
     dist_from_z = sqrt(x.^2 + y.^2);
     %%{
     % use findpeaks
@@ -89,12 +89,12 @@ for idx = 1:N
             pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
         end
         if isempty(ap)
-            apexes(s) = nan;
-        else
-            apexes(s) = ap;
-        end
+            [~, ap] = max(dist_from_z(sides{s}));
+        end 
+        apexes(s) = ap;
     end
     apexes(2) = apexes(2) + neutral - 1;
+    apexes(apexes == neutral) = nan;
     %}
     %{
     % use max
