@@ -2,24 +2,39 @@
 N = 32;
 num = num(1:N, :);
 XYZ = num(:, 13:end); 
-    x = XYZ(idx, 1:3:51); 
-    y = XYZ(idx, 2:3:51); 
-    z = XYZ(idx, 3:3:51); 
+    x = fliplr(XYZ(idx, 1:3:51)); 
+    y = fliplr(XYZ(idx, 2:3:51)); 
+    z = fliplr(XYZ(idx, 3:3:51)); 
     p = [x;y;z]';
 
 %figure; plot3(p(:,1), p(:,2), p(:,3), 'o'); grid on;
 
 deriv_front = @(cf, n) factorial(n)*cf(:,(end-n));
 
-nplots = 3;
-figure; subplot(1,nplots,1); plot(p(:,1), p(:,3), 'ok'); grid on; hold on;
-ppx = spline(p(:,3), p(:,1));
+%pdisp = p(2:end,:)-p(1,:);
+pdisp = diff(p);
+L = sqrt(diag(pdisp*pdisp')); 
+%L = [0;L];
+L = [0; cumsum(L)]; 
+
+nplots = 4;
+figure; subplot(1,nplots,1); plot(x, L, 'ok'); grid on; hold on; ylim([L(1), L(end)]);
+
+%pp = [spline(L, x), spline(L, y), spline(L, z)];
+pp = spline(L, x);
 %plot(linspace(p(1,3), p(end,3)), ppval(ppx, linspace(p(1,3), p(end,3))));
-cfx = ppx.coefs; 
-bx = ppx.breaks; 
-for i = 1:(length(bx)-1)
-    t = linspace(bx(i), bx(i+1)); t2 = t-bx(i);
-    cfi = cfx(i,:);
+Linterp = linspace(L(1), L(end), 1000);
+xbrute = ppval(pp, Linterp);
+dxbrute = diff(xbrute)./diff(Linterp); 
+ddxbrute = diff(dxbrute)./diff(Linterp(2:end)); 
+dddxbrute = diff(ddxbrute)./diff(Linterp(2:(end-1)));
+plot(xbrute, Linterp, '--k', 'LineWidth', 1);
+
+cf = pp.coefs; 
+b = pp.breaks; 
+for i = 1:(length(b)-1)
+    t = linspace(b(i), b(i+1)); t2 = t-b(i);
+    cfi = cf(i,:);
     %spl = cfi(4)*t.^3 + cfi(3)*t.^2 + cfi(2)*t + cfi(1);
     cfi = fliplr(cfi);
     spl = zeros(size(t));
@@ -33,36 +48,63 @@ end
     vertebrae = (1+q):(size(p,1)-q); 
     taulew = zeros(size(vertebrae)); % local torsion at each point on the spine 
     d2x = zeros(size(vertebrae)); d1x = d2x; d3x = d2x;
-    d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
+    %d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
     for vertebra = vertebrae
         [taulew(vertebra-q), d, dd, ddd] = lewinerTorsion(p, vertebra, q);
-        d2x(vertebra-q) = dd(1); d1x(vertebra-q) = d(1); d3x(vertebra-1) = ddd(1);
-        d2z(vertebra-q) = dd(3); d1z(vertebra-q) = d(3); d3z(vertebra-1) = ddd(3);
+        d2x(vertebra-q) = dd(1); d1x(vertebra-q) = d(1); d3x(vertebra-q) = ddd(1);
+        %d2z(vertebra-q) = dd(3); d1z(vertebra-q) = d(3); d3z(vertebra-1) = ddd(3);
     end
-    d2 = d2x./d2z; d1 = d1x./d1z; d3 = d3x./d3z;
+    %d2 = d2x./d2z; d1 = d1x./d1z; d3 = d3x./d3z;
+    d2 = d2x; d1 = d1x; d3 = d3x;
     
 for i = 1:length(taulew)
     vertebra = vertebrae(i);
-    t = linspace((vertebra-q), (vertebra+q)); t2 = t-(vertebra);
-    cub = x(vertebra) + d1x(i).*t2 + (d2x(i)/2).*t2.^2 + (d3x(i)/6).*t2.^3;
-    t = linspace(z(vertebra-q), z(vertebra+q));
+    t = linspace(L(vertebra-1), L(vertebra+1)); t2 = t-L(vertebra);
+    cub = x(vertebra) + d1(i).*t2 + (d2(i)/2).*t2.^2 + (d3(i)/6).*t2.^3;
+    %t = linspace(L(vertebra-q), L(vertebra+q));
     plot(cub, t, 'r');
 end
     
-df1 = deriv_front(cfx, 1); df2 = deriv_front(cfx, 2);
-db1 = deriv_back(cfx, 1, bx); db2 = deriv_back(cfx, 1, bx);
+df1 = deriv_front(cf, 1); df2 = deriv_front(cf, 2); df3 = deriv_front(cf, 3);
+db1 = deriv_back(cf, 1, b); db2 = deriv_back(cf, 1, b); db3 = deriv_back(cf, 3, b);
     
-subplot(1, nplots, 2); plot(diff(x)./diff(z), (z(1:(end-1))+z(2:end))/2, 'ok');
+subplot(1, nplots, 2); plot(diff(x)'./diff(L), (L(1:(end-1))+L(2:end))/2, 'ok'); 
 grid on; hold on;
-plot(d1, p(vertebrae,3), '^r'); 
-plot(df1, p(1:(end-1),3), '+b');
-plot(db1, p(2:end,3), 'xb');
+plot(dxbrute, Linterp(2:end), '--k', 'LineWidth', 1);
+ylim([L(1), L(end)]);
+plot(d1, L(vertebrae), '^r'); 
+plot(df1, L(1:(end-1)), '+b');
+plot(db1, L(2:end), 'xb');
 
-subplot(1, nplots, 3); plot(diff(diff(x)./diff(z))./diff(z(2:end)), z(2:(end-1)), 'ok');
+subplot(1, nplots, 3); plot(diff(diff(x)'./diff(L))./diff(L(2:end)), L(2:(end-1)), 'ok');
 grid on; hold on;
-plot(d2, p(vertebrae,3), '^r'); 
-plot(df2, p(1:(end-1),3), '+b');
-plot(db2, p(2:end,3), 'xb');
+plot(ddxbrute, Linterp(2:(end-1)), '--k', 'LineWidth', 1);
+ylim([L(1), L(end)]);
+plot(d2, L(vertebrae), '^r'); 
+plot(df2, L(1:(end-1)), '+b');
+%plot(db2, L(2:end), 'xb');
+
+subplot(1, nplots, 4); plot( diff(diff(diff(x)'./diff(L))./diff(L(2:end)))./diff(L(2:(end-1))), ...
+    L(3:(end-1)), 'ok');
+grid on; hold on;
+plot(dddxbrute, Linterp(3:(end-1)), '--k', 'LineWidth', 1);
+ylim([L(1), L(end)]);
+plot(d3, L(vertebrae), '^r'); 
+plot(df3, L(1:(end-1)), '+b');
+%plot(db3, L(2:end), 'xb');
+
+%{
+tauspline = arrayfun(@(i) -(cross(df1(i), df2(i)) * df3(i)')/(norm(cross(df1(i), df2(i)))^2), ...
+    1:length(df3));
+taubrut = arrayfun(@(i) ...
+    -(cross(dxbrut(i),ddxbrut(i))*dddxbrut(i)')/(norm(cross(dxbrut(i),ddxbrut(i)))^2), ...
+    1:length(dddxbrut));
+subplot(1, nplots, 5); plot(taubrut, Linterp(3:(end-1)), '--k', 'LineWidth', 1);
+grid on; hold on; 
+ylim([L(1), L(end)]);
+plot(taulew, L(vertebrae), '^r');
+plot(tauspline, L(1:(end-1)), '+b');
+%}
 
 function db = deriv_back(cf, n, b)
     b = diff(b)';
