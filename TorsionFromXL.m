@@ -42,7 +42,7 @@ for idx = 1:N
     
     % estimate 2nd derivative to get neutral/apical vertebrae 
     q = 4; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
-    vertebrae = (1+q):(17-q); 
+    vertebrae = (1+q):(size(p,1)-q); 
     tau = zeros(size(vertebrae)); % local torsion at each point on the spine 
     d2 = zeros(size(vertebrae)); d1 = d2;
     for vertebra = vertebrae
@@ -69,6 +69,43 @@ for idx = 1:N
     
     qs(idx) = q; neutrals(idx) = neutral; apicals(idx) = apex; 
     % store these to look at which vertebrae were selected as "neutral"/"apical"
+    
+    %%
+    %pcurve = p(apex:(neutral+q), :);
+    qcurve = 8;
+    icurve = ([apex, (neutral+q)] - 1)*qcurve + 1;
+    pcurve_interp = zeros(size(p,1)*qcurve, 3);
+    for col = 1:3
+        pcurve_interp(:,col) = interp(p(:,col), qcurve);
+        %xq
+        %pcurve_interp(:,col) = spline(p(:,3), p(:,col), 
+    end
+    pcurve = pcurve_interp(icurve(1):icurve(2), :);
+    
+    vcurve = (1+q):(size(pcurve,1)-q); 
+    taucurve = zeros(size(vcurve)); % local torsion at each point on the spine 
+    d2curve = zeros(size(vcurve)); d1curve = d2curve;
+    for vertebra = vcurve
+        [taucurve(vertebra-q), d, dd] = lewinerTorsion(pcurve, vertebra, q);
+        d2curve(vertebra-q) = norm(dd); d1curve(vertebra-q) = norm(d);
+    end
+    vcurve = linspace(apex, neutral+q, length(vcurve)); 
+    
+    vpts = [apex, neutral]-q;
+    if debugmode
+        figure; plot3(x, y, z, 'o'); hold on; grid on;
+        plot3(pcurve(:,1), pcurve(:,2), pcurve(:,3), '.'); 
+        figure; 
+        subplot(1,3,1); plot(d1, vertebrae, '-o'); grid on; title('first derivative');
+        hold on; plot(d1(vpts), vertebrae(vpts), '*k');
+        plot(d1curve, vcurve, '-x');
+        subplot(1,3,2); plot(d2, vertebrae, '-o'); grid on; title('second derivative');
+        hold on; plot(d2(vpts), vertebrae(vpts), '*k');
+        plot(d2curve, vcurve, '-x');
+        subplot(1,3,3); plot(tau, vertebrae, '-o'); grid on; title('torsion');
+        hold on; plot(tau(vpts), vertebrae(vpts), '*k');
+        plot(taucurve, vcurve, '-x');
+    end
     
     %% get apicals from distance from z axis 
     dist_from_z = sqrt(x.^2 + y.^2);
