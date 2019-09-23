@@ -32,6 +32,7 @@ end
 for i = fliplr(1:(t-1))
     L(i) = L(i+1) + dL(i);
 end
+L = -L;
 
 range = (t-q):(t+q); 
 w = w(range); L = L(range);
