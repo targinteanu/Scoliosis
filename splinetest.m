@@ -32,7 +32,8 @@ end
     q = 4; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
     vertebrae = (1+q):(size(p,1)-q); 
     taulew = zeros(size(vertebrae)); % local torsion at each point on the spine 
-    d2 = zeros(size(vertebrae)); d1 = d2; d3 = d2;
+    d2x = zeros(size(vertebrae)); d1x = d2x; d3x = d2x;
+    d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
     for vertebra = vertebrae
         [taulew(vertebra-q), d, dd, ddd] = lewinerTorsion(p, vertebra, q);
         d2x(vertebra-q) = dd(1); d1x(vertebra-q) = d(1); d3x(vertebra-1) = ddd(1);
