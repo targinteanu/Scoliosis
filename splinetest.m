@@ -23,13 +23,18 @@ nplots = 4;
 
 %pp = [spline(L, x), spline(L, y), spline(L, z)];
 pp = spline(L, var);
+
 %plot(linspace(p(1,3), p(end,3)), ppval(ppx, linspace(p(1,3), p(end,3))));
-Linterp = linspace(L(1), L(end), 1000);
+interpfactor = 10;
+Ltot = (L(end)-L(1)); interpext = 2/length(L);
+Linterp = linspace(L(1)-(interpext*Ltot), L(end)+(interpext*Ltot), ...
+    length(L)*(2*interpext + 1)*interpfactor)';
+
 xbrute = ppval(pp, Linterp);
 dxbrute = diff(xbrute)./diff(Linterp); 
 ddxbrute = diff(dxbrute)./diff(Linterp(2:end)); 
 dddxbrute = diff(ddxbrute)./diff(Linterp(2:(end-1)));
-plot(xbrute, Linterp, '--k', 'LineWidth', 1);
+%plot(xbrute, Linterp, '--k', 'LineWidth', 1);
 
 cf = pp.coefs; 
 b = pp.breaks; 
@@ -42,7 +47,7 @@ for i = 1:(length(b)-1)
     for j = 1:length(cfi)
         spl = spl + cfi(j)*t2.^(j-1);
     end
-    plot(spl, t, 'b');
+%    plot(spl, t, 'b');
 end
 
     q = 4; % 2 vertebrae above, 2 vertebrae below, current vertebra -> 5 points to fit each cubic
@@ -106,22 +111,40 @@ for i = 1:length(tauspline)
     tauspline(i) = -(cx * dddr(i,:)')/(norm(cx)^2);
 end
 
-figure; subplot(1, nplots, 1);
-plot(tauspline, L(1:(end-1)), '-ob'); hold on; grid on; 
-plot(taulew, L(vertebrae), '-^r');
-ylim([L(1), L(end)]);
-title('torsion');
-
 df1 = arrayfun(@(i) norm(dr(i,:)), 1:size(dr,1)); 
 df2 = arrayfun(@(i) norm(ddr(i,:)), 1:size(ddr,1)); 
 df3 = arrayfun(@(i) norm(dddr(i,:)), 1:size(dddr,1)); 
 
+
+    pinterp = cell2mat(arrayfun(@(j) ppval(ppall(j), Linterp), 1:3, 'UniformOutput', false));
+
+    q = q*interpfactor; 
+    vinterp = (1+q):(size(pinterp,1)-q); 
+    tauinterp = zeros(size(vinterp)); % local torsion at each point on the spine 
+    %d2x = zeros(size(vertebrae)); d1x = d2x; d3x = d2x;
+    %d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
+    d2int = zeros(size(vinterp)); d1int = d2; d3int = d2;
+    for vertebra = vinterp
+        [tauinterp(vertebra-q), d, dd, ddd] = lewinerTorsion(pinterp, vertebra, q);
+        %d2x(vertebra-q) = dd(nvar); d1x(vertebra-q) = d(nvar); d3x(vertebra-q) = ddd(nvar);
+        %d2z(vertebra-q) = dd(3); d1z(vertebra-q) = d(3); d3z(vertebra-1) = ddd(3);
+        d1int(vertebra-q) = norm(d); d2int(vertebra-q) = norm(dd); d3int(vertebra-q) = norm(ddd);
+    end
+
+figure; subplot(1, nplots, 1);
+plot(tauspline, L(1:(end-1)), '-ob'); hold on; grid on; 
+plot(tauinterp, Linterp(vinterp), '.m');
+plot(taulew, L(vertebrae), '-^r');
+ylim([Linterp(1), Linterp(end)]);
+title('torsion');
+    
 %%
 subplot(1, nplots, 2); %plot(diff(var)'./diff(L), (L(1:(end-1))+L(2:end))/2, 'ok'); 
 grid on; hold on;
 %plot(dxbrute, Linterp(2:end), '--k', 'LineWidth', 1);
-ylim([L(1), L(end)]);
+ylim([Linterp(1), Linterp(end)]);
 plot(d1, L(vertebrae), '-^r'); 
+plot(d1int, Linterp(vinterp), '.m');
 plot(df1, L(1:(end-1)), '-+b');
 %plot(db1, L(2:end), 'xb');
 title('d/ds'); 
@@ -129,8 +152,9 @@ title('d/ds');
 subplot(1, nplots, 3); %plot(diff(diff(var)'./diff(L))./diff(L(2:end)), L(2:(end-1)), 'ok');
 grid on; hold on;
 %plot(ddxbrute, Linterp(2:(end-1)), '--k', 'LineWidth', 1);
-ylim([L(1), L(end)]);
+ylim([Linterp(1), Linterp(end)]);
 plot(d2, L(vertebrae), '-^r'); 
+plot(d2int, Linterp(vinterp), '.m');
 plot(df2, L(1:(end-1)), '-+b');
 %plot(db2, L(2:end), 'xb');
 title('d^2/ds^2');
@@ -150,7 +174,8 @@ title('d^3/ds^3');
 subplot(1, nplots, 4); 
 grid on; hold on;
 plot(sqrt(x.^2 + y.^2), L, '-ok');
-ylim([L(1), L(end)]);
+plot(sqrt(pinterp(:,1).^2 + pinterp(:,2).^2), Linterp, '.m');
+ylim([Linterp(1), Linterp(end)]);
 title('(x^2 + y^2)^{1/2}');
 
 %%    
