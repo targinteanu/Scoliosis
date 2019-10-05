@@ -6,7 +6,8 @@ XYZ = num(:, 13:end);
     y = fliplr(XYZ(idx, 2:3:51)); 
     z = fliplr(XYZ(idx, 3:3:51)); 
     p = [x;y;z]';
-
+    var = x; nvar = 1;
+    
 %figure; plot3(p(:,1), p(:,2), p(:,3), 'o'); grid on;
 
 deriv_front = @(cf, n) factorial(n)*cf(:,(end-n));
@@ -18,10 +19,10 @@ L = sqrt(diag(pdisp*pdisp'));
 L = [0; cumsum(L)]; 
 
 nplots = 4;
-figure; subplot(1,nplots,1); plot(x, L, 'ok'); grid on; hold on; ylim([L(1), L(end)]);
+figure; subplot(1,nplots,1); plot(var, L, 'ok'); grid on; hold on; ylim([L(1), L(end)]);
 
 %pp = [spline(L, x), spline(L, y), spline(L, z)];
-pp = spline(L, x);
+pp = spline(L, var);
 %plot(linspace(p(1,3), p(end,3)), ppval(ppx, linspace(p(1,3), p(end,3))));
 Linterp = linspace(L(1), L(end), 1000);
 xbrute = ppval(pp, Linterp);
@@ -51,7 +52,7 @@ end
     %d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
     for vertebra = vertebrae
         [taulew(vertebra-q), d, dd, ddd] = lewinerTorsion(p, vertebra, q);
-        d2x(vertebra-q) = dd(1); d1x(vertebra-q) = d(1); d3x(vertebra-q) = ddd(1);
+        d2x(vertebra-q) = dd(nvar); d1x(vertebra-q) = d(nvar); d3x(vertebra-q) = ddd(nvar);
         %d2z(vertebra-q) = dd(3); d1z(vertebra-q) = d(3); d3z(vertebra-1) = ddd(3);
     end
     %d2 = d2x./d2z; d1 = d1x./d1z; d3 = d3x./d3z;
@@ -60,23 +61,23 @@ end
 for i = 1:length(taulew)
     vertebra = vertebrae(i);
     t = linspace(L(vertebra-1), L(vertebra+1)); t2 = t-L(vertebra);
-    cub = x(vertebra) + d1(i).*t2 + (d2(i)/2).*t2.^2 + (d3(i)/6).*t2.^3;
+    cub = var(vertebra) + d1(i).*t2 + (d2(i)/2).*t2.^2 + (d3(i)/6).*t2.^3;
     %t = linspace(L(vertebra-q), L(vertebra+q));
     plot(cub, t, 'r');
 end
     
 df1 = deriv_front(cf, 1); df2 = deriv_front(cf, 2); df3 = deriv_front(cf, 3);
-db1 = deriv_back(cf, 1, b); db2 = deriv_back(cf, 1, b); db3 = deriv_back(cf, 3, b);
+%db1 = deriv_back(cf, 1, b); db2 = deriv_back(cf, 1, b); db3 = deriv_back(cf, 3, b);
     
-subplot(1, nplots, 2); plot(diff(x)'./diff(L), (L(1:(end-1))+L(2:end))/2, 'ok'); 
+subplot(1, nplots, 2); plot(diff(var)'./diff(L), (L(1:(end-1))+L(2:end))/2, 'ok'); 
 grid on; hold on;
 plot(dxbrute, Linterp(2:end), '--k', 'LineWidth', 1);
 ylim([L(1), L(end)]);
 plot(d1, L(vertebrae), '^r'); 
 plot(df1, L(1:(end-1)), '+b');
-plot(db1, L(2:end), 'xb');
+%plot(db1, L(2:end), 'xb');
 
-subplot(1, nplots, 3); plot(diff(diff(x)'./diff(L))./diff(L(2:end)), L(2:(end-1)), 'ok');
+subplot(1, nplots, 3); plot(diff(diff(var)'./diff(L))./diff(L(2:end)), L(2:(end-1)), 'ok');
 grid on; hold on;
 plot(ddxbrute, Linterp(2:(end-1)), '--k', 'LineWidth', 1);
 ylim([L(1), L(end)]);
@@ -84,7 +85,7 @@ plot(d2, L(vertebrae), '^r');
 plot(df2, L(1:(end-1)), '+b');
 %plot(db2, L(2:end), 'xb');
 
-subplot(1, nplots, 4); plot( diff(diff(diff(x)'./diff(L))./diff(L(2:end)))./diff(L(2:(end-1))), ...
+subplot(1, nplots, 4); plot( diff(diff(diff(var)'./diff(L))./diff(L(2:end)))./diff(L(2:(end-1))), ...
     L(3:(end-1)), 'ok');
 grid on; hold on;
 plot(dddxbrute, Linterp(3:(end-1)), '--k', 'LineWidth', 1);
@@ -106,6 +107,32 @@ plot(taulew, L(vertebrae), '^r');
 plot(tauspline, L(1:(end-1)), '+b');
 %}
 
+%%
+ppall = [spline(L, x), spline(L, y), spline(L, z)];
+cfs = {ppall.coefs}; 
+
+%{
+df = arrayfun(@(n) ...
+    arrayfun(@(i) deriv_front(cfs{i}, n), 1:3, 'UniformOutput', false), ...
+    1:length(cfs), 'UniformOutput', false);
+%}
+
+dr = cell2mat(arrayfun(@(var) deriv_front(cfs{var}, 1), 1:3, 'UniformOutput', false)); 
+ddr = cell2mat(arrayfun(@(var) deriv_front(cfs{var}, 2), 1:3, 'UniformOutput', false)); 
+dddr = cell2mat(arrayfun(@(var) deriv_front(cfs{var}, 3), 1:3, 'UniformOutput', false)); 
+
+tauspline = zeros(size(dr,1), 1); 
+for i = 1:length(tauspline)
+    cx = cross(dr(i,:), ddr(i,:));
+    tauspline(i) = -(cx * dddr(i,:)')/(norm(cx)^2);
+end
+
+figure; plot(tauspline, 1:length(tauspline), '-ob'); hold on; grid on; 
+plot(taulew, vertebrae, '-^r');
+
+%%    
+
+%{
 function db = deriv_back(cf, n, b)
     b = diff(b)';
     cf = cf(:,1:(end-n)); cf = fliplr(cf); 
@@ -114,3 +141,4 @@ function db = deriv_back(cf, n, b)
         db = db + cf(:,j).*(b.^(j-1));
     end
 end
+%}
