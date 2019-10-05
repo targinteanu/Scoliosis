@@ -29,6 +29,7 @@ interpfactor = 10;
 Ltot = (L(end)-L(1)); interpext = 2/length(L);
 Linterp = linspace(L(1)-(interpext*Ltot), L(end)+(interpext*Ltot), ...
     length(L)*(2*interpext + 1)*interpfactor)';
+Linterp2 = flipud(interp(flipud(L), interpfactor));
 
 xbrute = ppval(pp, Linterp);
 dxbrute = diff(xbrute)./diff(Linterp); 
@@ -123,17 +124,29 @@ df3 = arrayfun(@(i) norm(dddr(i,:)), 1:size(dddr,1));
     tauinterp = zeros(size(vinterp)); % local torsion at each point on the spine 
     %d2x = zeros(size(vertebrae)); d1x = d2x; d3x = d2x;
     %d2z = zeros(size(vertebrae)); d1z = d2z; d3z = d2z;
-    d2int = zeros(size(vinterp)); d1int = d2; d3int = d2;
+    d2int = zeros(size(vinterp)); d1int = d2int; d3int = d2int;
     for vertebra = vinterp
         [tauinterp(vertebra-q), d, dd, ddd] = lewinerTorsion(pinterp, vertebra, q);
         %d2x(vertebra-q) = dd(nvar); d1x(vertebra-q) = d(nvar); d3x(vertebra-q) = ddd(nvar);
         %d2z(vertebra-q) = dd(3); d1z(vertebra-q) = d(3); d3z(vertebra-1) = ddd(3);
         d1int(vertebra-q) = norm(d); d2int(vertebra-q) = norm(dd); d3int(vertebra-q) = norm(ddd);
     end
+    
+    % do the same thing using interp instead of spline
+    pinterp2 = flipud(cell2mat(arrayfun(@(j) interp(flipud(p(:,j)), interpfactor), 1:3,...
+        'UniformOutput', false)));
+    vinterp2 = (1+q):(size(pinterp2,1)-q); 
+    tauinterp2 = zeros(size(vinterp2));
+    d2int2 = zeros(size(vinterp2)); d1int2 = d2int2; d3int2 = d2int2;
+    for vertebra = vinterp2
+        [tauinterp2(vertebra-q), d, dd, ddd] = lewinerTorsion(pinterp2, vertebra, q);
+        d1int2(vertebra-q) = norm(d); d2int2(vertebra-q) = norm(dd); d3int2(vertebra-q) = norm(ddd);
+    end
 
 figure; subplot(1, nplots, 1);
 plot(tauspline, L(1:(end-1)), '-ob'); hold on; grid on; 
-plot(tauinterp, Linterp(vinterp), '.m');
+plot(tauinterp, Linterp(vinterp), '.c');
+plot(tauinterp2, Linterp2(vinterp2), '.m');
 plot(taulew, L(vertebrae), '-^r');
 ylim([Linterp(1), Linterp(end)]);
 title('torsion');
@@ -144,7 +157,8 @@ grid on; hold on;
 %plot(dxbrute, Linterp(2:end), '--k', 'LineWidth', 1);
 ylim([Linterp(1), Linterp(end)]);
 plot(d1, L(vertebrae), '-^r'); 
-plot(d1int, Linterp(vinterp), '.m');
+plot(d1int, Linterp(vinterp), '.c');
+plot(d1int2, Linterp2(vinterp2), '.m');
 plot(df1, L(1:(end-1)), '-+b');
 %plot(db1, L(2:end), 'xb');
 title('d/ds'); 
@@ -154,7 +168,8 @@ grid on; hold on;
 %plot(ddxbrute, Linterp(2:(end-1)), '--k', 'LineWidth', 1);
 ylim([Linterp(1), Linterp(end)]);
 plot(d2, L(vertebrae), '-^r'); 
-plot(d2int, Linterp(vinterp), '.m');
+plot(d2int, Linterp(vinterp), '.c');
+plot(d2int2, Linterp2(vinterp2), '.m');
 plot(df2, L(1:(end-1)), '-+b');
 %plot(db2, L(2:end), 'xb');
 title('d^2/ds^2');
@@ -174,7 +189,8 @@ title('d^3/ds^3');
 subplot(1, nplots, 4); 
 grid on; hold on;
 plot(sqrt(x.^2 + y.^2), L, '-ok');
-plot(sqrt(pinterp(:,1).^2 + pinterp(:,2).^2), Linterp, '.m');
+plot(sqrt(pinterp(:,1).^2 + pinterp(:,2).^2), Linterp, '.c');
+plot(sqrt(pinterp2(:,1).^2 + pinterp2(:,2).^2), Linterp2, '.m');
 ylim([Linterp(1), Linterp(end)]);
 title('(x^2 + y^2)^{1/2}');
 
