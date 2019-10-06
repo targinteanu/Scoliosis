@@ -103,32 +103,35 @@ for idx = 1:N
     %% use derivatives to get apex and neutral ----------------------------
     
     % get lower apex using spline  
-    aidx = Linterp(vinterp) < L(neutral); averts = vinterp(aidx);
-    %{
-    [~, ap, w, pp] = findpeaks(-d1int(aidx));
-    % if there are more than 2, get rid of the farthest
-    while length(ap) > 1
-        %[~,minIdx] = min(pp);
-        [~,maxIdx] = max(abs(ap - neutral));
-        ap = ap([1:(maxIdx-1), (maxIdx+1):end]);
-        w = w([1:(maxIdx-1), (maxIdx+1):end]);
-        pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
-    end
-    % if there aren't any, pick the -greatest value
-    if isempty(ap)
-        [~, ap] = max(-d1int(aidx));
-    end
-    %}
+    aidx = Linterp(vinterp) > L(neutral); averts = vinterp(aidx);
     [~, ap] = min(d1int(aidx));
     ap = averts(ap); 
     
     % convert interpolated apex to real 
     [~, ap] = min(abs(L - Linterp(ap)));
+    if ap == neutral
+        % look for peaks instead 
+        [~, ap, w, pp] = findpeaks(-d1int(aidx));
+        % if there are more than 2, get rid of the farthest
+        while length(ap) > 1
+            %[~,minIdx] = min(pp);
+            [~,maxIdx] = max(abs(ap - neutral));
+            ap = ap([1:(maxIdx-1), (maxIdx+1):end]);
+            w = w([1:(maxIdx-1), (maxIdx+1):end]);
+            pp = pp([1:(maxIdx-1), (maxIdx+1):end]);
+        end
+        % if there aren't any, pick the -greatest value
+        if isempty(ap)
+            ap = NaN;
+        end
+    end
     
     % store variables 
     neutral_from_deriv(idx) = neutral; 
     apical_from_deriv(idx,:) = [apex, ap];
-    Torsion_from_deriv(idx) = customTorsion(p, neutral, [apex, ap]);
+    if ~isnan(ap)
+        Torsion_from_deriv(idx) = customTorsion(p, neutral, [apex, ap]);
+    end
     
     % --------------------------------------------------------------------
     
@@ -194,6 +197,7 @@ checkTorsions = max(abs(Torsion_from_deriv - torglob))
 checkMaxTorsions = max(abs(maxTorsions - tor1))
 
 Torsion_from_dist(isnan(sum(apical_from_dist,2))) = nan;
+Torsion_from_deriv(isnan(sum(apical_from_deriv,2))) = nan;
 
 figure; plot(neutral_from_deriv, '-k'); hold on; grid on;
 plot(apical_from_deriv, ':r'); plot(apical_from_dist, '--b');
