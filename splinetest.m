@@ -25,7 +25,7 @@ nplots = 4;
 pp = spline(L, var);
 
 %plot(linspace(p(1,3), p(end,3)), ppval(ppx, linspace(p(1,3), p(end,3))));
-interpfactor = 10;
+interpfactor = 1;
 Ltot = (L(end)-L(1)); interpext = 2/length(L);
 Linterp = linspace(L(1)-(interpext*Ltot), L(end)+(interpext*Ltot), ...
     length(L)*(2*interpext + 1)*interpfactor)';
