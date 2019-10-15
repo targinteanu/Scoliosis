@@ -20,7 +20,7 @@ if sum(size(img)==1)
        end
        
 else
-    R = arrayfun(@(r) CenterOfMass1(img(r,:)), 1:size(img,1));
+    R = arrayfun(@(r) CenterOfMass1(img(r,:)), 1:size(img,1))';
 end
 
 end
