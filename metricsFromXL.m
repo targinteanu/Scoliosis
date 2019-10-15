@@ -1,9 +1,10 @@
-[num, txt] = xlsread('Writhe-pre-post_new-metrics.csv');
-XYZ = num(:, 13:end); 
+[num, txt] = xlsread('Writhe-pre-post_new-metrics_10-14.xlsx');
 N = 32;
+num = num(1:N, :);
+XYZ = num(:, 13:end); 
 
 cluster_shape = num(:,1); cluster_writhe = num(:,2); 
-    cluster_tor = num(:,3); cluster_twist = num(:,4);
+    cluster_tor = num(:,3); cluster_twist = num(:,4); cluster_writhetwist = num(:,5);
 %writhe_preop = num(:,4); 
 %writhe_postop = num(:,5);
 %nonsurg = isnan(writhe_postop);
@@ -35,15 +36,27 @@ for v = 1:length(var)
 end
 %linkaxes(ax);
 
+%% check values 
+rotv = @(theta) [cos(theta), sin(theta), zeros(size(theta))];
+
+checkwrithe = arrayfun(@(p) ...
+    levittWrithe([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]'), 1:N);
+checktwist = arrayfun(@(p) ...
+    getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', rotv(XYZ(p,52:end)')), 1:N);
+
+sum(abs(checktwist' - twist))
+sum(abs(checkwrithe' - writhe))
+
 %%
 varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
 X = num(:,6:12); 
-RHO = zeros(7); 
+X(isnan(X))=0;
+RHO = zeros(length(varnames2)); 
 RHO(1,:) = arrayfun(@(x) corr(X(:,x), writhe), 1:7); 
 RHO(2,:) = arrayfun(@(x) corr(X(:,x), abswrithe), 1:7); 
 RHO(3,:) = arrayfun(@(x) corr(X(:,x), tor1), 1:7); 
 RHO(4,:) = arrayfun(@(x) corr(X(:,x), tor2), 1:7); 
-RHO(5,:) = arrayfun(@(x) corr(X(:,x), torglob), 1:7); 
+RHO(5,:) = arrayfun(@(x) corr(X(:,x), X(:,5)), 1:7); % torglob
 RHO(6,:) = arrayfun(@(x) corr(X(:,x), twist), 1:7); 
 RHO(7,:) = arrayfun(@(x) corr(X(:,x), writhetwist), 1:7); 
 %RHO
@@ -55,12 +68,28 @@ figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cm
 title('correlation between variables');
 
 %%
+var = {'manual', 'writhe', 'torsion', 'twist', 'tw+wr'}; 
+cluster = num(:,1:5);
+
+T = zeros(length(var), length(varnames2));
+for v = 1:size(T,1)
+    for j = 1:size(T,2)
+        c = cluster(:,v);
+        [~,T(v,j)] = ttest2(X(c==1,j), X(c==2,j));
+    end
+end
+
+figure; heatmap(varnames2, var, T); 
+title('p value'); xlabel('variable'); ylabel('clustering based on:');
+
+%%
 varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
-group = 2;
-X = num(cluster_shape==group,6:12); 
+group = 1;
+Xg = num(cluster_shape==group,6:12); 
+Xg(isnan(Xg))=0;
 RHO = zeros(length(varnames2)); 
 for r = 1:length(varnames2)
-    RHO(r,:) = arrayfun(@(x) corr(X(:,x), X(:,r)), 1:length(varnames2)); 
+    RHO(r,:) = arrayfun(@(x) corr(Xg(:,x), Xg(:,r)), 1:length(varnames2)); 
 end
 
 cmp = [linspace(1, 1), linspace(1, 0); 
@@ -223,7 +252,8 @@ acc = max(acc, 1-acc);
 title(num2str(acc));
 
 %%
-var1 = twist; 
+var1 = writhetwist; 
 cluster_var1 = kmeans(var1, 2); 
 acc = cluster_shape == cluster_var1; acc = sum(acc)/length(acc); 
-acc = max(acc, 1-acc)
+acc
+%acc = max(acc, 1-acc)
