@@ -1,7 +1,8 @@
 cor = imread('eso001cor.png'); sag = imread('eso001sag.png'); 
 cor = rgb2gray(cor); sag = rgb2gray(sag);
-figure; corroi = roipoly(cor); 
-figure; sagroi = roipoly(sag); 
+%figure; corroi = roipoly(cor); 
+%figure; sagroi = roipoly(sag); 
+load('esotestroi.mat');
 
 %%
 cortrim = cor.*uint8(corroi); sagtrim = sag.*uint8(sagroi); 
@@ -71,3 +72,22 @@ for i = 1:length(centlinesSag)
     centlinesSag{i} = imgout;
 end
 figure; imshow(cell2mat(centlinesSag));
+
+%%
+orig = sagspine;
+roughline = CenterOfMass1(orig);
+rang = max(roughline)-min(roughline);
+
+[pk1, loc1, pw1, pp1] = findpeaks(roughline, 'MinPeakProminence', rang/10);
+[pk2, loc2, pw2, pp2] = findpeaks(-roughline, 'MinPeakProminence', rang/10); pk2=-pk2;
+
+pk = [pk1; pk2]; loc = [loc1; loc2]; pw = [pw1; pw2]; pp = [pp1; pp2];
+[loc,idx] = sort(loc); pk=pk(idx); pw=pw(idx); pp=pp(idx);
+
+xq = 1:size(orig,1);
+rlspl = spline(loc, pk, xq);
+
+figure; imshow(orig); hold on; 
+plot(roughline, xq, '.y');
+plot(rlspl, xq, 'y');
+errorbar(pk,loc, pw,pw, pp,pp, 'oy');
