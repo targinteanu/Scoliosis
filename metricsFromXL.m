@@ -99,12 +99,14 @@ figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cm
 title(['correlation between variables group ' num2str(group)]);
 
 %%
+%{
 pat = zeros(4, length(varnames2));
 for r = 1:4
     pat(r, :) = arrayfun(@(v) mean(X(cluster(:,r)==1,v)) > mean(X(cluster(:,r)==2,v)), ...
         1:length(varnames2));
 end
 figure; heatmap(varnames2([1,6,5,3,4]), var, pat(:, [1,6,5,3,4]));
+%}
 
 %%
 
@@ -239,7 +241,7 @@ legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 
 %%
 var1 = twist; 
-var2 = abs(torglob);
+var2 = torglob;
 figure; 
 plot(var1(cluster_shape == 1), var2(cluster_shape == 1), 'ob'); 
 grid on; hold on; 
