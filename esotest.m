@@ -26,32 +26,38 @@ spinethresh = [spine > .03*max(spine(:)), spine > .05*max(spine(:)), spine > .07
 figure; imshow([sag2 sagspine cor2 corspine])
 %}
 
-%%
+%% polynomial & spline fitting - works well
 figure; 
 polyfun = @(p0, p1, p2, p3, p4, p5, x) ...
     p0 + p1*x + p2*x.^2 + p3*x.^3 + p4*x.^4 + p5*x.^5; % + ...
 %    p6*x.^6 + p7*x.^7 + p8*x.^8 + p9*x.^9 + p10*x.^10;
+npoly = 10;
 mm = 20;
+polyval = @(p, x) sum( p.*(x'.^fliplr((1:length(p))-1)), 2);
 
 [rsag, csag] = find(sagspine);
 [fosag, gofsag] = fit(rsag, csag, 'smoothingspline', 'Weights', sagspine(find(sagspine(:)))); 
 %[fpsag, gofsag] = fit(rsag, csag, polyfun, 'Weights', sagspine(find(sagspine(:))));
+polysag = polyfit(rsag, csag, npoly);
 subplot(1,2,1); imshow(sagspine); hold on;
 %plot(feval(fpsag,min(rsag):max(rsag)), min(rsag):max(rsag));
 xsag = min(rsag):max(rsag); clsag = ppval(xsag, fosag.p);
 clsag = movmean(clsag, mm); 
 plot(clsag, xsag);
+plot(polyval(polysag, xsag), xsag);
 
 [rcor, ccor] = find(corspine);
 [focor, gofcor] = fit(rcor, ccor, 'smoothingspline', 'Weights', corspine(find(corspine(:))));
 %[fpcor, gofcor] = fit(rcor, ccor, polyfun, 'Weights', corspine(find(corspine(:))));
+polycor = polyfit(rcor, ccor, npoly);
 subplot(1,2,2); imshow(corspine); hold on;
 %plot(feval(fpcor,min(rcor):max(rcor)), min(rcor):max(rcor));
 xcor = min(rcor):max(rcor); clcor = ppval(xcor, focor.p);
 clcor = movmean(clcor, mm);
 plot(clcor, xcor);
+plot(polyval(polycor, xcor), xcor);
 
-%%
+%% segment 
 seg = corspine;
 CC = bwconncomp(seg > .04);
 minsz = 5; % pixels 
@@ -81,6 +87,36 @@ for pixIdx = CC.PixelIdxList
 end
 
 figure; imshow([label2rgb(L), 255*CMs, label2rgb(Lsag), 255*CMs_sag]);
+
+%% conv with different kernels 
+img = sag2; 
+
+kernels = {...
+    [-1 -1 -1; -1 9 -1; -1 -1 -1],...
+    [-1 2 1], [1 2 -1], [1; 2; -1], [-1; 2; 1], ...
+    [-1 3 -1], [-1; 3; -1], ...
+    [0 .25 0; .25 1 .25; 0 .25 0]};
+imf = cell(size(kernels));
+for i = 1:length(kernels)
+    k = kernels{i};
+    imf{i} = imfilter(img, k, 'conv', 'replicate');
+end
+figure; imshow(cell2mat(imf));
+
+%% use kmeans on pixels 
+
+R = repmat((1:size(img,1))', [1,size(img,2)]); C = repmat((1:size(img,2)), [size(img,1),1]);
+R = R/max(R(:)); C = C/max(C(:));
+
+G = 1:size(img,2); G = (1./sqrt(2*pi*std(G).^2)) .* exp(-((G-mean(G)).^2)./(2*std(G).^2));
+G = repmat(G, [size(img,1),1]);
+
+%X = [img(:), R(:), C(:)];
+X = [img(:), G(:), imf{1}(:), imf{6}(:), imf{7}(:), imf{8}(:)];
+idx = kmeans(X, 7); 
+imgout = zeros(size(img)); imgout(:) = idx;
+figure; imshow(label2rgb(imgout));
+%figure; imshow([img, imgout/max(imgout(:))])
 
 %%
 centlinesSag = {double(~~Lsag), sagspine, CMs_sag(:,:,1)};
