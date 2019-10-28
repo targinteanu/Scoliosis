@@ -22,16 +22,26 @@ for v = 1:length(var)
     subplot(sp + v);
     c = cluster(:,v);
     %x = cell(1,2); y = cell(1,2); z = cell(1,2);
+    lgd = cell(1,2);
     for group = 1:2
         x = XYZ(c == group, 1:3:51);
         y = XYZ(c == group, 2:3:51);
         z = XYZ(c == group, 3:3:51);
         
+        p = [mean(x); mean(y); mean(z)]';
+        [tau, neutral, apical] = kadouryTorsion(p); taupts = [neutral, apical];
+        Wr = levittWrithe(p); 
+        
+        lgd{group} = ['group ' num2str(group) ' | Wr=' num2str(Wr) ' | \tau=' num2str(tau)];
+        
         %errorbar(mean(x), mean(y), std(y),std(y), std(x),std(x), '-o'); 
         plot3(mean(x), mean(y), mean(z), '-o'); 
         hold on;
+        plot3(p(taupts,1), p(taupts,2), p(taupts,3), '*');
     end
     grid on; view([0,90]);
+    lgd = {lgd{1}, 'neutral/apical', lgd{2}, 'neutral/apical'}; 
+    legend(lgd);
     title(var{v}); 
 end
 %linkaxes(ax);
