@@ -4,11 +4,11 @@ cor = rgb2gray(cor); sag = rgb2gray(sag);
 %figure; sagroi = roipoly(sag); 
 load('esotestroi.mat');
 
-%%
+%% 
 cortrim = cor.*uint8(corroi); sagtrim = sag.*uint8(sagroi); 
 figure; imshow(cortrim); figure; imshow(sagtrim);
 
-%%
+%% 
 sag2 = double(sag)/255; cor2 = double(cor)/255;
 %{
 im = showreconstruct(sag2); sagbone = sag2-im; 
@@ -56,6 +56,52 @@ xcor = min(rcor):max(rcor); clcor = ppval(xcor, focor.p);
 clcor = movmean(clcor, mm);
 plot(clcor, xcor);
 plot(polyval(polycor, xcor), xcor);
+
+%% align coordinate systems 
+clear ax;
+% get ref pts 
+figure; ax(1)=subplot(1,2,1); imshow(cor); ax(2)=subplot(1,2,2); imshow(sag);
+[x,z1] = getpts(ax(1)); [y,z2] = getpts(ax(2));
+% ignore excess 
+zL = min(length(z1), length(z2));
+x = x(1:zL); y = y(1:zL); z1 = z1(1:zL); z2 = z2(1:zL);
+% find best fit 
+c = [z1, ones(size(z1))]\z2; % z2 = c(1)*z1 + c(2)
+%c = int16(c);
+
+%%
+% display results 
+corscl = cor2; sagscl = sag2;
+z1scl = z1; z2scl = z2;
+if c(2) < 0
+    % cor higher than sag 
+    sagscl = [zeros(-int16(c(2)), size(sag,2)); sag];
+    z2scl = z2scl - c(2);
+elseif c(2) > 0
+    % sag higher than cor 
+    corscl = [zeros(int16(c(2)), size(cor,2)); cor];
+    z1scl = z1scl + c(2);
+end
+if c(1) > 1
+    % stretch cor 
+    corscl0 = corscl(1:int16((size(sag,1)/c(1))), :);
+    corscl = zeros(size(sagscl));
+    for col = 1:size(corscl,2)
+        corscl(:,col) = interp(corscl0(:,col), c(1)); 
+    end
+    z1scl = z1scl * c(1);
+elseif c(1) < 1
+    % stretch sag
+    sagscl0 = sagscl(1:int16((size(cor,1)*c(1))), :);
+    sagscl = zeros(size(corscl));
+    for col = 1:size(sagscl,2)
+        sagscl(:,col) = interp(sagscl0(:,col), 1/c(1)); 
+    end
+    z2scl = z2scl / c(1);
+end
+figure; 
+subplot(1,2,1); imshow(corscl); hold on; plot(x, z1scl, '*');
+subplot(1,2,2); imshow(sagscl); hold on; plot(y, z2scl, '*');
 
 %% segment 
 seg = corspine;
@@ -118,7 +164,8 @@ imgout = zeros(size(img)); imgout(:) = idx;
 figure; imshow(label2rgb(imgout));
 %figure; imshow([img, imgout/max(imgout(:))])
 
-%%
+%% doesn't work well 
+%{
 centlinesSag = {double(~~Lsag), sagspine, CMs_sag(:,:,1)};
 for i = 1:length(centlinesSag)
     img = centlinesSag{i};
@@ -134,7 +181,7 @@ for i = 1:length(centlinesSag)
 end
 figure; imshow(cell2mat(centlinesSag));
 
-%%
+%
 orig = sagspine;
 roughline = CenterOfMass1(orig);
 rang = max(roughline)-min(roughline);
@@ -152,3 +199,4 @@ figure; imshow(orig); hold on;
 plot(roughline, xq, '.y');
 plot(rlspl, xq, 'y');
 errorbar(pk,loc, pw,pw, pp,pp, 'oy');
+%}
