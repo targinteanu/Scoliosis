@@ -93,8 +93,36 @@ figure; heatmap(varnames2, var, T);
 title('p value'); xlabel('variable'); ylabel('clustering based on:');
 
 %%
+var = {'manual', 'writhe', 'torsion', 'twist', 'tw+wr'}; 
+cluster = num(:,1:5);
+
+AS = cell(length(var), length(varnames2));
+for v = 1:size(AS,1)
+    for j = 1:size(AS,2)
+        c = cluster(:,v);
+        avg = [mean(X(c==1,j)); mean(X(c==2,j))]; sd = [std(X(c==1,j)); std(X(c==2,j))];
+        AS{v,j} = [avg, sd];
+    end
+end
+AS = cell2mat(AS)
+
+name1 = cell(1, 2*length(var)); 
+for i = 1:length(var)
+    i1 = (i-1)*2 + 1; i2 = (i-1)*2 + 2;
+    name1{i1} = [var{i}, ' avg']; name1{i2} = [var{i}, ' std'];
+end
+name2 = cell(1, 2*length(varnames2));
+for i = 1:length(varnames2)
+    i1 = (i-1)*2 + 1; i2 = (i-1)*2 + 2;
+    name2{i1} = [varnames2{i}, ' g1']; name2{i2} = [varnames2{i}, ' g2'];
+end
+
+%figure; heatmap(name2, name1, AS); 
+%title('avg/std'); xlabel('variable'); ylabel('clustering based on:');
+
+%%
 varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
-group = 1;
+group = 2;
 Xg = num(cluster_shape==group,6:12); 
 Xg(isnan(Xg))=0;
 RHO = zeros(length(varnames2)); 
