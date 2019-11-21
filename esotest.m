@@ -26,37 +26,6 @@ spinethresh = [spine > .03*max(spine(:)), spine > .05*max(spine(:)), spine > .07
 figure; imshow([sag2 sagspine cor2 corspine])
 %}
 
-%% polynomial & spline fitting - works well
-figure; 
-polyfun = @(p0, p1, p2, p3, p4, p5, x) ...
-    p0 + p1*x + p2*x.^2 + p3*x.^3 + p4*x.^4 + p5*x.^5; % + ...
-%    p6*x.^6 + p7*x.^7 + p8*x.^8 + p9*x.^9 + p10*x.^10;
-npoly = 10;
-mm = 20;
-polyval = @(p, x) sum( p.*(x'.^fliplr((1:length(p))-1)), 2);
-
-[rsag, csag] = find(sagspine);
-[fosag, gofsag] = fit(rsag, csag, 'smoothingspline', 'Weights', sagspine(find(sagspine(:)))); 
-%[fpsag, gofsag] = fit(rsag, csag, polyfun, 'Weights', sagspine(find(sagspine(:))));
-polysag = polyfit(rsag, csag, npoly);
-subplot(1,2,1); imshow(sagspine); hold on;
-%plot(feval(fpsag,min(rsag):max(rsag)), min(rsag):max(rsag));
-xsag = min(rsag):max(rsag); clsag = ppval(xsag, fosag.p);
-clsag = movmean(clsag, mm); 
-plot(clsag, xsag);
-plot(polyval(polysag, xsag), xsag);
-
-[rcor, ccor] = find(corspine);
-[focor, gofcor] = fit(rcor, ccor, 'smoothingspline', 'Weights', corspine(find(corspine(:))));
-%[fpcor, gofcor] = fit(rcor, ccor, polyfun, 'Weights', corspine(find(corspine(:))));
-polycor = polyfit(rcor, ccor, npoly);
-subplot(1,2,2); imshow(corspine); hold on;
-%plot(feval(fpcor,min(rcor):max(rcor)), min(rcor):max(rcor));
-xcor = min(rcor):max(rcor); clcor = ppval(xcor, focor.p);
-clcor = movmean(clcor, mm);
-plot(clcor, xcor);
-plot(polyval(polycor, xcor), xcor);
-
 %% align coordinate systems 
 clear ax;
 % get ref pts 
@@ -69,8 +38,63 @@ x = x(1:zL); y = y(1:zL); z1 = z1(1:zL); z2 = z2(1:zL);
 c = [z1, ones(size(z1))]\z2; % z2 = c(1)*z1 + c(2)
 %c = int16(c);
 
-%%
-% display results 
+%% polynomial & spline fitting - works well
+figure; 
+polyfun = @(p0, p1, p2, p3, p4, p5, x) ...
+    p0 + p1*x + p2*x.^2 + p3*x.^3 + p4*x.^4 + p5*x.^5; % + ...
+%    p6*x.^6 + p7*x.^7 + p8*x.^8 + p9*x.^9 + p10*x.^10;
+npoly = 10;
+mm = 40;
+polyval = @(p, x) sum( p.*(x'.^fliplr((1:length(p))-1)), 2);
+
+[rsag, csag] = find(sagspine);
+[fosag, gofsag] = fit(rsag, csag, 'smoothingspline', 'Weights', sagspine(find(sagspine(:)))); 
+%[fpsag, gofsag] = fit(rsag, csag, polyfun, 'Weights', sagspine(find(sagspine(:))));
+polysag = polyfit(rsag, csag, npoly);
+img = zeros([size(sagspine),3]); img(:,:,1) = sag2; 
+img(:,:,3) = sag2-3*sagspine; img(:,:,2) = img(:,:,3);
+subplot(1,3,1); imshow(img); hold on; title('sag');
+%plot(feval(fpsag,min(rsag):max(rsag)), min(rsag):max(rsag));
+xsag = min(rsag):max(rsag); clsag = ppval(xsag, fosag.p);
+clsag = movmean(clsag, mm); 
+plot(clsag, xsag, 'b');
+%plot(polyval(polysag, xsag), xsag);
+
+[rcor, ccor] = find(corspine);
+[focor, gofcor] = fit(rcor, ccor, 'smoothingspline', 'Weights', corspine(find(corspine(:))));
+%[fpcor, gofcor] = fit(rcor, ccor, polyfun, 'Weights', corspine(find(corspine(:))));
+polycor = polyfit(rcor, ccor, npoly);
+img = zeros([size(corspine),3]); img(:,:,1) = cor2; 
+img(:,:,3) = cor2-3*corspine; img(:,:,2) = img(:,:,3);
+subplot(1,3,2); imshow(img); hold on; title('cor');
+%plot(feval(fpcor,min(rcor):max(rcor)), min(rcor):max(rcor));
+xcor = min(rcor):max(rcor); clcor = ppval(xcor, focor.p);
+clcor = movmean(clcor, mm);
+plot(clcor, xcor, 'b');
+%plot(polyval(polycor, xcor), xcor);
+
+% spline fit with aligned z
+% z2 = c(1)*z1 + c(2)
+% z1 = cor; z2 = sag;
+
+[rsag, csag] = find(sagspine);
+[rcor, ccor] = find(corspine);
+rcor = c(1)*rcor + c(2); % rcor now aligned to rsag
+z = max(min(rsag), min(rcor)):min(max(rsag), max(rcor));
+
+[fosag, gofsag] = fit(rsag, csag, 'smoothingspline', 'Weights', sagspine(find(sagspine(:)))); 
+clsag = ppval(z, fosag.p);
+clsag = movmean(clsag, mm); 
+
+[focor, gofcor] = fit(rcor, ccor, 'smoothingspline', 'Weights', corspine(find(corspine(:))));
+clcor = ppval(z, focor.p);
+clcor = movmean(clcor, mm);
+
+subplot(1,3,3); plot3(clcor, clsag, z, 'b'); grid on; 
+title(['Writhe = ' num2str(levittWrithe([clcor; clsag; z]'))]);
+
+%% display results of coordinate system alignment - does not work
+%{
 corscl = cor2; sagscl = sag2;
 z1scl = z1; z2scl = z2;
 if c(2) < 0
@@ -102,6 +126,7 @@ end
 figure; 
 subplot(1,2,1); imshow(corscl); hold on; plot(x, z1scl, '*');
 subplot(1,2,2); imshow(sagscl); hold on; plot(y, z2scl, '*');
+%}
 
 %% segment 
 seg = corspine;
