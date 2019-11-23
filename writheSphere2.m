@@ -12,18 +12,19 @@ XYZ = num(:, 13:end);
 cm = [x; y; z]';
 [sx,sy,sz] = sphere;
 
-spscl = 750;
-views = [0 0; 0 90];
-numplots = 2;
+spscl = 1000;
+views = {[90,0], [37.5,30], [0,90]};
+numplots = 3;
 cursori = cell(1,numplots); cursorj = cell(1,numplots);
 spn = cell(1, numplots);
 Rvector = cell(4, numplots);
-figure('Position', [50 300 1400 525]); 
+%figure('Position', [50 300 1400 525]);
+figure('Position', [50 300 1400 350]);
 for idx = fliplr(1:numplots)
     subplot(1,numplots,idx); 
     spn{idx} = plot3(x/spscl, y/spscl, z/spscl - 1, 'LineWidth', 3);
-    hold on; mesh(sx, sy, sz, zeros(size(sx))); hidden off; grid on;
-    view(views(idx,:));
+    hold on; mesh(sx, sy, sz, zeros(size(sx))); hidden off; %grid on;
+    view(views{idx});
     cursori{idx} = plot3(x([1,2])/spscl, y([1,2])/spscl, z([1,2])/spscl - 1, '*k', 'LineWidth', 1.1);
     cursorj{idx} = plot3(x([1,2])/spscl, y([1,2])/spscl, z([1,2])/spscl - 1, 'ok', 'LineWidth', 1.1);
     for iidx = 1:4
@@ -31,7 +32,7 @@ for idx = fliplr(1:numplots)
     end
 end
 grid off;
-subplot(1,numplots,1); xlim([-1 1]); ylim([-1 1]); zlim([-2 2]);
+%subplot(1,numplots,1); xlim([-1 1]); ylim([-1 1]); zlim([-2 2]);
 
 dirold = [0 0 -1];
 
@@ -39,7 +40,7 @@ dirold = [0 0 -1];
 range = 2:length(cm);
         frames = 20;
         T = .001; % pause between frames
-        T2 = .15; % pause between plots 
+        T2 = .5; % pause between plots 
 M = cell(1, frames*((length(cm)-1)^2));
 for i = range
     for j = range
@@ -63,7 +64,7 @@ for i = range
         dir = dir/norm(dir);
         bigAngle = acos(dir*dirold');
         smallAngle = bigAngle/frames;
-        %%{
+        %{
         for f = 1:frames
             newview = changeviews(dirold, dir, f*smallAngle, bigAngle);
             if norm(newview)
