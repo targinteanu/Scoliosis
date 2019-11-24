@@ -34,14 +34,24 @@ end
 grid off;
 %subplot(1,numplots,1); xlim([-1 1]); ylim([-1 1]); zlim([-2 2]);
 
-dirold = [0 0 -1];
+%dirold = [0 0 -1];
 
 %%
 range = 2:length(cm);
-        frames = 20;
-        T = .001; % pause between frames
-        T2 = .5; % pause between plots 
+        %frames = 20;
+        frames = 2;
+        T = .4; % pause between frames
+        T2 = .4; % pause between plots 
 M = cell(1, frames*((length(cm)-1)^2));
+Writhe = 0;
+
+subplot(1,numplots,2); t = title(['Writhe = ' num2str(Writhe)]);
+set(t, 'horizontalAlignment', 'left')
+set(t, 'units', 'normalized')
+h1 = get(t, 'position');
+%set(t, 'position', [1 h1(2) h1(3)])
+F = getframe(gcf); M1 = F.cdata;
+
 for i = range
     for j = range
         
@@ -53,17 +63,41 @@ for i = range
         r34 = p4-p3; r12 = p2-p1;
         r13 = p3-p1; r14 = p4-p1; r23 = p3-p2; r24 = p4-p2;
         sgn = sign( (cross(r34,r12)) *r13');
-                
+        
         r13 = r13/norm(r13); r14 = r14/norm(r14); r23 = r23/norm(r23); r24 = r24/norm(r24);
+        
+        n = zeros(4, 3);
+        n(1,:) = cross(r13, r14);
+        n(2,:) = cross(r14, r24);
+        n(3,:) = cross(r24, r23);
+        n(4,:) = cross(r23, r13);
+        
+        for k = 1:4
+            if norm(n(k,:))
+                % normalize 
+                n(k,:) = n(k,:)/norm(n(k,:));
+            end
+        end
+        
+        N = n([2:end 1],:);
+        as = diag(n*N'); angles = asin(as) + pi/2;
+
+        Omega = sum(angles) - 2*pi;
+        Omega = Omega*sgn;
+        Omega = Omega/(4*pi);
+        
+        Writhe = Writhe + Omega;
         
         %% update view 
         %view(r13);
         %dir = r13*[0,0,1;0,1,0;-1,0,0]; 
+        %{
         dir = r13*[cos(pi/4), 0, sin(pi/4); 0,1,0; -sin(pi/4), 0, cos(pi/4)]*...
             [cos(pi/4), -sin(pi/4), 0; sin(pi/4), cos(pi/4), 0; 0,0,1];
         dir = dir/norm(dir);
         bigAngle = acos(dir*dirold');
         smallAngle = bigAngle/frames;
+        %}
         %{
         for f = 1:frames
             newview = changeviews(dirold, dir, f*smallAngle, bigAngle);
@@ -78,7 +112,7 @@ for i = range
         end
         %}
         
-        dirold = dir;
+        %dirold = dir;
         
         %% update plots 
         x = x0-p1(1); y = y0-p1(2); z = z0-p1(3); % center on p1
@@ -146,6 +180,17 @@ for i = range
             end
             %}
         end
+        
+        %% update Writhe readout
+        
+        pause(T);
+        t.String = [t.String ' + ' num2str(Omega)];
+        t.Color = colr{sgn + 2};
+        F = getframe(gcf); M{ ((i-1)*(length(cm)-1) + j)*(1-1)*frames + 1 } = F.cdata;
+        pause(T); 
+        t.String = ['Writhe = ' num2str(Writhe)];
+        t.Color = 'black';
+        F = getframe(gcf); M{ ((i-1)*(length(cm)-1) + j)*(2-1)*frames + 2 } = F.cdata;
                 
         pause(T2);
         
@@ -153,6 +198,9 @@ for i = range
     end
 end
 
+M = [{M1}, M];
+
+%{
 function view3 = changeviews(view1, view2, angle13, angle12)
     %{
     A = rref([view1; view2]);
@@ -169,5 +217,6 @@ function view3 = changeviews(view1, view2, angle13, angle12)
     A = rref([view1*view1', view1*view2', cos(angle13); view1*view2', view2*view2', cos(angle12-angle13)]);
     view3 = A(1,3)*view1 + A(2,3)*view2;
 end
+%}
 
 %end
