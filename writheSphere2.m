@@ -40,9 +40,9 @@ grid off;
 range = 2:length(cm);
         %frames = 20;
         frames = 2;
-        T = .4; % pause between frames
-        T2 = .4; % pause between plots 
-M = cell(1, frames*((length(cm)-1)^2));
+        T = .05; % pause between frames
+        T2 = .05; % pause between plots 
+M = cell(1, frames*(length(range))^2);
 Writhe = 0;
 
 subplot(1,numplots,2); t = title(['Writhe = ' num2str(Writhe)]);
@@ -55,7 +55,7 @@ F = getframe(gcf); M1 = F.cdata;
 for i = range
     for j = range
         
-        if abs(i-j) > 2
+        if ((i-1)>j)|((j-1)>i)
         %% get writhe stuff 
         p1 = cm(i-1,:); p2 = cm(i,:); 
         p3 = cm(j-1,:); p4 = cm(j,:);
@@ -130,7 +130,8 @@ for i = range
         R = [r13; r14; r24; r23];
         px = R(:,1); py = R(:,2); pz = R(:,3);
         p1=p1-p1; p2=p2-p1; p3=p3-p1; p4=p4-p1;% center on p1
-        colr = {'red', 'blue', 'green'};
+        %colr = {'red', 'blue', 'green'};
+        colr = {'red', 'blue', [.133, .545, .133]};
         for idx = fliplr(1:numplots)
             subplot(1,numplots,idx);
             patch(px, py, pz, colr{sgn + 2});
