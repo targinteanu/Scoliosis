@@ -1,4 +1,5 @@
 %function M = writheSphere2(patient_number)
+savevid = false;
 
 [num, txt] = xlsread('Writhe-pre-post_new-metrics.csv');
 N = 32;
@@ -40,8 +41,8 @@ grid off;
 range = 2:length(cm);
         %frames = 20;
         frames = 2;
-        T = .05; % pause between frames
-        T2 = .05; % pause between plots 
+        T = .01; % pause between frames
+        T2 = .01; % pause between plots 
 M = cell(1, frames*(length(range))^2);
 Writhe = 0;
 
@@ -50,7 +51,7 @@ set(t, 'horizontalAlignment', 'left')
 set(t, 'units', 'normalized')
 h1 = get(t, 'position');
 %set(t, 'position', [1 h1(2) h1(3)])
-F = getframe(gcf); M1 = F.cdata;
+F = getframe(gcf); M{1} = F.cdata; f=2;
 
 for i = range
     for j = range
@@ -187,11 +188,11 @@ for i = range
         pause(T);
         t.String = [t.String ' + ' num2str(Omega)];
         t.Color = colr{sgn + 2};
-        F = getframe(gcf); M{ ((i-1)*(length(cm)-1) + j)*(1-1)*frames + 1 } = F.cdata;
+        F = getframe(gcf); M{ f } = F.cdata; f=f+1;
         pause(T); 
         t.String = ['Writhe = ' num2str(Writhe)];
         t.Color = 'black';
-        F = getframe(gcf); M{ ((i-1)*(length(cm)-1) + j)*(2-1)*frames + 2 } = F.cdata;
+        F = getframe(gcf); M{ f } = F.cdata; f=f+1;
                 
         pause(T2);
         
@@ -199,8 +200,21 @@ for i = range
     end
 end
 
-M = [{M1}, M];
+%% save video 
+if savevid
+    v = VideoWriter(['writheSpherePat' num2str(patient_number) '.mp4'], 'MPEG-4');
+    v.FrameRate = 5;
+    open(v); 
+    for f = 1:length(M)
+        F = M{f};
+        if ~isempty(F)
+            writeVideo(v, F);
+        end
+    end
+    close(v);
+end
 
+%% helper functions 
 %{
 function view3 = changeviews(view1, view2, angle13, angle12)
     %{
