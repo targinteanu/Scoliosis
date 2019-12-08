@@ -23,6 +23,11 @@ U = [0 0 0; U];
 clear dX;
 
 Twist = 0; 
+
+% debugging ----------------------
+tw = zeros(size(range)); i=1;
+% --------------------------------
+
 for s = range
     ds = norm(cm(s,:)-cm((s-1),:)); 
     dX = cm(s,:) - cm((s-1),:);
@@ -43,8 +48,17 @@ for s = range
     
     % twist 
     dT = cross((dU/ds), U2) * (dX/ds)' * ds;
-    Twist = Twist + dT;    
+    Twist = Twist + dT;   
+    
+    % debugging ----------------------
+    tw(i) = dT; i = i + 1;
+    % --------------------------------
 end
 Twist = Twist/(2*pi);
+
+% debugging ----------------------
+tw = tw/(2*pi);
+figure; plot(tw); hold on; plot(cumsum(tw));
+% --------------------------------
 
 end
