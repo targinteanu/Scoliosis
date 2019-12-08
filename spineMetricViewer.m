@@ -48,6 +48,8 @@ twist = num(:,11); writhetwist = num(:,12);
     cm = [x;y;z]';
 
 %%
+%{
+
 q = 4;
 tau = zeros(1, length(x)-2*q); wr = tau;
 d1 = tau; d2 = d1; d3 = d1;
@@ -90,8 +92,9 @@ title('torsion'); ylabel('z'); xlabel('\tau'); ylim([0 1000]);
 
 %}
 %%
+figure;
 plot3dSpine(cm, theta);
-[twist(patient_number), getTwist(cm, [cos(theta), sin(theta), zeros(size(theta))])]
+[twist(patient_number), getTwist(cm, cm + [cos(theta), sin(theta), zeros(size(theta))])]
 
 %%
 %{
