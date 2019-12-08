@@ -18,7 +18,7 @@ writhe_postop = num(:,5);
 nonsurg = isnan(writhe_postop);
 %}
 
-[num, txt] = xlsread('Writhe-pre-post_new-metrics.csv');
+[num, txt] = xlsread('Writhe-pre-post_new-metrics_10-14.xlsx');
 N = 32;
 num = num(1:N, :);
 XYZ = num(:, 13:end); 
@@ -38,13 +38,16 @@ twist = num(:,11); writhetwist = num(:,12);
     y = (XYZ(patient_number, 2:3:51)); 
     z = (XYZ(patient_number, 3:3:51)); 
     
+    theta = XYZ(patient_number, 52:end); 
+    theta = theta'; 
+    
     x0 = x; y0 = y; z0 = z;
     intp = 4;
 %    x = interp(x, intp); y = interp(y, intp); z = interp(z, intp);
     
     cm = [x;y;z]';
 
-%
+%%
 q = 4;
 tau = zeros(1, length(x)-2*q); wr = tau;
 d1 = tau; d2 = d1; d3 = d1;
@@ -86,6 +89,9 @@ title('torsion'); ylabel('z'); xlabel('\tau'); ylim([0 1000]);
 %text(tau, z((q+1):(end-q)), vertnames_part);
 
 %}
+%%
+plot3dSpine(cm, theta);
+[twist(patient_number), getTwist(cm, [cos(theta), sin(theta), zeros(size(theta))])]
 
 %%
 %{
