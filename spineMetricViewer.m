@@ -48,7 +48,7 @@ twist = num(:,11); writhetwist = num(:,12);
     cm = [x;y;z]';
 
 %%
-%{
+%%{
 
 q = 4;
 tau = zeros(1, length(x)-2*q); wr = tau;

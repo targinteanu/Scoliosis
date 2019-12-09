@@ -19,7 +19,7 @@ else % sp is 3D coordinates
     U = sp-cm; 
 end
 
-U = U(2:end,:);
+U = .5* (U(2:end,:) + U(1:(end-1),:));
 dX = cm(2:end,:) - cm(1:end-1,:);
     % make U perp dX
     Uparl = diag((U*dX')./(dX*dX')) .* dX;

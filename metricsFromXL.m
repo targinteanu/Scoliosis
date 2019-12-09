@@ -46,13 +46,53 @@ for v = 1:length(var)
 end
 %linkaxes(ax);
 
+%% do above for just manual 
+vertnames = [arrayfun(@(i) ['T' num2str(i)], 1:12, 'UniformOutput', 0), ...
+    arrayfun(@(i) ['L' num2str(i)], 1:5, 'UniformOutput', 0)];
+vertnames(2:(length(vertnames)-1)) = {' '};
+mkr = {':ob', '--sr'};
+
+figure; 
+c = cluster_shape;
+    for group = 1:2
+        x = XYZ(c == group, 1:3:51);
+        y = XYZ(c == group, 2:3:51);
+        z = XYZ(c == group, 3:3:51);
+        
+        p = [mean(x); mean(y); mean(z)]';
+%        [tau, neutral, apical] = kadouryTorsion(p); taupts = [neutral, apical];
+%        Wr = levittWrithe(p); 
+        
+%        lgd{group} = ['group ' num2str(group) ' | Wr=' num2str(Wr) ' | \tau=' num2str(tau)];
+        
+        %errorbar(mean(x), mean(y), std(y),std(y), std(x),std(x), '-o'); 
+        plot3(mean(x), mean(y), mean(z), mkr{group}, 'LineWidth', 1.5); 
+        hold on;
+%        plot3(p(taupts,1), p(taupts,2), p(taupts,3), '*');
+        ofst=5;
+        %{
+        if group==1
+            ofst = 5; 
+        end
+        if group==2
+            ofst = -10;
+        end
+        %}
+        text(mean(x) + ofst, mean(y), mean(z), vertnames);
+    end
+    
+    legend('a', 'b');
+    grid on; 
+    view(2); xlabel('x'); ylabel('y');
+
 %% check values 
 rotv = @(theta) [cos(theta), sin(theta), zeros(size(theta))];
 
 checkwrithe = arrayfun(@(p) ...
     levittWrithe([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]'), 1:N);
 checktwist = arrayfun(@(p) ...
-    getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', rotv(XYZ(p,52:end)')), 1:N);
+     getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', XYZ(p,52:end)'), 1:N);
+%    getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', rotv(XYZ(p,52:end)')), 1:N);
 
 sum(abs(checktwist' - twist))
 sum(abs(checkwrithe' - writhe))
