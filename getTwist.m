@@ -47,7 +47,8 @@ for s = range
     U2 = U(s,:);
     
     % twist 
-    dT = cross((dU/ds), U2) * (dX/ds)' * ds;
+    %dT = cross((dU/ds), U2) * (dX/ds)' * ds;
+    dT = ( cross(dU, U2) * dX' )/ ds;
     Twist = Twist + dT;   
     
     % debugging ----------------------
@@ -58,7 +59,7 @@ Twist = Twist/(2*pi);
 
 % debugging ----------------------
 tw = tw/(2*pi);
-figure; plot(tw); hold on; plot(cumsum(tw));
+%figure; plot(tw); hold on; plot(cumsum(tw));
 % --------------------------------
 
 end
