@@ -3,6 +3,7 @@ function Twist = getTwist(cm, sp, range)
 % whose coordinates are given by sp, using discrete approximations of
 % integrals and derivatives. 
 % Coordinates are rows of cm and sp.
+% If sp is given as a 1D vector, it is assumed to be angle in degrees. 
 % Each vector in sp corresponds to the point in the same row of cm. 
 % range: an optional input vector that specifies which rows of cm and sp to
 % use. If unspecified, Twist will be evaluated from the start to end of cm.
@@ -11,7 +12,14 @@ if nargin == 2
     range = 2:length(cm(:,1));
 end
 
-U = sp-cm; U = U(2:end,:);
+if sum(size(sp)==1) % sp is xy-plane angle
+    sp = sp * pi / 180; % deg to rad 
+    U = [cos(sp), sin(sp), zeros(size(sp))];
+else % sp is 3D coordinates 
+    U = sp-cm; 
+end
+
+U = U(2:end,:);
 dX = cm(2:end,:) - cm(1:end-1,:);
     % make U perp dX
     Uparl = diag((U*dX')./(dX*dX')) .* dX;

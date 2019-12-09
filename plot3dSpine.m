@@ -16,7 +16,7 @@ dX = cm(2:end,:) - cm(1:end-1,:);
     normU = sqrt(diag(U*U'));
     U = U./normU; 
     % make U big enough to display
-    U = U * 4*abs(cm(1,3)-cm(end,3))/size(cm,1);
+    U = U * 2*abs(cm(1,3)-cm(end,3))/size(cm,1);
 U = [0 0 0; U];
 V = U + cm;
 
@@ -25,10 +25,11 @@ grid on; hold on;
 for n = 2:length(cm(:,1))
     %vector = [-cm(n,:); -V(n,:)];
     vector = [cm(n,:); V(n,:)];
-    plot3(vector(:,2), vector(:,1), vector(:,3), '-or', 'LineWidth', 1);
+    plot3(vector(:,2), vector(:,1), vector(:,3), '-r', 'LineWidth', 1);
+    plot3(V(:,2), V(:,1), V(:,3), 'sr', 'LineWidth', 1);
 end
-%plot3(-cm(:,2), -cm(:,1), -cm(:,3), 'b', 'LineWidth', 2);
-plot3(cm(:,2), cm(:,1), cm(:,3), 'b', 'LineWidth', 2);
+%plot3(-cm(:,2), -cm(:,1), -cm(:,3), 'b', LineWidth', 2);
+plot3(cm(:,2), cm(:,1), cm(:,3), '-sb', 'LineWidth', 2);
 %xlabel('coronal'); ylabel('sagittal'); zlabel('axial');
 xlabel('x'); ylabel('y'); zlabel('z');
 
