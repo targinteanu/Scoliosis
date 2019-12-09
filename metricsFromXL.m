@@ -94,8 +94,10 @@ checktwist = arrayfun(@(p) ...
      getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', XYZ(p,52:end)'), 1:N);
 %    getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', rotv(XYZ(p,52:end)')), 1:N);
 
-sum(abs(checktwist' - twist))
-sum(abs(checkwrithe' - writhe))
+checkwrithe = checkwrithe'; checktwist = checktwist';
+
+sum(abs(checktwist - twist))
+sum(abs(checkwrithe - writhe))
 
 %%
 varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
@@ -144,7 +146,7 @@ for v = 1:size(AS,1)
         AS{v,j} = [avg, sd];
     end
 end
-AS = cell2mat(AS)
+AS = cell2mat(AS);
 
 name1 = cell(1, 2*length(var)); 
 for i = 1:length(var)
@@ -162,7 +164,7 @@ end
 
 %%
 varnames2 = {'wr', 'awr', '\tau_1', '\tau_2', '\tau_K', 'tw', 'twr'};
-group = 2;
+for group = 1:2
 Xg = num(cluster_shape==group,6:12); 
 Xg(isnan(Xg))=0;
 RHO = zeros(length(varnames2)); 
@@ -175,6 +177,7 @@ cmp = [linspace(1, 1), linspace(1, 0);
         linspace(1, 1), linspace(1, 1)]';
 figure; heatmap(varnames2, varnames2, RHO, 'ColorLimits', [-1 1], 'Colormap', cmp); 
 title(['correlation between variables group ' num2str(group)]);
+end
 
 %%
 %{
@@ -318,8 +321,8 @@ legend('Group 1', 'Group 2'); title('D) Sum of Coordinates');
 %}
 
 %%
-var1 = twist; 
-var2 = torglob;
+var1 = checktwist; 
+var2 = writhe;
 figure; 
 plot(var1(cluster_shape == 1), var2(cluster_shape == 1), 'ob'); 
 grid on; hold on; 
@@ -332,7 +335,7 @@ acc = max(acc, 1-acc);
 title(num2str(acc));
 
 %%
-var1 = writhetwist; 
+var1 = checktwist; 
 cluster_var1 = kmeans(var1, 2); 
 acc = cluster_shape == cluster_var1; acc = sum(acc)/length(acc); 
 acc
