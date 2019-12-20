@@ -17,6 +17,7 @@ dX = cm(2:end,:) - cm(1:end-1,:);
     end
     %Uparl = diag((U*dX')./(dX*dX')) .* dX;
     U = U - Uparl;
+    %arrayfun(@(n) acos(U(n,:)*dX(n,:)'), 1:size(U,1))
     % make U unit
     normU = sqrt(diag(U*U'));
     U = U./normU; 

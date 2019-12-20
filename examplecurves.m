@@ -3,18 +3,18 @@ npts = 17;
 amax = 180;
 lbl = {'a) ', 'b) ', 'c) ', 'd) ', 'e) '};
 
-s = linspace(0, 1, npts)';
+s = linspace(0, 2*pi*sqrt(2), npts)';
 
 %cm{1} = [zeros(size(s)), zeros(size(s)), s];
-cm{1} = [zeros(size(s)), cos(2*pi*s), s];
+cm{1} = [zeros(size(s)), cos(s/sqrt(2)), s/sqrt(2)];
 theta{1} = 90 + zeros(size(s));
 cm{2} = cm{1};
 theta{2} = 90 + linspace(amax, 0, npts)';
-cm{3} = [sin(2*pi*s), cos(2*pi*s), s];
+cm{3} = [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 theta{3} = theta{1};
 cm{4} = cm{3};
 theta{4} = theta{2};
-cm{5} = [zeros(size(s)), zeros(size(s)), s];
+cm{5} = [zeros(size(s)), zeros(size(s)), s/sqrt(2)];
 theta{5} = theta{2};
 
 %figure('Position', [50 50 1400 500]); 
@@ -26,7 +26,7 @@ for i = 1:N
     Wr = levittWrithe(cm{i});
     title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)]);
     view([20, 10]);
-    xlim([-2, 2]); ylim([-2, 2]); zlim([0, 1]);
+    xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
 end
 
 %%
