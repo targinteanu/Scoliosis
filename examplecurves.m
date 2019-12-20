@@ -9,7 +9,7 @@ s = linspace(0, 2*pi*sqrt(2), npts)';
 cm{1} = [zeros(size(s)), cos(s/sqrt(2)), s/sqrt(2)];
 theta{1} = 90 + zeros(size(s));
 cm{2} = cm{1};
-theta{2} = 90 + linspace(amax, 0, npts)';
+theta{2} = 90 + linspace(0, amax, npts)';
 cm{3} = [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 theta{3} = theta{1};
 cm{4} = cm{3};
@@ -25,7 +25,7 @@ for i = 1:N
     Tw = getTwist(cm{i}, theta{i});
     Wr = levittWrithe(cm{i});
     title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)]);
-    view([20, 10]);
+    view([-30, 10]);
     xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
 end
 
@@ -36,14 +36,14 @@ for ang = a
   
 %CM = [zeros(size(s)), zeros(size(s)), s];
 CM = cm{2};
-th = 90 + linspace(ang, 0, npts)';
+th = 90 + linspace(0, ang, npts)';
 
 %i = 5; %figure; 
 %    plot3dSpine(cm{i}, theta{i}); 
     %Tw(ang) = getTwist(cm{i}, cm{i}+[cos(theta{i}), sin(theta{i}), zeros(size(theta{i}))]);
     Tw(ang) = getTwist(CM, th);
     
-    Twact(ang) = ang/(360);
+    Twact(ang) = -ang/(360);
 end
 figure; plot(a/360, [Tw; Twact]); %xticks(0:45:720);
 %D = cm{i}(2:end,:) - cm{i}(1:(end-1),:);

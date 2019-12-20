@@ -22,7 +22,7 @@ dX = cm(2:end,:) - cm(1:end-1,:);
     normU = sqrt(diag(U*U'));
     U = U./normU; 
     % make U big enough to display
-    U = U * 5*abs(cm(1,3)-cm(end,3))/size(cm,1);
+    U = U * 2*abs(cm(1,3)-cm(end,3))/size(cm,1);
 %U = [0 0 0; U];
 cm2 = .5* (cm(2:end,:) + cm(1:(end-1),:));
 V = U + cm2;
