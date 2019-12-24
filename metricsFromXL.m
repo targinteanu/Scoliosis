@@ -1,4 +1,4 @@
-[num, txt] = xlsread('Writhe-pre-post_new-metrics_10-14.xlsx');
+[num, txt] = xlsread('Writhe-pre-post_new-metrics_10-21.xlsx');
 N = 32;
 num = num(1:N, :);
 XYZ = num(:, 13:end); 
