@@ -4,7 +4,8 @@ if sum(size(dir)==1) % sp is xy-plane angle
     dir = dir * pi / 180; % deg to rad 
     U = [cos(dir), sin(dir), zeros(size(dir))];
 else % sp is 3D coordinates 
-    U = dir-cm; 
+    %U = dir-cm; 
+    U = dir;
 end
 
 U = .5* (U(2:end,:) + U(1:(end-1),:));

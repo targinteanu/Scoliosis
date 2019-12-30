@@ -74,6 +74,55 @@ subplot(1,2,2); plot3(Q(:,1), Q(:,2), Q(:,3), '-o'); grid on;
 title([num2str(wr_q), ' | ', num2str(wr_Q)]);
 xlabel('x'); ylabel('y'); zlabel('z'); view([20, 10]);
 
+%% twist by hand
+proj = @(u, x) ((u*x')/(x*x'))*x;
+r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
+dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
+q = @(s) [sin(s/sqrt(2)), -cos(s/sqrt(2)), s/sqrt(2)];
+dq = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), sin(s/sqrt(2)), 1];
+v = @(s) [0, 1, 0];
+vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
+vq = @(s) v(s) - proj(v(s), q(s)); uq = @(s) vq(s)/norm(vq(s));
+
+R = r(s); Q = q(s); 
+%VR = vr(s); VQ = vq(s);
+VR = [zeros(size(s)), ones(size(s)), zeros(size(s))]; VQ = VR;
+
+tw_r = integral( @(t) dTw(t, dr, ur), s(1), s(end));%, 'Method', 'iterated');
+tw_q = integral( @(t) dTw(t, dq, uq), s(1), s(end));%, 'Method', 'iterated');
+tw_r = tw_r/(2*pi); tw_q = tw_q/(2*pi);
+tw_R = getTwist(R, VR); tw_Q = getTwist(Q, VQ);
+
+figure; 
+subplot(1,2,1); plot3dSpine(R, VR); view([-30,10]);
+xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
+title([num2str(tw_r), ' | ', num2str(tw_R)]);
+subplot(1,2,2); plot3dSpine(Q, VQ); view([-30,10]);
+xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
+title([num2str(tw_q), ' | ', num2str(tw_Q)]);
+
+%% twist and writhe functions 
+    function dTw_ = dTw(t, dr, u)
+    % u, du must be entered s.t. u perp dr
+        t = t';
+        dTw_ = zeros(size(t)); imax = length(t);
+        for i = 1:imax
+            tt = t(i);
+            if (i == 1) 
+                if (i+1 <= imax)
+                    dtt = t(i+1)-t(i);
+                else
+                    dtt = .0001;
+                end
+            else
+                dtt = t(i)-t(i-1);
+            end
+            du = (u(tt + dtt) - u(tt))/dtt;
+            dTw_(i) = cross(du, u(tt)) * dr(tt)';
+        end
+        dTw_ = dTw_';
+    end
+
     function ddWr_ = ddWr(t1, t2, r1, r2, dr1, dr2)
         t1 = t1'; t2 = t2';
         r12 = r1(t1) - r2(t2);
