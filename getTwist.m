@@ -16,8 +16,8 @@ if sum(size(sp)==1) % sp is xy-plane angle
     sp = sp * pi / 180; % deg to rad 
     U = [cos(sp), sin(sp), zeros(size(sp))];
 else % sp is 3D coordinates 
-    %U = sp-cm; 
-    U = sp;
+    U = sp-cm; 
+    %U = sp;
 end
 
 U = .5* (U(2:end,:) + U(1:(end-1),:));

@@ -80,13 +80,14 @@ r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
 q = @(s) [sin(s/sqrt(2)), -cos(s/sqrt(2)), s/sqrt(2)];
 dq = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), sin(s/sqrt(2)), 1];
-v = @(s) [0, 1, 0];
+%v = @(s) [0, 1, 0];
+v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
 vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
 vq = @(s) v(s) - proj(v(s), q(s)); uq = @(s) vq(s)/norm(vq(s));
 
 R = r(s); Q = q(s); 
 %VR = vr(s); VQ = vq(s);
-VR = theta{3}; VQ = VR;
+VR = theta{4}; VQ = VR;
 
 tw_r = integral( @(t) dTw(t, dr, ur), s(1), s(end));%, 'Method', 'iterated');
 tw_q = integral( @(t) dTw(t, dq, uq), s(1), s(end));%, 'Method', 'iterated');
