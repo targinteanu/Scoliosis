@@ -86,7 +86,7 @@ vq = @(s) v(s) - proj(v(s), q(s)); uq = @(s) vq(s)/norm(vq(s));
 
 R = r(s); Q = q(s); 
 %VR = vr(s); VQ = vq(s);
-VR = [zeros(size(s)), ones(size(s)), zeros(size(s))]; VQ = VR;
+VR = theta{3}; VQ = VR;
 
 tw_r = integral( @(t) dTw(t, dr, ur), s(1), s(end));%, 'Method', 'iterated');
 tw_q = integral( @(t) dTw(t, dq, uq), s(1), s(end));%, 'Method', 'iterated');
