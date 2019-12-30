@@ -78,8 +78,9 @@ xlabel('x'); ylabel('y'); zlabel('z'); view([20, 10]);
 proj = @(u, x) ((u*x')/(x*x'))*x;
 r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
-q = @(s) [sin(s/sqrt(2)), -cos(s/sqrt(2)), s/sqrt(2)];
-dq = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), sin(s/sqrt(2)), 1];
+%q = @(s) [sin(s/sqrt(2)), -cos(s/sqrt(2)), s/sqrt(2)];
+%dq = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), sin(s/sqrt(2)), 1];
+q = @(s) [0*s, 0*s, s/sqrt(2)]; dq = @(s) (1/sqrt(2))*[0*s, 0*s, ones(size(s))];
 %v = @(s) [0, 1, 0];
 v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
 vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
@@ -103,6 +104,7 @@ xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
 title([num2str(tw_q), ' | ', num2str(tw_Q)]);
 
 %% twist and writhe functions 
+
     function dTw_ = dTw(t, dr, u)
     % u, du must be entered s.t. u perp dr
         t = t';
