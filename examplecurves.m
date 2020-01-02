@@ -30,7 +30,7 @@ for i = 1:N
 end
 
 %%
-%%{
+%{
 a = 1:2000; Tw = zeros(size(a)); Twact = Tw;
 for ang = a
   
@@ -52,6 +52,7 @@ figure; plot(a/360, [Tw; Twact]); %xticks(0:45:720);
 %}
 
 %% writhe by hand 
+%{
 r = @(t) [cos(t), sin(t), t]; dr = @(t) [-sin(t), cos(t), 1];
 q = @(t) [cos(t), -sin(t), t]; dq = @(t) [-sin(t), -cos(t), 1];
 
@@ -73,9 +74,10 @@ xlabel('x'); ylabel('y'); zlabel('z'); view([20, 10]);
 subplot(1,2,2); plot3(Q(:,1), Q(:,2), Q(:,3), '-o'); grid on; 
 title([num2str(wr_q), ' | ', num2str(wr_Q)]);
 xlabel('x'); ylabel('y'); zlabel('z'); view([20, 10]);
+%}
 
 %% twist by hand
-proj = @(u, x) ((u*x')/(x*x'))*x;
+%proj = @(u, x) ((u*x')/(x*x'))*x;
 r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
 %q = @(s) [sin(s/sqrt(2)), -cos(s/sqrt(2)), s/sqrt(2)];
@@ -104,6 +106,15 @@ xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
 title([num2str(tw_q), ' | ', num2str(tw_Q)]);
 
 %% twist and writhe functions 
+
+function proj_ = proj(u, x)
+    denom = (x*x');
+    if denom
+        proj_ = ((u*x')/denom)*x;
+    else
+        proj_ = 0*x;
+    end
+end
 
     function dTw_ = dTw(t, dr, u)
     % u, du must be entered s.t. u perp dr
