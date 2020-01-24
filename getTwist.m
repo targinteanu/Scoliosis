@@ -16,8 +16,8 @@ if sum(size(sp)==1) % sp is xy-plane angle
     sp = sp * pi / 180; % deg to rad 
     U = [cos(sp), sin(sp), zeros(size(sp))];
 else % sp is 3D coordinates 
-    U = sp-cm; 
-    %U = sp;
+    %U = sp-cm; 
+    U = sp;
 end
 
 U = .5* (U(2:end,:) + U(1:(end-1),:));
@@ -53,11 +53,11 @@ for s = range
     %}
     
     dU = U(s,:) - U((s-1),:);
-    U2 = U(s,:);
+    Ucurrent = U(s,:);
     
     % twist 
     %dT = cross((dU/ds), U2) * (dX/ds)' * ds;
-    dT = ( cross(dU, U2) * dX' )/ ds;
+    dT = ( cross(dX, Ucurrent) * dU' )/ ds;
     Twist = Twist + dT;   
     
     % debugging ----------------------

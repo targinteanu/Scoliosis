@@ -38,7 +38,7 @@ dU = U(2:end,:) - U(1:end-1,:);
 Twist = 0; 
 for s = range
     ds = norm(dX2(s,:));
-    dT = cross((dU(s,:)/ds), Ugap(s,:)) * (dX2(s,:)/ds)' * ds;
+    dT = cross((dX2(s,:)/ds), Ugap(s,:)) * (dU(s,:)/ds)' * ds;
     Twist = Twist + dT; 
 end
 Twist = Twist/(2*pi);

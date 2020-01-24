@@ -21,7 +21,7 @@ for i = range
     theta = acos( (u1*u2') );
     
     du = u2-u1;
-    sgn = cross(du, u2) * dX';
+    sgn = cross(dX, u2) * du';
     
     Twist = Twist + theta * sign(sgn);
     

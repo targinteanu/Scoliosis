@@ -95,7 +95,7 @@ VR = theta{4}; VQ = VR;
 tw_r = integral( @(t) dTw(t, dr, ur), s(1), s(end));%, 'Method', 'iterated');
 tw_q = integral( @(t) dTw(t, dq, uq), s(1), s(end));%, 'Method', 'iterated');
 tw_r = tw_r/(2*pi); tw_q = tw_q/(2*pi);
-tw_R = getTwist(R, VR); tw_Q = getTwist(Q, VQ);
+tw_R = deturckTwist2(R, VR); tw_Q = getTwist(Q, VQ);
 
 figure; 
 subplot(1,2,1); plot3dSpine(R, VR); view([-30,10]);
@@ -132,7 +132,7 @@ end
                 dtt = t(i)-t(i-1);
             end
             du = (u(tt + dtt) - u(tt))/dtt;
-            dTw_(i) = cross(du, u(tt)) * dr(tt)';
+            dTw_(i) = cross(dr(tt), u(tt)) * du';
         end
         dTw_ = dTw_';
     end
