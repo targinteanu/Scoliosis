@@ -1,8 +1,11 @@
 %% input variables: ---------------------------------------------------
 r = @(s) [cos(s), sin(s), 0*s];
 dr = @(s) (1/sqrt(2))*[-sin(s), cos(s), 0*s];
-u = @(s) [cos(s).*cos(s), cos(s).*sin(s), sin(s)];
-du = @(s) [-cos(s).*sin(s)-sin(s).*cos(s), cos(s).*cos(s)-sin(s).*sin(s), cos(s)];
+k=3;
+u = @(s) [cos(s).*cos(k*s), cos(k*s).*sin(s), sin(k*s)];
+du = @(s) [(-k*cos(s).*sin(k*s)-sin(s).*cos(k*s))./sqrt(k^2+cos(k*s)*cos(k*s)),...
+           (cos(s).*cos(k*s)-2*sin(s).*sin(k*s)) ./sqrt(k^2+cos(k*s)*cos(k*s)),...
+           2*cos(k*s)./sqrt(k^2+cos(k*s)*cos(k*s))];
 npts = 100;
 Smin = 0; Smax = 2*pi;
 % --------------------------------------------------------------------
