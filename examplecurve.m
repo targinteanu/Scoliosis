@@ -1,9 +1,9 @@
 %% input variables: ---------------------------------------------------
-r = @(s) [cos(s),sin(s),2*s];
-dr = @(s) [-sin(s)/sqrt(5),cos(s)/sqrt(5),2/sqrt(5)];
-v = @(s) [cos(s),sin(s),0*s];
-npts = 40;
-Smin = 0; Smax = 2*pi*.25;
+r = @(s) [0*s, 0*s, s/sqrt(2)];
+dr = @(s) (1/sqrt(2))*[0*s, 0*s, ones(size(s))];
+v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
+npts = 20;
+Smin = 0; Smax = 2*pi*10;
 % --------------------------------------------------------------------
 
 %% operations
@@ -22,7 +22,8 @@ Writhe_estimate = levittWrithe(R)
 
 figure; 
 plot3dSpine(R, VR); view([-30,10]);
-xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
+zmax = r(Smax); zmax = zmax(3);
+xlim([-2, 2]); ylim([-2, 2]); zlim([0, zmax]);
 
 %% twist and writhe functions 
 
