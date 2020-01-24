@@ -149,8 +149,8 @@ dirIdx = [zeros(24,1), dirIdx]; dirIdx = dirIdx + 4;
 
 di = dirIdx(direction, :); 
 
-idx = find( ((I{di(1)} <= I{di(2)}) & (I{di(2)} <= I{di(3)})) | ...
-    ((I{di(1)} >= I{di(2)}) & (I{di(2)} >= I{di(3)})) );
+idx = find( ((I{di(1)} <= I{di(2)}) & (I{di(2)} <= I{di(3)}) & (I{di(3)} <= I{di(4)})) | ...
+    ((I{di(1)} >= I{di(2)}) & (I{di(2)} >= I{di(3)}) & (I{di(3)} >= I{di(4)})) );
 
 %{
 switch direction
@@ -163,6 +163,16 @@ switch direction
     case 4
         idx = find((iy<0 & ix<=iy)  | (iy>0 & ix>=iy));
 end
+    %%}
+    casecond = @(a,b,c,d) (a<=b & b<=c & c<=d) | (a>=b & b>=c & c>=d);
+    switch direction 
+        case 2
+            idx = find(casecond(0, iy, -ix, iz));
+        case 3
+            idx = find(casecond(0, ix, iy, iz));
+        case 4
+            idx = find(casecond(0, iy, ix, iz));
+    end
     %}
 
 % Exclude the exterior pixels
