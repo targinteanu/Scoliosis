@@ -1,9 +1,10 @@
 %% input variables: ---------------------------------------------------
-r = @(s) [0*s, 0*s, s/sqrt(2)];
-dr = @(s) (1/sqrt(2))*[0*s, 0*s, ones(size(s))];
-v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
-npts = 20;
-Smin = 0; Smax = 2*pi*10;
+r = @(s) [cos(s), sin(s), 0*s];
+dr = @(s) (1/sqrt(2))*[-sin(s), cos(s), 0*s];
+u = @(s) [cos(s).*cos(s), cos(s).*sin(s), sin(s)];
+du = @(s) [-cos(s).*sin(s)-sin(s).*cos(s), cos(s).*cos(s)-sin(s).*sin(s), cos(s)];
+npts = 100;
+Smin = 0; Smax = 2*pi;
 % --------------------------------------------------------------------
 
 %% operations
@@ -12,9 +13,11 @@ S = linspace(Smin, Smax, npts)';
 vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
 dr_norm = @(s) dr(s)/norm(dr(s)); 
 
-R = r(S); VR = cell2mat( arrayfun(vr, S, 'UniformOutput', false) );
+R = r(S); 
+%VR = cell2mat( arrayfun(vr, S, 'UniformOutput', false) );
+VR = u(S);
 
-Twist_integral = integral( @(t) dTw(t, dr_norm, ur), S(1), S(end)) / (2*pi)
+Twist_integral = integral( @(t) dTw(t, dr_norm, u, du), S(1), S(end)) / (2*pi)
 Twist_estimate = getTwist(R, VR)
 Writhe_integral = integral2( @(t1,t2) ddWr(t1,t2, r, r, dr, dr), ...
     S(1), S(end), S(1), S(end), 'Method', 'iterated') / (4*pi)
@@ -23,7 +26,7 @@ Writhe_estimate = levittWrithe(R)
 figure; 
 plot3dSpine(R, VR); view([-30,10]);
 zmax = r(Smax); zmax = zmax(3);
-xlim([-2, 2]); ylim([-2, 2]); zlim([0, zmax]);
+%xlim([-2, 2]); ylim([-2, 2]); zlim([0, zmax]);
 
 %% twist and writhe functions 
 
@@ -36,7 +39,7 @@ function proj_ = proj(u, x)
     end
 end
 
-    function dTw_ = dTw(t, dr, u)
+    function dTw_ = dTw(t, dr, u, du)
     % u, du must be entered s.t. u perp dr
         t = t';
         dTw_ = zeros(size(t)); imax = length(t);
@@ -51,8 +54,8 @@ end
             else
                 dtt = t(i)-t(i-1);
             end
-            du = (u(tt + dtt) - u(tt))/dtt;
-            dTw_(i) = cross(du, u(tt)) * dr(tt)';
+            %du = (u(tt + dtt) - u(tt))/dtt;
+            dTw_(i) = cross(du(tt), u(tt)) * dr(tt)';
         end
         dTw_ = dTw_';
     end
