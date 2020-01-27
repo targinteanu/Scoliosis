@@ -1,33 +1,36 @@
 %% input variables: ---------------------------------------------------
 r = @(s) [cos(s), sin(s), 0*s];
-dr = @(s) (1/sqrt(2))*[-sin(s), cos(s), 0*s];
-k=5;
+dr = @(s) [-sin(s), cos(s), 0*s]; % unit!
+k=4;
 u = @(s) [cos(s).*cos(k*s), cos(k*s).*sin(s), sin(k*s)];
+%{
 du = @(s) [(-k*cos(s).*sin(k*s)-sin(s).*cos(k*s))./sqrt(k^2+cos(k*s)*cos(k*s)),...
-           (cos(s).*cos(k*s)-2*sin(s).*sin(k*s)) ./sqrt(k^2+cos(k*s)*cos(k*s)),...
-           2*cos(k*s)./sqrt(k^2+cos(k*s)*cos(k*s))];
-npts = 200;
+           (cos(s).*cos(k*s)-k*sin(s).*sin(k*s)) ./sqrt(k^2+cos(k*s)*cos(k*s)),...
+           k*cos(k*s)./sqrt(k^2+cos(k*s)*cos(k*s))];
+%}
+du = @(s) [(-k*cos(s).*sin(k*s)-sin(s).*cos(k*s)),...
+           (cos(s).*cos(k*s)-k*sin(s).*sin(k*s)),...
+           k*cos(k*s)];
+npts = 100;
 Smin = 0; Smax = 2*pi;
 % --------------------------------------------------------------------
 
 %% operations
 
 S = linspace(Smin, Smax, npts)';
-vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
-dr_norm = @(s) dr(s)/norm(dr(s)); 
 
 R = r(S); 
 %VR = cell2mat( arrayfun(vr, S, 'UniformOutput', false) );
-VR = u(S);
+U = u(S);
 
-Twist_integral = integral( @(t) dTw(t, dr_norm, u, du), S(1), S(end)) / (2*pi)
-Twist_estimate = deturckTwist2(R, VR)
+Twist_integral = integral( @(t) dTw(t, dr, u, du), S(1), S(end)) / (2*pi)
+Twist_estimate = deturckTwist2(R, U)
 Writhe_integral = integral2( @(t1,t2) ddWr(t1,t2, r, r, dr, dr), ...
     S(1), S(end), S(1), S(end), 'Method', 'iterated') / (4*pi)
 Writhe_estimate = levittWrithe(R)
 
 figure; 
-plot3dSpine(R, VR); view([-30,10]);
+plot3dSpine(R, U); view([-30,10]);
 zmax = r(Smax); zmax = zmax(3);
 %xlim([-2, 2]); ylim([-2, 2]); zlim([0, zmax]);
 
@@ -48,17 +51,8 @@ end
         dTw_ = zeros(size(t)); imax = length(t);
         for i = 1:imax
             tt = t(i);
-            if (i == 1) 
-                if (i+1 <= imax)
-                    dtt = t(i+1)-t(i);
-                else
-                    dtt = .0001;
-                end
-            else
-                dtt = t(i)-t(i-1);
-            end
-            %du = (u(tt + dtt) - u(tt))/dtt;
-            dTw_(i) = cross(dr(tt), u(tt)) * du(tt)';
+            drr = dr(tt);%/norm(dr(tt));
+            dTw_(i) = cross(drr, u(tt)) * du(tt)';
         end
         dTw_ = dTw_';
     end
