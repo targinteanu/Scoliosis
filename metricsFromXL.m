@@ -1,4 +1,4 @@
-[num, txt] = xlsread('Writhe-pre-post_new-metrics_10-21.xlsx');
+[num, txt] = xlsread('Writhe-pre-post_new-metrics_1-25.xlsx');
 N = 32;
 num = num(1:N, :);
 XYZ = num(:, 13:end); 
@@ -91,7 +91,7 @@ rotv = @(theta) [cos(theta), sin(theta), zeros(size(theta))];
 checkwrithe = arrayfun(@(p) ...
     levittWrithe([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]'), 1:N);
 checktwist = arrayfun(@(p) ...
-     getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', XYZ(p,52:end)'), 1:N);
+     deturckTwist2([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', XYZ(p,52:end)'), 1:N);
 %    getTwist([XYZ(p,1:3:51); XYZ(p,2:3:51); XYZ(p,3:3:51)]', rotv(XYZ(p,52:end)')), 1:N);
 
 checkwrithe = checkwrithe'; checktwist = checktwist';
