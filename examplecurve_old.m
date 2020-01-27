@@ -1,20 +1,28 @@
 %% input variables: ---------------------------------------------------
-r = @(s) [0*s, 0*s, s];
-dr = @(s) [0, 0, 1];
+r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
+dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
 v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
 npts = 50;
-Smin = 0; Smax = 2*4*pi*sqrt(2);
+Smin = 0; Smax = .5*4*pi*sqrt(2);
 % --------------------------------------------------------------------
 
 %% operations
 
 S = linspace(Smin, Smax, npts)';
-vr = @(s) v(s) - proj(v(s), r(s)); ur = @(s) vr(s)/norm(vr(s));
+vr = @(s) v(s) - proj(v(s), dr(s)); ur = @(s) vr(s)/norm(vr(s));
 T = @(s) dr(s)/norm(dr(s)); % (unit) tangent vector 
 
 R = r(S); VR = cell2mat( arrayfun(vr, S, 'UniformOutput', false) );
 
-Twist_integral = integral( @(t) dTw(t, T, ur, dr), S(1), S(end)) / (2*pi)
+%Twist_integral = integral( @(t) dTw(t, T, ur, r), S(1), S(end)) / (2*pi)
+dt = .001; t = Smin:dt:Smax; dTW = zeros(size(t));
+for i = 2:length(t)
+    du = ur(t(i)) - ur(t(i-1));
+    ds = norm( r(t(i)) - r(t(i-1)) );
+    dTW(i) = cross(T(t(i)), ur(t(i))) * (du)';
+end
+Twist_integral = sum(dTW) / (2*pi)
+
 Twist_estimate = deturckTwist2(R, VR)
 Writhe_integral = integral2( @(t1,t2) ddWr(t1,t2, r, r, dr, dr), ...
     S(1), S(end), S(1), S(end), 'Method', 'iterated') / (4*pi)
@@ -36,18 +44,7 @@ function proj_ = proj(u, x)
     end
 end
 
-function ds_ = ds(t, dr)
-% arc length from ti to tf
-t = t';
-ds_ = zeros(size(t)); imax = length(t);
-    for i = 1:imax
-        tt = t(i);
-        ds_(i) = norm(dr(tt));
-    end
-    ds_ = ds_';
-end
-
-    function dTw_ = dTw(t, T, u, DR)
+    function dTw_ = dTw(t, T, u, R)
     % u, du must be entered s.t. u perp dr
     % dr must be a unit vector 
         t = t';
@@ -57,9 +54,11 @@ end
         for i = 1:imax
             tt = t(i);
             U(i,:) = u(tt);
-            AL(i) = integral( @(ttt) ds(ttt, DR), 0, tt );
         end
-        du = diff(U)./diff(AL);
+        for i = 2:imax
+            AL(i) = norm(R(t(i))-R(t(i-1)));
+        end
+        du = diff(U)./AL(2:end);
         du = [zeros(size(u(0))); du];
         for i = 1:imax
             tt = t(i);
