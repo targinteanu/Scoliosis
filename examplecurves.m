@@ -22,7 +22,7 @@ figure('Position', [0 50 1500 500]);
 for i = 1:N
     subplot(1,N,i);
     plot3dSpine(cm{i}, theta{i}); 
-    Tw = getTwist(cm{i}, theta{i});
+    Tw = deturckTwist2(cm{i}, theta{i});
     Wr = levittWrithe(cm{i});
     title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)]);
     view([-30, 10]);
@@ -40,8 +40,8 @@ th = 90 + linspace(0, ang, npts)';
 
 %i = 5; %figure; 
 %    plot3dSpine(cm{i}, theta{i}); 
-    %Tw(ang) = getTwist(cm{i}, cm{i}+[cos(theta{i}), sin(theta{i}), zeros(size(theta{i}))]);
-    Tw(ang) = getTwist(CM, th);
+    %Tw(ang) = deturckTwist2(cm{i}, cm{i}+[cos(theta{i}), sin(theta{i}), zeros(size(theta{i}))]);
+    Tw(ang) = deturckTwist2(CM, th);
     
     Twact(ang) = -ang/(360);
 end
@@ -95,7 +95,7 @@ VR = theta{4}; VQ = VR;
 tw_r = integral( @(t) dTw(t, dr, ur), s(1), s(end));%, 'Method', 'iterated');
 tw_q = integral( @(t) dTw(t, dq, uq), s(1), s(end));%, 'Method', 'iterated');
 tw_r = tw_r/(2*pi); tw_q = tw_q/(2*pi);
-tw_R = deturckTwist2(R, VR); tw_Q = getTwist(Q, VQ);
+tw_R = deturckTwist2(R, VR); tw_Q = deturckTwist2(Q, VQ);
 
 figure; 
 subplot(1,2,1); plot3dSpine(R, VR); view([-30,10]);

@@ -24,10 +24,10 @@ U = .5* (U(2:end,:) + U(1:(end-1),:));
 dX = cm(2:end,:) - cm(1:end-1,:);
     % make U perp dX
     Uparl = diag((U*dX')./(dX*dX')) .* dX;
-    %U = U - Uparl;
+    U = U - Uparl;
     % make U unit
     normU = sqrt(diag(U*U'));
-    %U = U./normU; 
+    U = U./normU; 
 U = [0 0 0; U];
 clear dX;
 

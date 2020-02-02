@@ -24,6 +24,7 @@ for i = range
     sgn = cross(dX, u2) * du';
     
     Twist = Twist + theta * sign(sgn);
+    theta * sign(sgn)
     
 end
 

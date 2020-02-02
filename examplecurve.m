@@ -11,7 +11,7 @@ du = @(s) [(-k*cos(s).*sin(k*s)-sin(s).*cos(k*s))./sqrt(k^2+cos(k*s)*cos(k*s)),.
 du = @(s) [(-k*cos(s).*sin(k*s)-sin(s).*cos(k*s)),...
            (cos(s).*cos(k*s)-k*sin(s).*sin(k*s)),...
            k*cos(k*s)];
-npts = 100;
+npts = 200;
 Smin = 0; Smax = 2*pi;
 % --------------------------------------------------------------------
 

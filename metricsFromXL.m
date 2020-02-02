@@ -335,7 +335,7 @@ acc = max(acc, 1-acc);
 title(num2str(acc));
 
 %%
-var1 = checktwist; 
+var1 = writhetwist; 
 cluster_var1 = kmeans(var1, 2); 
 acc = cluster_shape == cluster_var1; acc = sum(acc)/length(acc); 
 acc

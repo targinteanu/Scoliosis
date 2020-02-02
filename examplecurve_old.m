@@ -1,9 +1,9 @@
 %% input variables: ---------------------------------------------------
 r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
-v = @(s) [cos(pi/2 + s*pi/(2*pi*sqrt(2))), sin(pi/2 + s*pi/(2*pi*sqrt(2))), 0];
-npts = 50;
-Smin = 0; Smax = .5*4*pi*sqrt(2);
+v = @(s) [0, 1, 0];
+npts = 30;
+Smin = 0; Smax = 2*pi*sqrt(2);
 % --------------------------------------------------------------------
 
 %% operations
@@ -13,6 +13,7 @@ vr = @(s) v(s) - proj(v(s), dr(s)); ur = @(s) vr(s)/norm(vr(s));
 T = @(s) dr(s)/norm(dr(s)); % (unit) tangent vector 
 
 R = r(S); VR = cell2mat( arrayfun(vr, S, 'UniformOutput', false) );
+V = cell2mat( arrayfun(v, S, 'UniformOutput', false) );
 
 %Twist_integral = integral( @(t) dTw(t, T, ur, r), S(1), S(end)) / (2*pi)
 dt = .001; t = Smin:dt:Smax; dTW = zeros(size(t));
@@ -23,13 +24,14 @@ for i = 2:length(t)
 end
 Twist_integral = sum(dTW) / (2*pi)
 
-Twist_estimate = deturckTwist2(R, VR)
+Twist_estimate = deturckTwist2(R, V)
+Twist_estimate_2 = deturckTwist2(R, VR)
 Writhe_integral = integral2( @(t1,t2) ddWr(t1,t2, r, r, dr, dr), ...
-    S(1), S(end), S(1), S(end), 'Method', 'iterated') / (4*pi)
-Writhe_estimate = levittWrithe(R)
+    S(1), S(end), S(1), S(end), 'Method', 'iterated') / (4*pi);
+Writhe_estimate = levittWrithe(R);
 
 figure; 
-plot3dSpine(R, VR); view([-30,10]);
+plot3dSpine(R, V); view([-30,10]);
 zmax = r(Smax); zmax = zmax(3);
 xlim([-2, 2]); ylim([-2, 2]); zlim([0, zmax]);
 
