@@ -22,7 +22,7 @@ figure('Position', [0 50 1500 500]);
 for i = 1:N
     subplot(1,N,i);
     plot3dSpine(cm{i}, theta{i}); 
-    Tw = deturckTwist2(cm{i}, theta{i});
+    Tw = getTwist(cm{i}, theta{i});
     Wr = levittWrithe(cm{i});
     title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)]);
     view([-30, 10]);
@@ -77,6 +77,7 @@ xlabel('x'); ylabel('y'); zlabel('z'); view([20, 10]);
 %}
 
 %% twist by hand
+%{
 %proj = @(u, x) ((u*x')/(x*x'))*x;
 r = @(s) [sin(s/sqrt(2)), cos(s/sqrt(2)), s/sqrt(2)];
 dr = @(s) (1/sqrt(2))*[cos(s/sqrt(2)), -sin(s/sqrt(2)), 1];
@@ -104,6 +105,7 @@ title([num2str(tw_r), ' | ', num2str(tw_R)]);
 subplot(1,2,2); plot3dSpine(Q, VQ); view([-30,10]);
 xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
 title([num2str(tw_q), ' | ', num2str(tw_Q)]);
+%}
 
 %% twist and writhe functions 
 
