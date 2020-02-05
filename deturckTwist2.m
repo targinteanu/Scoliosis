@@ -11,20 +11,27 @@ end
 
 Twist = 0;
 
+DX = (cm(2:end,:) - cm(1:(end-1),:));
+U = .5 * (dir(2:end,:) + dir(1:(end-1),:)); 
+U = [0, 0, 0; U]; DX = [0, 0, 0; DX];
+for i = range
+    u1 = U(i,:); 
+    u1 = u1 - proj(u1, DX(i,:)); 
+    u1 = u1/norm(u1); 
+    U(i,:) = u1;
+end
+
 for i = range
     
-    dX = cm(i,:) - cm((i-1),:);
-    u1 = dir((i-1),:); u2 = dir(i,:);
+    dX = DX(i,:);
+    u2 = U(i,:); u1 = U(i-1,:);
     
-    u1 = u1 - proj(u1,dX); u2 = u2 - proj(u2,dX);
-    u1 = u1/norm(u1); u2 = u2/norm(u2);
     theta = acos( (u1*u2') );
     
     du = u2-u1;
     sgn = cross(dX, u2) * du';
     
     Twist = Twist + theta * sign(sgn);
-    theta * sign(sgn)
     
 end
 
