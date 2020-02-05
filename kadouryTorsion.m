@@ -106,6 +106,8 @@ x = p(:,1); y = p(:,2); z = p(:,3);
     apical_from_deriv = [apex, ap];
     if ~isnan(ap)
         Torsion_from_deriv = customTorsion(p, neutral, [apex, ap]);
+    else
+        Torsion_from_deriv = nan;
     end
     
     % --------------------------------------------------------------------
