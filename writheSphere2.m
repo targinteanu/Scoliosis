@@ -23,7 +23,7 @@ Rvector = cell(4, numplots);
 figure('Position', [50 300 1400 350]);
 for idx = fliplr(1:numplots)
     subplot(1,numplots,idx); 
-    spn{idx} = plot3(x/spscl, y/spscl, z/spscl - 1, 'LineWidth', 3);
+    spn{idx} = plot3(x/spscl, y/spscl, z/spscl - 1, 'b', 'LineWidth', 3);
     hold on; mesh(sx, sy, sz, zeros(size(sx))); hidden off; %grid on;
     view(views{idx});
     cursori{idx} = plot3(x([1,2])/spscl, y([1,2])/spscl, z([1,2])/spscl - 1, '*k', 'LineWidth', 1.1);
@@ -134,7 +134,7 @@ for i = range
         %colr = {'red', 'blue', 'green'};
         colr = {'red', 'blue', [.133, .545, .133]};
         for idx = fliplr(1:numplots)
-            subplot(1,numplots,idx);
+            %subplot(1,numplots,idx);
             patch(px, py, pz, colr{sgn + 2});
             
             Rvector{1,idx}.XData = [0, r13(1)]; 

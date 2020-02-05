@@ -1,7 +1,7 @@
-N = 5; cm = cell(1,N); theta = cell(1,N);
-npts = 17;
+N = 4; cm = cell(1,N); theta = cell(1,N);
+npts = 30;
 amax = 180;
-lbl = {'a) ', 'b) ', 'c) ', 'd) ', 'e) '};
+lbl = {'a) ', 'b) ', 'c) ', 'd) '};
 
 s = linspace(0, 2*pi*sqrt(2), npts)';
 
@@ -22,11 +22,12 @@ figure('Position', [0 50 1500 500]);
 for i = 1:N
     subplot(1,N,i);
     plot3dSpine(cm{i}, theta{i}); 
-    Tw = getTwist(cm{i}, theta{i});
-    Wr = levittWrithe(cm{i});
-    title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)]);
+    Tw = getTwist(cm{i}, theta{i}); Tw = round(Tw, 3);
+    Wr = levittWrithe(cm{i}); Wr = round(Wr, 3);
+    title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)], 'FontSize', 14.5);
     view([-30, 10]);
     xlim([-2, 2]); ylim([-2, 2]); zlim([0, 2*pi]);
+    FS = 13; xlabel('x', 'FontSize', FS); ylabel('y', 'FontSize', FS); zlabel('z', 'FontSize', FS);
 end
 
 %%

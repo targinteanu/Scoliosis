@@ -28,8 +28,8 @@ for i = 2:length(t)
 end
 Twist_integral = sum(dTW) / (2*pi)
 
-Twist_estimate = deturckTwist2(R, V)
-Twist_estimate_2 = deturckTwist2(R, VR)
+%Twist_estimate = deturckTwist2(R, V)
+%Twist_estimate_2 = deturckTwist2(R, VR)
 Twist_estimate_3 = getTwist(R, V)
 Twist_estimate_4 = getTwist(R, VR)
 Writhe_integral = integral2( @(t1,t2) ddWr(t1,t2, r, r, dr, dr), ...
