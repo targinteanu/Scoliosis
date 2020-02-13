@@ -3,6 +3,7 @@ N = 32;
 num = num(1:N, :);
 XYZ = num(:, 13:63); 
 ROT = num(:, 64:end);
+IDCHOP = txt(2:(N+1),1); ID = txt(2:(N+1),3);
 
 cluster_shape = num(:,1); cluster_writhe = num(:,2); 
     cluster_tor = num(:,3); cluster_twist = num(:,4); cluster_writhetwist = num(:,5);
@@ -111,3 +112,59 @@ acc
 cluster_var12 = kmeans([var1 var2], 2); 
 acc = cluster_shape == cluster_var12; acc = sum(acc)/length(acc); 
 acc
+
+%% groups 1 & 2 averages 
+c = cluster_shape;
+numclusters = 2;
+CM = cell(1,numclusters); rot = cell(1,numclusters);
+%%{
+for i = 1:numclusters
+    % for each cluster
+    xyz = mean(XYZ(c==i,:));
+    cm = arrayfun(@(j) xyz(j:3:end)', 1:3, 'UniformOutput', false);
+    CM{i} = cell2mat(cm);
+    rot{i} = mean(ROT(c==i,:))';
+end
+IDS = arrayfun(@(i) ['Avg group ',num2str(i)], 1:numclusters, 'UniformOutput', false);
+%}
+%{
+ex = [17, 30];
+for i = 1:numclusters
+    xyz = XYZ(ex(i),:); 
+    cm = arrayfun(@(j) xyz(j:3:end)', 1:3, 'UniformOutput', false);
+    CM{i} = cell2mat(cm);
+    rot{i} = ROT(ex(1),:)';
+end
+IDS = arrayfun(@(i) [ID{i},' (group ',num2str(c(i)),')'], ex, 'UniformOutput', false);
+%}
+
+vlabels_startend = cell(size(rot{1})); vlabels_startend{1} = 'T1'; vlabels_startend{end} = 'L5';
+vlabels = [arrayfun(@(v) ['T' num2str(v)], 1:12, 'UniformOutput', false), ...
+    arrayfun(@(v) ['L' num2str(v)], 1:5, 'UniformOutput', false)];
+lbl = {'b) ', 'c) ', 'd) ', 'e) ', 'f) ', 'g) '};
+
+figure('Position', [0 50 1500 500]); 
+subplot(1,numclusters+1,1); 
+LS = {{':b', 'ob', ':ob'}, {'--k','sk','--sk'}}; 
+DS = {{':m', 'om'},        {'--r','sr'}};
+for i = 1:numclusters
+    %plot3dSpine(CM{i}, rot{i}, LS{i}, DS{i}); hold on; grid on;
+    plot3(CM{i}(:,1), CM{i}(:,2), CM{i}(:,3), LS{i}{3}, 'LineWidth', 2); 
+    hold on; grid on;
+    text(CM{i}(:,1) - 20, CM{i}(:,2), CM{i}(:,3), vlabels_startend);
+    title('a) Axial View', 'FontSize', 13);
+end
+view(2); 
+xlabel('x'); ylabel('y');
+legend(IDS, 'Location', 'southoutside');
+
+for i = 1:numclusters
+    subplot(1,numclusters+1,i+1); 
+    plot3dSpine(CM{i}, rot{i}, LS{i}, DS{i});
+    hold on; text(CM{i}(:,1), CM{i}(:,2) + 30, CM{i}(:,3), vlabels);
+    grid on; view([-70,8]);
+    xlabel('x'); ylabel('y'); zlabel('z');
+    Tw = getTwist(CM{i}, rot{i}); Tw = round(Tw, 3);
+    Wr = levittWrithe(CM{i}); Wr = round(Wr, 3);
+    title([lbl{i}, 'Twist = ' num2str(Tw) ', Writhe = ' num2str(Wr)], 'FontSize', 13);
+end
