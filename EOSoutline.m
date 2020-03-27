@@ -22,7 +22,7 @@ function varargout = EOSoutline(varargin)
 
 % Edit the above text to modify the response to help EOSoutline
 
-% Last Modified by GUIDE v2.5 26-Mar-2020 14:26:17
+% Last Modified by GUIDE v2.5 27-Mar-2020 17:37:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -90,14 +90,21 @@ function inputCor_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesCor); 
+hold off; imshow(handles.imgCor); hold on;
 OL = roipoly; 
+[handles.imgCorFilt, handles.splCorObj, handles.splCorSmp] = process(handles.imgCor, OL); 
+guidata(hObject, handles);
 
 % --- Executes on button press in inputSag.
 function inputSag_Callback(hObject, eventdata, handles)
 % hObject    handle to inputSag (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+axes(handles.axesSag); 
+hold off; imshow(handles.imgSag); hold on;
+OL = roipoly; 
+[handles.imgSagFilt, handles.splSagObj, handles.splSagSmp] = process(handles.imgSag, OL); 
+guidata(hObject, handles);
 
 % --- Executes on button press in show3D.
 function show3D_Callback(hObject, eventdata, handles)
@@ -105,6 +112,33 @@ function show3D_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% set dimensions to mm
+splCorScl = splineRescale(handles.splCorObj, ...
+    handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2));
+splSagScl = splineRescale(handles.splSagObj, ...
+    handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2));
+zCor = handles.splCorSmp(:,1)*handles.ifoCor.PixelSpacing(1); 
+zSag = handles.splSagSmp(:,1)*handles.ifoSag.PixelSpacing(1);
+zScl = max(zCor(1),zSag(1)):.5:min(zCor(end),zSag(end)); 
+xScl = ppval(zScl, splSagScl.p);
+yScl = ppval(zScl, splCorScl.p);
+
+% store 
+handles.splSclObj = {splSagScl, splCorScl};
+handles.splSclRng = [min(zScl); max(zScl)];
+handles.splSclSmp = [xScl, yScl, zScl];
+guidata(hObject, handles);
+
+% display 
+axes(handles.axes3); plot3(xScl, yScl, zScl, 'b'); grid on; 
+
+function splObj = splineRescale(splObj, zscl, xscl)
+splPP = splObj.p.coefs;
+zmult = (1/zscl).^(0:(size(splPP, 2)-1));
+splPP = splPP.*zmult; 
+splPP = splPP * xscl; 
+splObj.p.coefs = splPP; 
+splObj.p.breaks = splObj.p.breaks*zscl;
 
 % --- Executes on button press in saveButton.
 function saveButton_Callback(hObject, eventdata, handles)
@@ -139,11 +173,11 @@ end
 
 function shownewpatient(hObject, eventdata, handles)
 % get DICOM info 
-ifoCor = dicomread([handles.base_fp,...
+ifoCor = dicominfo([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
     handles.img_fp,...
     'cor']);
-ifoSag = dicomread([handles.base_fp,...
+ifoSag = dicominfo([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
     handles.img_fp,...
     'sag']);
@@ -157,12 +191,31 @@ imgSag = dicomread([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
     handles.img_fp,...
     'sag']);
-% convert int to double [0,1]
-
+% convert uint to double [0,1]
+imgCor = double(imgCor) / double(2^ifoCor.BitsStored - 1);
+imgSag = double(imgSag) / double(2^ifoSag.BitsStored - 1);
 % show/store 
 handles.imgCor = imgCor; handles.imgSag = imgSag; 
-axes(handles.axesCor); imshow(imgCor, []); 
-axes(handles.axesSag); imshow(imgSag, []);
+axes(handles.axesCor); hold off; imshow(imgCor); 
+axes(handles.axesSag); hold off; imshow(imgSag);
 
 % Update handles structure
 guidata(hObject, handles);
+
+function [imgFiltered, splineObj, splineSample] = process(img, outln)
+% img is a double img [0, 1]; outln is a BW outline
+
+% filtering 
+im = imreconstruct(double(~outln), img); 
+imgFiltered = img - im; 
+imgFiltered = imgFiltered .* outln;
+
+% spline fitting 
+[r, c] = find(imgFiltered); 
+[splineObj, gof] = fit(r, c, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
+z = min(r):max(r); 
+splineSample = [z; ppval(z, splineObj.p)]';
+
+% display results on current axes 
+visboundaries(outln); 
+plot(splineSample(:,2), splineSample(:,1), 'b');
