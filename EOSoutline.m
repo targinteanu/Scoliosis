@@ -134,15 +134,7 @@ function show3D_Callback(hObject, eventdata, handles)
 % hObject    handle to show3D (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-%handles.ifoSag.PixelSpacing = handles.ifoSag.ImagerPixelSpacing;
-%handles.ifoCor.PixelSpacing = handles.ifoCor.ImagerPixelSpacing;
-%{
-% set dimensions to mm
-splCorScl = splineRescale(handles.splCorObj, ...
-    handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2));
-splSagScl = splineRescale(handles.splSagObj, ...
-    handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2));
-%}
+
 splCorScl = handles.splCorObj; splSagScl = handles.splSagObj;
 zCor = handles.splCorSmp(:,1)*handles.ifoCor.PixelSpacing(1); % mm
 zSag = handles.splSagSmp(:,1)*handles.ifoSag.PixelSpacing(1); % mm
@@ -161,14 +153,6 @@ axes(handles.axes3); plot3(xScl, yScl, zScl, 'b'); grid on;
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
 ylim([1, size(handles.imgCor,2)] * handles.ifoCor.PixelSpacing(2));
 xlabel('x(mm)'); ylabel('y(mm)'); zlabel('z(mm)');
-
-function splObj = splineRescale(splObj, zscl, xscl)
-splPP = splObj.p.coefs;
-zmult = (1/zscl).^(0:(size(splPP, 2)-1));
-splPP = splPP.*zmult; 
-splPP = splPP * xscl; 
-splObj.p.coefs = splPP; 
-splObj.p.breaks = splObj.p.breaks*zscl;
 
 % --- Executes on button press in saveButton.
 function saveButton_Callback(hObject, eventdata, handles)
@@ -236,7 +220,15 @@ ifoSag = dicominfo([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
     handles.img_fp,...
     'sag']);
+% PixelSpacing 
+if ~exist('ifoCor.PixelSpacing', 'var')
+    ifoCor.PixelSpacing = ifoCor.ImagerPixelSpacing;
+end
+if ~exist('ifoSag.PixelSpacing', 'var')
+    ifoSag.PixelSpacing = ifoSag.ImagerPixelSpacing;
+end
 handles.ifoCor = ifoCor; handles.ifoSag = ifoSag; 
+
 % get DICOM img
 imgCor = dicomread([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
