@@ -92,7 +92,8 @@ function inputCor_Callback(hObject, eventdata, handles)
 axes(handles.axesCor); 
 hold off; imshow(handles.imgCor); hold on;
 OL = roipoly; handles.CorOL = OL;
-[handles.imgCorFilt, handles.splCorObj, handles.splCorSmp] = process(handles.imgCor, OL); 
+[handles.imgCorFilt, handles.splCorObj, handles.splCorSmp] = processOL(handles.imgCor, OL, ...
+    handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2)); 
 guidata(hObject, handles);
 
 % --- Executes on button press in inputSag.
@@ -103,8 +104,30 @@ function inputSag_Callback(hObject, eventdata, handles)
 axes(handles.axesSag); 
 hold off; imshow(handles.imgSag); hold on;
 OL = roipoly; handles.SagOL = OL;
-[handles.imgSagFilt, handles.splSagObj, handles.splSagSmp] = process(handles.imgSag, OL); 
+[handles.imgSagFilt, handles.splSagObj, handles.splSagSmp] = processOL(handles.imgSag, OL, ...
+    handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2)); 
 guidata(hObject, handles);
+
+function [imgFiltered, splineObj, splineSample] = processOL(img, outln, zscl, xscl)
+% img is a double img [0, 1]; outln is a BW outline
+
+% filtering 
+im = imreconstruct(double(~outln), img); 
+imgFiltered = img - im; 
+imgFiltered = imgFiltered .* outln;
+
+% spline fitting 
+[r, c] = find(imgFiltered);
+[splineObj, gof] = fit(r*zscl, c*xscl, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
+z = min(r):max(r); 
+z = z*zscl;
+splineSample = [z/zscl; ppval(z, splineObj.p)/xscl]';
+% splineSample is in pixels, but splineObj is in mm
+
+% display results on current axes 
+visboundaries(outln); 
+plot(splineSample(:,2), splineSample(:,1), 'b');
+
 
 % --- Executes on button press in show3D.
 function show3D_Callback(hObject, eventdata, handles)
@@ -113,13 +136,16 @@ function show3D_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %handles.ifoSag.PixelSpacing = handles.ifoSag.ImagerPixelSpacing;
 %handles.ifoCor.PixelSpacing = handles.ifoCor.ImagerPixelSpacing;
+%{
 % set dimensions to mm
 splCorScl = splineRescale(handles.splCorObj, ...
     handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2));
 splSagScl = splineRescale(handles.splSagObj, ...
     handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2));
-zCor = handles.splCorSmp(:,1)*handles.ifoCor.PixelSpacing(1); 
-zSag = handles.splSagSmp(:,1)*handles.ifoSag.PixelSpacing(1);
+%}
+splCorScl = handles.splCorObj; splSagScl = handles.splSagObj;
+zCor = handles.splCorSmp(:,1)*handles.ifoCor.PixelSpacing(1); % mm
+zSag = handles.splSagSmp(:,1)*handles.ifoSag.PixelSpacing(1); % mm
 zScl = max(zCor(1),zSag(1)):.5:min(zCor(end),zSag(end)); 
 xScl = ppval(zScl, splSagScl.p);
 yScl = ppval(zScl, splCorScl.p);
@@ -171,6 +197,7 @@ CorOL = handles.CorOL;
 save(fn, 'splSclObj', 'splSclRng', 'splSclSmp', ...
     'imgSagFilt', 'splSagObj', 'splSagSmp', 'SagOL', ...
     'imgCorFilt', 'splCorObj', 'splCorSmp', 'CorOL');
+disp(['saving ',fn])
 
 
 % --- Executes on button press in nextButton.
@@ -267,23 +294,3 @@ end
 
 % Update handles structure
 guidata(hObject, handles);
-
-function [imgFiltered, splineObj, splineSample] = process(img, outln)
-% img is a double img [0, 1]; outln is a BW outline
-zscl=1;xscl=1;
-% filtering 
-im = imreconstruct(double(~outln), img); 
-imgFiltered = img - im; 
-imgFiltered = imgFiltered .* outln;
-
-% spline fitting 
-[r, c] = find(imgFiltered);
-r = r*zscl; c = c*xscl;
-[splineObj, gof] = fit(r, c, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
-z = min(r):max(r); 
-z = z*zscl;
-splineSample = [z/zscl; ppval(z, splineObj.p)/xscl]';
-
-% display results on current axes 
-visboundaries(outln); 
-plot(splineSample(:,2), splineSample(:,1), 'b');
