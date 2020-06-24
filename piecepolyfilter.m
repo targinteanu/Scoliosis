@@ -1,5 +1,5 @@
 function [polyFilt, polyFiltVal, polyFS, polyFSVal, polyVal, X] = ...
-    piecepolyfilter(wcutoff, xBreaks, yCoefs, xN)
+    piecepolyfilter(wcutoff, xBreaks, yCoefs, xRng, xN)
 % Applies rectangular filters to piecewise polynomial e.g. spline. 
 % Input: 
 %   wcutoff: frequency cutoff, in units of 1/[x units] 
@@ -8,7 +8,8 @@ function [polyFilt, polyFiltVal, polyFS, polyFSVal, polyVal, X] = ...
 %           bounds as rows of an L-by-m matrix, going from zeroth-order
 %           coefficient (first column) to mth-order coefficient (last
 %           column). 
-%   xN: # of points per interval. If unspecified, default = 100
+%   xRng: range of X values to evaluate 
+%   xN: # of points per interval. If unspecified, default = 5
 % Output: 
 %   result of rectangular filter using convolution in [y units]:
 %     polyFilt: L-by-1 cell array of functions corresponding to each pair
@@ -22,13 +23,19 @@ function [polyFilt, polyFiltVal, polyFS, polyFSVal, polyVal, X] = ...
 %            of X in [y units]
 %   X: vector independent variable of evaluated functions in [x units]
 
-if nargin < 4
-    xN = 100; % default to 100 x points per interval
+if nargin < 5
+    xN = 5; % default to 5 x points per interval
 end
+
+% Select Range 
+inRng = (xBreaks > xRng(1))&(xBreaks < xRng(2));
+xBreaks = [xRng(1), xBreaks(inRng), xRng(2)];
+inRng = (inRng(1:(end-1)))&(inRng(2:end));
+yCoefs = yCoefs(inRng, :);
 
 ply_helper = @(p, x) p(1) + p(2)*x + p(3)*x.^2 + p(4)*x.^3;
 
-ply = @(p, x, b) ply_helper(p, x) .* (x>b(1) & x<b(2));
+ply = @(p, x, b) ply_helper(p, x) .* (x>=b(1) & x<=b(2));
 
 filtply_helper = @(w, p, x, t) (1/(pi*w^3))*(...
     w^3 * sinint(w*(t-x)) .* (ply_helper(p, x)) -...

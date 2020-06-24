@@ -16,6 +16,7 @@ for p = patient_list
     end
 end
 
+% Sag = x; Cor = y
 
 figure('Position', [50, 100, 1400, 800]);
 ntot = length(patients_avail);
@@ -28,6 +29,17 @@ for i = 1:ntot
     load(fnp);
     
     plot3(splSclSmp(:,1), splSclSmp(:,2), splSclSmp(:,3));
-    grid on;
-    wr = getWrithe(splSclSmp); title(num2str(wr));
+    grid on; hold on;
+    %wr = getWrithe(splSclSmp); title(num2str(wr));
+    
+    fcutoff = 1/40; %1/mm
+    
+    [~,corFilt,~,corFS,corPoly,corZ] = ...
+        piecepolyfilter(fcutoff, splCorObj.p.breaks, splCorObj.p.coefs, splSclRng);
+    [~,sagFilt,~,sagFS,sagPoly,sagZ] = ...
+        piecepolyfilter(fcutoff, splSagObj.p.breaks, splSagObj.p.coefs, splSclRng);
+    size(corZ)
+    size(sagZ)
+    plot3(sagFilt, corFilt, sagZ);
+    plot3(sagFS, corFS, sagZ);
 end
