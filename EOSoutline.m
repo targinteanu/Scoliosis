@@ -145,7 +145,7 @@ yScl = ppval(zScl, splCorScl.p);
 % store 
 handles.splSclObj = {splSagScl, splCorScl};
 handles.splSclRng = [min(zScl); max(zScl)];
-handles.splSclSmp = [xScl, yScl, zScl];
+handles.splSclSmp = [xScl', yScl', zScl'];
 guidata(hObject, handles);
 
 % display 
