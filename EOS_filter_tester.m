@@ -34,6 +34,7 @@ for i = 1:ntot
     plot3(splSclSmp(:,1), splSclSmp(:,2), splSclSmp(:,3));
     grid on; hold on;
     %wr = getWrithe(splSclSmp); title(num2str(wr));
+    title(num2str(patients_avail(i)));
     
     fcutoff = 1/100; %1/mm
     

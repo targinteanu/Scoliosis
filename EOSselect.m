@@ -1,7 +1,7 @@
-function finalproj
+function EOSselect
 
 %% setting up the window and background
-width = 1280; windowheight = 550; margin = 50; menuwidth = 100; 
+width = 1280; windowheight = 750; margin = 50; menuwidth = 100; 
 ax = []; btn = []; txt = [];
 
 [fn, fp] = uigetfile('*.mat', 'Select Scan Directory File'); 
@@ -75,7 +75,7 @@ handleNewPatient(current_patient);
                 'String', {'none', 'cor', 'sag'});
             txt(i) = uicontrol('Style','text',...
                 'Position',[(i-1)*imwidth + i*margin, windowheight-2*margin, imwidth, margin],...
-                'String',[imgs(i).name ' \n ' num2str(size(img,1)) ' x ' num2str(size(img,2))]);
+                'String',[num2str(size(img,1)), ' x ', num2str(size(img,2)), newline, imgs(i).name]);
         end
     end
 

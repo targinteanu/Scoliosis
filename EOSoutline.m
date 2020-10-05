@@ -22,7 +22,7 @@ function varargout = EOSoutline(varargin)
 
 % Edit the above text to modify the response to help EOSoutline
 
-% Last Modified by GUIDE v2.5 28-Mar-2020 21:38:11
+% Last Modified by GUIDE v2.5 08-Sep-2020 02:47:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -211,6 +211,9 @@ end
 %show3D_Callback(hObject, eventdata, handles)
 
 function shownewpatient(hObject, eventdata, handles)
+set(handles.PatientNum, 'String', ...
+    num2str(handles.patient_list(handles.current_patient)));
+
 % get DICOM info 
 ifoCor = dicominfo([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
