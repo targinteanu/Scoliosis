@@ -118,9 +118,9 @@ for i = 1:length(k)
 end
 %}
 
-slc_sharp = imsharpen(slc_large, 'Amount', 30, 'Radius', 1.25, 'Threshold', 0);
+slc_sharp = imsharpen(slc_bright, 'Amount', 35, 'Radius', 1, 'Threshold', 0);
 %slc_sharp = conv2(slc_large,k{4}); slc_sharp = slc_sharp(2:end-1,2:end-1);
-slc_sharp(seg_large==0) = slc_large(seg_large==0);
+slc_sharp(seg_large==0) = slc_bright(seg_large==0);
 slc_sharp = slc_sharp.*(slc_sharp > 0);
 
 figure; subplot(1,2,1); imshow(slc_bright, []); %subplot(2,2,3); histogram(slc(:));
@@ -129,7 +129,7 @@ subplot(1,2,2); imshow(slc_sharp, []); %subplot(2,2,4); histogram(slc_sharp(:));
 %% show seg
 colr = {'r', 'b', 'g', 'c', 'm', 'y'};
 lsty = {'-', '--', ':', '-.'};
-figure; imshow(slc_bright, []); hold on;
+figure; imshow(slc_sharp, []); hold on;
 se = strel('sphere', seR);
 c = 1;
 for n = 1:length(vertebrae)
