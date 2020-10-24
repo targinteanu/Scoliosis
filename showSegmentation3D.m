@@ -75,19 +75,19 @@ slc_large = imresize(slc, scl, 'bilinear');
 seg_large = imresize(seg,scl, 'nearest');
 
 %% brighten
-mapbrightness = @(I) 1-exp(-3*I);
+mapbrightness = @(I,k) 1-exp(-k*I);
 
 figure; 
 subplot(2,2,1); histogram(slc_large(:)); 
-slc_bright = mapbrightness(slc_large); 
+slc_bright = mapbrightness(slc_large,3); 
 subplot(2,2,2); histogram(slc_bright(:));
 subplot(2,2,3); imshow(slc_large, []);
 subplot(2,2,4); imshow(slc_bright, []); 
 
 %% sharpening matrix
 figure; 
-amt = 15:5:35;
-rad = .5:.25:1.5;
+amt = 30:5:40;
+rad = 1:.25:1.5;
 for i = 1:length(amt)
     for j = 1:length(rad)
         spidx = (j-1)*length(rad) + i;
@@ -118,7 +118,7 @@ for i = 1:length(k)
 end
 %}
 
-slc_sharp = imsharpen(slc_bright, 'Amount', 35, 'Radius', 1, 'Threshold', 0);
+slc_sharp = imsharpen(slc_bright, 'Amount', 40, 'Radius', 1.25, 'Threshold', 0);
 %slc_sharp = conv2(slc_large,k{4}); slc_sharp = slc_sharp(2:end-1,2:end-1);
 slc_sharp(seg_large==0) = slc_bright(seg_large==0);
 slc_sharp = slc_sharp.*(slc_sharp > 0);
