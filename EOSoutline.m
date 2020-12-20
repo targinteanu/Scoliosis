@@ -91,7 +91,8 @@ function inputCor_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesCor); 
 hold off; imshow(handles.imgCor); hold on;
-OL = roipoly; handles.CorOL = OL;
+[OL, vertx, verty] = roipoly; 
+handles.CorOL = OL; handles.CorVertX = vertx; handles.CorVertY = verty;
 [handles.imgCorFilt, handles.splCorObj, handles.splCorSmp] = processOL(handles.imgCor, OL, ...
     handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2)); 
 guidata(hObject, handles);
@@ -103,7 +104,8 @@ function inputSag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesSag); 
 hold off; imshow(handles.imgSag); hold on;
-OL = roipoly; handles.SagOL = OL;
+[OL, vertx, verty] = roipoly; 
+handles.SagOL = OL; handles.SagVertX = vertx; handles.SagVertY = verty;
 [handles.imgSagFilt, handles.splSagObj, handles.splSagSmp] = processOL(handles.imgSag, OL, ...
     handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2)); 
 guidata(hObject, handles);
@@ -214,6 +216,8 @@ function shownewpatient(hObject, eventdata, handles)
 set(handles.PatientNum, 'String', ...
     num2str(handles.patient_list(handles.current_patient)));
 
+set(handles.Writhe, 'String', 'Wr = ');
+
 % get DICOM info 
 ifoCor = dicominfo([handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
@@ -256,6 +260,12 @@ fn = [handles.base_fp,...
     'patient',num2str(handles.patient_list(handles.current_patient)),...
     ' EOSoutline data.mat'];
 
+fn2 = [handles.base_fp,...
+    num2str(handles.patient_list(handles.current_patient)),...
+    handles.img_fp,...
+    'patient',num2str(handles.patient_list(handles.current_patient)),...
+    ' filtered data.mat'];
+
 if exist(fn, 'file')
     disp(['loading ',fn])
     load(fn);
@@ -275,12 +285,26 @@ handles.CorOL = CorOL;
 
     axes(handles.axesCor); hold on; 
     visboundaries(CorOL); 
-    plot(splCorSmp(:,2), splCorSmp(:,1), 'b');
+    plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
     
     axes(handles.axesSag); hold on; 
     visboundaries(SagOL); 
-    plot(splSagSmp(:,2), splSagSmp(:,1), 'b');
+    plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
 
+    if exist(fn2, 'file')
+        disp(['loading ',fn2])
+        load(fn2);
+        
+        set(handles.Writhe, 'String', ['Wr = ' num2str(Wr)]);
+        
+        splfiltPix = splfilt/handles.ifoCor.PixelSpacing(1);
+                
+        axes(handles.axesSag); hold on;
+        plot(splfiltPix(:,1), splfiltPix(:,3), 'm', 'LineWidth', 2);
+        axes(handles.axesCor); hold on;
+        plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
+    end
+    
 else
 clear handles.splSclObj handles.splSclRng handles.splSclSmp
 clear handles.imgSagFilt handles.splSagObj handles.splSagSmp handles.SagOL
