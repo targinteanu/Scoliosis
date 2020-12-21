@@ -10,8 +10,8 @@ m = (y2-y1)/(x2-x1); k = y1-m*x1;
 coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
 b = WLS(X,Y,wts,10);
 y = coeff2fun(b', x); 
-[b2,x0] = WLStangent(X,Y,wts,1, m,k,x1);
-x_2 = (min(0, x0)):.1:50;
+[b2,x0] = WLStangent(X,Y,wts,3, m,k,0,zeros(1,3));
+x_2 = x0:.1:50;
 y_2 = coeff2fun(b2', x_2);
 dydx0 = (y_2(2)-y_2(1))/(x_2(2)-x_2(1));
 
@@ -26,41 +26,64 @@ function beta = WLS(x,y,w,N)
     beta = ((X'*diag(w)*X)^-1)*X'*diag(w)*y;
 end
 
-function [beta,X0] = WLStangent(x,y,w,N, m0,c0,xstart)
-    X = cell2mat(arrayfun(@(xi) xi.^(0:N), x, 'UniformOutput', false));
+function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
+    options = optimoptions('fsolve','Display','iter','PlotFcn',@optimplotfirstorderopt);
+    coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
     
-    function eqn = eqnsolver(vars, X,y,W,N, m0,c0)
-        
-        %x0 = vars(1); b1 = vars(2); b = vars(3:end);
-        x0 = vars(1); b = vars(2:end);
+    i = 2:N;
+    % 2 solve for x0
+    eqnX0 = @(x0, b,i, m0,c0) c0 + x0.*(m0 + 1/m0) - b(1) + sum((i-1).*b(3:end).*(x0.^i));
+    % 3 solve for b1
+    eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
     
-        eqnsB = ((X'*W*X)^-1)*X'*W*y - b;
-        
-        b = b';
+    % init vars for loop
+    learnrt = 1e-10;
+    b = bstart;
+    plt = [0,0,b];
     
-        %{
-        i = 2:N;
-        eqnX0 = b(1) - c0 + x0.*(m0 + 1/m0) + sum((i-1).*b(2:end).*(x0.^i));
-        eqnB1 = m0 - b1 - sum(i.*b(2:end).*(x0.^(i-1)));
-                
-        eqn = [eqnX0; eqnB1; eqnsB];
-        %}
+    for n = 1:100
+        % 2 solve for x0
+        x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
+            xstart);
+        % 3 solve for b1
+        b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
+            bstart(2));
+        b(2) = b1solved;
         
-        i = 1:N;
-        eqn1 = b(1) - m0*x0 - c0 + sum(b.*(x0.^i));
-        eqn2 = (1/m0) + sum(i.*b.*(x0.^(i-1)));
+        % 4 calculate gradient 
+        derrdb = zeros(size(b));
+        err=0;
+        for j = 1:length(x)
+            yj = coeff2fun(b, x(j)); err = err+(y(j)-yj)^2; 
+            
+            dx0db0 = 1./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
+            dx0dbk = @(k) -((k-1).*x0solved.^k)./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
+            
+            dydb0 = 1 - x(j)*dx0db0.*sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2)));
+            dydbk = @(k) x(j).^k - x(j).*(...
+                sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2))).*dx0dbk(k) + k.*x0solved.^(k-1) );
+            
+            dydb = [dydb0, 0, arrayfun(@(k) dydbk(k), 2:(N-1))];
+            derrdb = derrdb + w(j)*(y(j)-yj)*dydb;
+        end
         
-        eqn = [eqn1; eqn2; eqnsB];
-    
+        plt = [plt; err,norm(derrdb),b];
+        
+        % gradient descend
+        b = b + learnrt*derrdb;
+        
     end
     
-    options = optimoptions('fsolve','Display','iter','PlotFcn',@optimplotfirstorderopt);
-    solvars = fsolve(@(v) eqnsolver(v, X,y,diag(w),N, m0,c0),...
-        [xstart; zeros(N+1,1)], options);
-    %    [xstart; zeros(N+1,1)], options);
-    eqnsolver(solvars, X,y,diag(w),N, m0,c0)
+    % 2 solve for x0
+    x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
+        xstart);
+    % 3 solve for b1
+    b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
+        bstart(2));
+    b(2) = b1solved;
     
-    %beta = [solvars(3); solvars(2); solvars(4:end)];
-    beta = solvars(2:end);
-    X0 = solvars(1);
+    figure; plot(diff(plt));
+    
+    beta = b';
+    X0 = x0solved;
 end
