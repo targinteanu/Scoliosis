@@ -27,7 +27,7 @@ function beta = WLS(x,y,w,N)
 end
 
 function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
-    options = optimoptions('fsolve','Display','iter','PlotFcn',@optimplotfirstorderopt);
+    options = optimoptions('fsolve','Display','none');%'iter','PlotFcn',@optimplotfirstorderopt);
     coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
     
     i = 2:N;
@@ -37,22 +37,35 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
     
     % init vars for loop
+    nsteps = 500;
     learnrt = 1e-10;
     b = bstart;
-    plt = [0,0,b];
+    plt = [0,0,learnrt,b];
+    errs = zeros(nsteps,1);
+    KI=0; KD=0; KP=0;
     
-    for n = 1:100
+    figure('Position', [50 100 1300 700]); 
+    subplot(1,3,1); errplt1 = plot(plt(:,1));
+    hold on; errplt2 = plot([0, diff(plt(:,1))]); errplt3 = plot(plt(:,2));
+    subplot(1,3,2); learnplt = plot(plt(:,3)); 
+    subplot(1,3,3); coeffplt=cell(length(b),1);
+    for j = 1:length(b)
+        coeffplt{j} = plot(plt(:,3+j)); hold on; 
+    end
+    pause(.01);
+    
+    for n = 1:nsteps        
         % 2 solve for x0
         x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
-            xstart);
+            xstart, options);
         % 3 solve for b1
         b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
-            bstart(2));
+            bstart(2), options);
         b(2) = b1solved;
         
         % 4 calculate gradient 
         derrdb = zeros(size(b));
-        err=0;
+        err=0; 
         for j = 1:length(x)
             yj = coeff2fun(b, x(j)); err = err+(y(j)-yj)^2; 
             
@@ -67,7 +80,29 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
             derrdb = derrdb + w(j)*(y(j)-yj)*dydb;
         end
         
-        plt = [plt; err,norm(derrdb),b];
+        % error tracking, learning rate adjustment 
+        errs(n)=err;
+        if n>1
+            derr = (errs(n)-errs(n-1));
+            if n>2
+                dderr = (errs(n)+errs(n-2)-2*errs(n-1));
+            else
+                dderr = 0;
+            end
+        else
+            derr=0;
+            dderr=0;
+        end
+        learnrt = (learnrt + KI*abs(err) + KP*abs(derr))/(1 + KD*abs(dderr));
+        
+        plt = [plt; err,norm(derrdb),learnrt,b];
+        
+        errplt1.YData = plt(:,1); errplt3.YData = plt(:,2); errplt2.YData = diff(plt(:,1));
+        learnplt.YData = plt(:,3);
+        for j = 1:length(coeffplt)
+            coeffplt{j}.YData = plt(:,3+j);
+        end
+        pause(.00001);
         
         % gradient descend
         b = b + learnrt*derrdb;
@@ -81,8 +116,6 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
         bstart(2));
     b(2) = b1solved;
-    
-    figure; plot(diff(plt));
     
     beta = b';
     X0 = x0solved;
