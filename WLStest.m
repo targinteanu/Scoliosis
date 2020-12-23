@@ -37,17 +37,17 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
     
     % init vars for loop
-    nsteps = 500;
-    learnrt = 1e-10;
+    nsteps = 10000;
+    learnrt = 0;
     b = bstart;
     plt = [0,0,learnrt,b];
-    errs = zeros(nsteps,1);
-    KI=0; KD=0; KP=0;
+    errs = zeros(nsteps,1); dderrs = zeros(size(errs));
+    KI=1e-17; KD=1; KP=1e-15;
     
     figure('Position', [50 100 1300 700]); 
-    subplot(1,3,1); errplt1 = plot(plt(:,1));
+    subplot(1,3,1); errplt1 = plot(plt(:,1)); ht1 = title('');
     hold on; errplt2 = plot([0, diff(plt(:,1))]); errplt3 = plot(plt(:,2));
-    subplot(1,3,2); learnplt = plot(plt(:,3)); 
+    subplot(1,3,2); learnplt = plot(plt(:,3)); ht2 = title('');
     subplot(1,3,3); coeffplt=cell(length(b),1);
     for j = 1:length(b)
         coeffplt{j} = plot(plt(:,3+j)); hold on; 
@@ -85,20 +85,22 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
         if n>1
             derr = (errs(n)-errs(n-1));
             if n>2
-                dderr = (errs(n)+errs(n-2)-2*errs(n-1));
+                dderrs(n) = (errs(n)+errs(n-2)-2*errs(n-1));
             else
-                dderr = 0;
+                dderrs(n) = 0;
             end
         else
             derr=0;
-            dderr=0;
+            dderrs(n)=0;
         end
-        learnrt = (learnrt + KI*abs(err) + KP*abs(derr))/(1 + KD*abs(dderr));
+        dderr = mean(abs(dderrs(max(n-20,1):n)));
+        learnrt = (learnrt + KI*abs(err) - KP*(derr))/(1 + KD*abs(dderr));
         
         plt = [plt; err,norm(derrdb),learnrt,b];
         
+        ht1.String = num2str(err);
         errplt1.YData = plt(:,1); errplt3.YData = plt(:,2); errplt2.YData = diff(plt(:,1));
-        learnplt.YData = plt(:,3);
+        learnplt.YData = plt(:,3); ht2.String = num2str(learnrt);
         for j = 1:length(coeffplt)
             coeffplt{j}.YData = plt(:,3+j);
         end
