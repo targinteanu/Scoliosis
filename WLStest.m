@@ -39,35 +39,47 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     % init vars for loop
     nsteps = 10000;
     learnrt = 1e-10;
-    b = bstart;
+    b = bstart; 
     plt = [0,0,learnrt,b];
     errs = zeros(nsteps,1); dderrs = zeros(size(errs));
-    KI=1e-17; KD=1; KP=1e-15;
+    KI=1e-17; KD=1; KP=1e-10;
     
     figure('Position', [50 100 1300 700]); 
-    subplot(1,3,1); errplt1 = plot(plt(:,1)); ht1 = title('');
+    subplot(1,3,1); errplt1 = plot(plt(:,1)); ht1 = title(''); ylim([-2e9, 1e10]);
     hold on; errplt2 = plot([0, diff(plt(:,1))]); errplt3 = plot(plt(:,2));
-    subplot(1,3,2); learnplt = plot(plt(:,3)); ht2 = title('');
-    subplot(1,3,3); coeffplt=cell(length(b),1);
+    subplot(1,3,2); learnplt = plot(plt(:,3)); ht2 = title(''); 
+    subplot(1,3,3); coeffplt=cell(length(b),1); ylim([-10, 10]);
     for j = 1:length(b)
         coeffplt{j} = plot(plt(:,3+j)); hold on; 
     end
     pause(.01);
     
-    for n = 1:nsteps        
-        % 2 solve for x0
-        x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
-            xstart, options);
-        % 3 solve for b1
-        b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
-            bstart(2), options);
-        b(2) = b1solved;
+    for n = 1:nsteps
+        cont = false; 
+        while ~cont
+        cont = true;
         
+        try
+            % 2 solve for x0
+            x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
+                xstart, options);
+            % 3 solve for b1
+            b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
+                bstart(2), options);
+            b(2) = b1solved;
+        catch
+            cont = false;
+            learnrt = learnrt/2;
+        end
+        
+        if cont
+            
         % 4 calculate gradient 
+        errfn = @(b) sum( arrayfun( @(j) ( y(j) - coeff2fun(b, x(j)) ).^2, 1:length(x) ) );
+        err = errfn(b);
         derrdb = zeros(size(b));
-        err=0; 
         for j = 1:length(x)
-            yj = coeff2fun(b, x(j)); err = err+(y(j)-yj)^2; 
+            yj = coeff2fun(b, x(j));  
             
             dx0db0 = 1./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
             dx0dbk = @(k) -((k-1).*x0solved.^k)./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
@@ -81,9 +93,8 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
         end
         
         % error tracking, learning rate adjustment 
-        errs(n)=err;
         if n>1
-            derr = (errs(n)-errs(n-1));
+            derr = (err-errs(n-1));
             if n>2
                 dderrs(n) = (errs(n)+errs(n-2)-2*errs(n-1));
             else
@@ -94,11 +105,18 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
             dderrs(n)=0;
         end
         dderr = mean(abs(dderrs(max(n-20,1):n)));
-        %learnrt = (learnrt + KI*abs(err) - KP*(derr))/(1 + KD*abs(dderr));
-        if n>100
-            learnrt = 5e-10;
+        
+        if n>10
+            learnrt = max(1e-10, learnrt - KP*derr);
+            cont = (derr <= 0);
+        else
+            cont=true;
         end
         
+        end
+        
+        %if cont
+                        
         plt = [plt; err,norm(derrdb),learnrt,b];
         
         ht1.String = num2str(err);
@@ -109,8 +127,17 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
         end
         pause(.00001);
         
+        if cont
+            errs(n)=err;
+            bprev = b;
+        else
+            b = bprev;
+        end
+                
         % gradient descend
         b = b + learnrt*derrdb;
+                
+        end
         
     end
     
