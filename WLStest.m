@@ -38,7 +38,7 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     
     % init vars for loop
     nsteps = 10000;
-    learnrt = 0;
+    learnrt = 1e-10;
     b = bstart;
     plt = [0,0,learnrt,b];
     errs = zeros(nsteps,1); dderrs = zeros(size(errs));
@@ -94,7 +94,10 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
             dderrs(n)=0;
         end
         dderr = mean(abs(dderrs(max(n-20,1):n)));
-        learnrt = (learnrt + KI*abs(err) - KP*(derr))/(1 + KD*abs(dderr));
+        %learnrt = (learnrt + KI*abs(err) - KP*(derr))/(1 + KD*abs(dderr));
+        if n>100
+            learnrt = 5e-10;
+        end
         
         plt = [plt; err,norm(derrdb),learnrt,b];
         
