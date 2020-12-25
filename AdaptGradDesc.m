@@ -11,10 +11,10 @@ errs = nan(nsteps,1); derrs = nan(size(errs)); gradnorms = nan(size(errs));
 mus = nan(nsteps,1); mus(1) = mu;
 bs = nan(nsteps,length(b)); bs(1,:)=b;
 derr = 0;  
-KP = 1e-13;
+KP = 1e-25; KI = KP/100;
 
 % initial gradient, error calculations
-err = sum( arrayfun(@(j) Ytrue(j) - yfun(b, Xtrue(j)), 1:length(Xtrue)) );
+err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b, Xtrue(j))).^2, 1:length(Xtrue)) );
 derr_db = gradfun(b); gradnorm = norm(derr_db); 
 errs(1) = err; gradnorms(1) = gradnorm;
 
@@ -23,10 +23,10 @@ colr = {'k',  'b',  'r',  'c',  'm',  'g',  'y'};
 styl = {'ok', 'ok', 'or', 'oc', 'om', 'og', 'oy'};
 figure('Position', [50 100 1300 700]);
 plts(1).ax = subplot(1,3,1); 
-plts(1).plt{1} = plot(errs, colr{1}); hold on; plts(1).plt{2} = plot(derrs, colr{2}); 
-    plts(1).plt{3} = plot(gradnorms, colr{3});
+plts(1).plt{2} = plot(errs, colr{1}); hold on; plts(1).plt{1} = plot(derrs, colr{2}); 
+%    plts(1).plt{3} = plot(gradnorms, colr{3});
 plts(1).nextval{1} = plot(2,err,styl{1}); plts(1).nextval{2} = plot(2,derr,styl{2}); 
-    plts(1).nextval{3} = plot(2,err,styl{3});
+%    plts(1).nextval{3} = plot(2,err,styl{3});
 plts(1).t = title(['Error = ' num2str(err)]);
 plts(2).ax = subplot(1,3,2); 
 plts(2).plt{1} = plot(mus, colr{1}); hold on;
@@ -38,35 +38,55 @@ for j = 1:length(b)
     plts(3).nextval{j} = plot(2,b(j),styl{j});
 end
 plts(3).t = title(['b0 = ']);
-for hp = plts
+for hp = plts(1:2)
     xlim(hp.ax, [0, 10]);
 end
 pause(.01);
 
 
 % iterate
-for n = 2:nsteps
+n = 1;
+notyetfound = true;
+mulimit = 1e-30; enablemulimit = false;
+while notyetfound
+    n = n+1;
     retry = true;
-    while retry
+    while retry&notyetfound
         retry = false;
+        enablemulimit = enablemulimit|(abs(mu)>mulimit);
     
         % try performing a gradient step and getting the new error
         b_new = b + mu*derr_db;
         try
-            err = sum( arrayfun(@(j) Ytrue(j) - yfun(b_new, Xtrue(j)), 1:length(Xtrue)) );
+            err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b_new, Xtrue(j))).^2, 1:length(Xtrue)) );
         catch
             retry = true;
-            mu = mu/2;
+            mu = mu/10;
         end
         
         if ~retry
-            derr = err - errs(n-1);
+            derr = err - errs(n-1); 
+            db = norm(b_new-b);
+            if db
+                derr=derr/db;
+            end
             
-            if n > 10
+            if n > 5
+                if n > 7
+                    notyetfound = (n<nsteps)&(abs(derr)>1e-6);
+                    if enablemulimit&(abs(mu)<mulimit)
+                        notyetfound = false;
+                    end
+                end
+                
                 % ADJUST LEARNING RATE
-                PIDvar = KP*derr;
-                mu = mu - PIDvar;
-                retry = retry|(derr>0)|(sum([b_new(:);err])==Inf);
+                PIDvar = -KP*derr +KI*err;
+                if (derr>(0*err))|(sum([b_new(:);err])==Inf)
+                    retry = true;
+                    mu = .5*mu;
+                else
+                    mu = mu + PIDvar;
+                end
             else
                 retry = false;
             end
@@ -98,7 +118,8 @@ for n = 2:nsteps
                 hp.nextval{j}.XData = n;
             end
         end
-        plts(1).nextval{1}.YData = err; plts(1).nextval{2}.YData = derr; plts(1).nextval{3}.YData = gradnorm;
+        plts(1).nextval{2}.YData = err; plts(1).nextval{1}.YData = derr; 
+        %    plts(1).nextval{3}.YData = gradnorm;
         plts(2).nextval{1}.YData = mu;
         for j = 1:length(b_new)
             plts(3).nextval{j}.YData = b_new(j);
@@ -106,7 +127,8 @@ for n = 2:nsteps
         
         % update plots
         if ~retry
-            plts(1).plt{1}.YData = errs; plts(1).plt{2}.YData = derrs; plts(1).plt{3}.YData = gradnorms;
+            plts(1).plt{2}.YData = errs; plts(1).plt{1}.YData = derrs; 
+            %    plts(1).plt{3}.YData = gradnorms;
             plts(2).plt{1}.YData = mus;
             for j = 1:length(b_new)
                 plts(3).plt{j}.YData = bs(:,j);
@@ -114,9 +136,9 @@ for n = 2:nsteps
         end
         
         % update title, view range
-        for hp = plts
+        for hp = plts(1:2)
             hp.t.String = num2str(hp.nextval{1}.YData(1));
-            win = [max(1, n-10), max(n, 10)];
+            win = [max(1, n-50), max(n, 10)];
             xlim(hp.ax, win);
             mn = zeros(length(hp.plt)); mx = zeros(size(mn));
             for j = 1:length(hp.plt)
