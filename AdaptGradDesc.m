@@ -1,4 +1,4 @@
-function args = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu)
+function beta = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu)
 % gradfun: of the form d_err/d_b = gradfun(b_old)
 % yfun: of the form y = yfun(b, x)
 % Xtrue, Ytrue: paired actual vaules of Y, X used to calculate error 
@@ -7,11 +7,11 @@ function args = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu)
 
 % init vars
 nsteps = 10000;
-errs = zeros(1,nsteps); derrs = zeros(size(errs)); gradnorms = zeros(size(errs));
-mus = zeros(1,nsteps); mus(1) = mu;
-bs = zeros(length(b),nsteps); bs(:,1)=b;
+errs = nan(nsteps,1); derrs = nan(size(errs)); gradnorms = nan(size(errs));
+mus = nan(nsteps,1); mus(1) = mu;
+bs = nan(nsteps,length(b)); bs(1,:)=b;
 derr = 0;  
-KP = 1e-10;
+KP = 1e-13;
 
 % initial gradient, error calculations
 err = sum( arrayfun(@(j) Ytrue(j) - yfun(b, Xtrue(j)), 1:length(Xtrue)) );
@@ -22,20 +22,25 @@ errs(1) = err; gradnorms(1) = gradnorm;
 colr = {'k',  'b',  'r',  'c',  'm',  'g',  'y'};
 styl = {'ok', 'ok', 'or', 'oc', 'om', 'og', 'oy'};
 figure('Position', [50 100 1300 700]);
-plts(1).ax = subplot(1,3,1); plts(1).t = ['Error = ' num2str(err)];
+plts(1).ax = subplot(1,3,1); 
 plts(1).plt{1} = plot(errs, colr{1}); hold on; plts(1).plt{2} = plot(derrs, colr{2}); 
     plts(1).plt{3} = plot(gradnorms, colr{3});
 plts(1).nextval{1} = plot(2,err,styl{1}); plts(1).nextval{2} = plot(2,derr,styl{2}); 
     plts(1).nextval{3} = plot(2,err,styl{3});
-plts(2).ax = subplot(1,3,2); plts(1).t = ['\mu = ' num2str(mu)];
-plts(2).plt{1} = plot(mus, colr{1});
+plts(1).t = title(['Error = ' num2str(err)]);
+plts(2).ax = subplot(1,3,2); 
+plts(2).plt{1} = plot(mus, colr{1}); hold on;
 plts(2).nextval{1} = plot(2,mu,styl{1});
-plts(2).ax = subplot(1,3,2); plts(1).t = ['b0 = '];
+plts(2).t = title(['\mu = ' num2str(mu)]);
+plts(3).ax = subplot(1,3,3); 
 for j = 1:length(b)
-    plts(3).plt{j} = plot(bs(j,:), colr{j}); hold on; 
+    plts(3).plt{j} = plot(bs(:,j), colr{j}); hold on; 
     plts(3).nextval{j} = plot(2,b(j),styl{j});
 end
-xlim(plts.ax, [0, 10]);
+plts(3).t = title(['b0 = ']);
+for hp = plts
+    xlim(hp.ax, [0, 10]);
+end
 pause(.01);
 
 
@@ -51,6 +56,7 @@ for n = 2:nsteps
             err = sum( arrayfun(@(j) Ytrue(j) - yfun(b_new, Xtrue(j)), 1:length(Xtrue)) );
         catch
             retry = true;
+            mu = mu/2;
         end
         
         if ~retry
@@ -58,8 +64,9 @@ for n = 2:nsteps
             
             if n > 10
                 % ADJUST LEARNING RATE
-                mu = mu - KP*derr;
-                retry = retry|(derr>0);
+                PIDvar = KP*derr;
+                mu = mu - PIDvar;
+                retry = retry|(derr>0)|(sum([b_new(:);err])==Inf);
             else
                 retry = false;
             end
@@ -71,12 +78,13 @@ for n = 2:nsteps
                 derr_db = gradfun(b); 
             catch
                 retry = true;
+                mu = mu/2;
             end
             
             if ~retry
                 gradnorm = norm(derr_db);
                 
-                bs(:,n) = b;
+                bs(n,:) = b;
                 errs(n) = err; derrs(n) = derr; gradnorms(n) = gradnorm;
                 mus(n) = mu;
             end
@@ -101,14 +109,14 @@ for n = 2:nsteps
             plts(1).plt{1}.YData = errs; plts(1).plt{2}.YData = derrs; plts(1).plt{3}.YData = gradnorms;
             plts(2).plt{1}.YData = mus;
             for j = 1:length(b_new)
-                plts(3).plt{j}.YData = bs(j);
+                plts(3).plt{j}.YData = bs(:,j);
             end
         end
         
         % update title, view range
         for hp = plts
             hp.t.String = num2str(hp.nextval{1}.YData(1));
-            win = [max(0, n-100), max(n, 10)];
+            win = [max(1, n-10), max(n, 10)];
             xlim(hp.ax, win);
             mn = zeros(length(hp.plt)); mx = zeros(size(mn));
             for j = 1:length(hp.plt)
@@ -120,10 +128,13 @@ for n = 2:nsteps
                 ylim(hp.ax, [mn,mx] + [-1,1]*.25*(mx-mn));
             end
         end
+        
+        pause(.00001);
     
     end
     
 end
 
+beta = b';
 
 end

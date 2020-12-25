@@ -26,129 +26,50 @@ function beta = WLS(x,y,w,N)
     beta = ((X'*diag(w)*X)^-1)*X'*diag(w)*y;
 end
 
+function derrdb = WLSgrad(b, x,y,N,w, m0,c0, coeff2fun, xstart,options)
+i = 2:N;
+
+eqnX0 = @(x0, b,i, m0,c0) c0 + x0.*(m0 + 1/m0) - b(1) + sum((i-1).*b(3:end).*(x0.^i));
+x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), xstart, options);
+eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
+b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), b(2), options);
+b(2) = b1solved;
+
+derrdb = zeros(size(b));
+for j = 1:length(x)
+    yj = coeff2fun(b, x(j));
+    
+    dx0db0 = 1./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
+    dx0dbk = @(k) -((k-1).*x0solved.^k)./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
+    
+    dydb0 = 1 - x(j)*dx0db0.*sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2)));
+    dydbk = @(k) x(j).^k - x(j).*(...
+        sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2))).*dx0dbk(k) + k.*x0solved.^(k-1) );
+    
+    dydb = [dydb0, 0, arrayfun(@(k) dydbk(k), 2:(N-1))];
+    derrdb = derrdb + w(j)*(y(j)-yj)*dydb;
+end
+end
+
+function y = getYvalue(b,x, N, m0,c0, coeff2fun, xstart,options)
+i = 2:N;
+
+eqnX0 = @(x0, b,i, m0,c0) c0 + x0.*(m0 + 1/m0) - b(1) + sum((i-1).*b(3:end).*(x0.^i));
+x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), xstart, options);
+eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
+b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), b(2), options);
+b(2) = b1solved;
+
+y = coeff2fun(b,x);
+end
+
 function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     options = optimoptions('fsolve','Display','none');%'iter','PlotFcn',@optimplotfirstorderopt);
     coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
     
-    i = 2:N;
-    % 2 solve for x0
-    eqnX0 = @(x0, b,i, m0,c0) c0 + x0.*(m0 + 1/m0) - b(1) + sum((i-1).*b(3:end).*(x0.^i));
-    % 3 solve for b1
-    eqnB1 = @(b1, b,i,x0, m0) -b1 - 1/m0 - sum(i.*b(3:end).*(x0.^(i-1)));
+    beta = AdaptGradDesc(@(b) WLSgrad(b, x,y,N,w, m0,c0, coeff2fun, xstart,options),...
+        @(b,x) getYvalue(b,x, N, m0,c0, coeff2fun, xstart,options),...
+        x, y, bstart, 1e-10);
     
-    % init vars for loop
-    nsteps = 10000;
-    learnrt = 1e-10;
-    b = bstart; 
-    plt = [0,0,learnrt,b];
-    errs = zeros(nsteps,1); dderrs = zeros(size(errs));
-    KI=1e-17; KD=1; KP=1e-10;
-    
-    figure('Position', [50 100 1300 700]); 
-    subplot(1,3,1); errplt1 = plot(plt(:,1)); ht1 = title(''); ylim([-2e9, 1e10]);
-    hold on; errplt2 = plot([0, diff(plt(:,1))]); errplt3 = plot(plt(:,2));
-    subplot(1,3,2); learnplt = plot(plt(:,3)); ht2 = title(''); 
-    subplot(1,3,3); coeffplt=cell(length(b),1); ylim([-10, 10]);
-    for j = 1:length(b)
-        coeffplt{j} = plot(plt(:,3+j)); hold on; 
-    end
-    pause(.01);
-    
-    for n = 1:nsteps
-        cont = false; 
-        while ~cont
-        cont = true;
-        
-        try
-            % 2 solve for x0
-            x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
-                xstart, options);
-            % 3 solve for b1
-            b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
-                bstart(2), options);
-            b(2) = b1solved;
-        catch
-            cont = false;
-            learnrt = learnrt/2;
-        end
-        
-        if cont
-            
-        % 4 calculate gradient 
-        errfn = @(b) sum( arrayfun( @(j) ( y(j) - coeff2fun(b, x(j)) ).^2, 1:length(x) ) );
-        err = errfn(b);
-        derrdb = zeros(size(b));
-        for j = 1:length(x)
-            yj = coeff2fun(b, x(j));  
-            
-            dx0db0 = 1./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
-            dx0dbk = @(k) -((k-1).*x0solved.^k)./(m0 + 1/m0 + sum(i.*(i-1).*b(3:end).*(x0solved.^(i-1))));
-            
-            dydb0 = 1 - x(j)*dx0db0.*sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2)));
-            dydbk = @(k) x(j).^k - x(j).*(...
-                sum(i.*(i-1).*b(3:end).*(x0solved.^(i-2))).*dx0dbk(k) + k.*x0solved.^(k-1) );
-            
-            dydb = [dydb0, 0, arrayfun(@(k) dydbk(k), 2:(N-1))];
-            derrdb = derrdb + w(j)*(y(j)-yj)*dydb;
-        end
-        
-        % error tracking, learning rate adjustment 
-        if n>1
-            derr = (err-errs(n-1));
-            if n>2
-                dderrs(n) = (errs(n)+errs(n-2)-2*errs(n-1));
-            else
-                dderrs(n) = 0;
-            end
-        else
-            derr=0;
-            dderrs(n)=0;
-        end
-        dderr = mean(abs(dderrs(max(n-20,1):n)));
-        
-        if n>10
-            learnrt = max(1e-10, learnrt - KP*derr);
-            cont = (derr <= 0);
-        else
-            cont=true;
-        end
-        
-        end
-        
-        %if cont
-                        
-        plt = [plt; err,norm(derrdb),learnrt,b];
-        
-        ht1.String = num2str(err);
-        errplt1.YData = plt(:,1); errplt3.YData = plt(:,2); errplt2.YData = diff(plt(:,1));
-        learnplt.YData = plt(:,3); ht2.String = num2str(learnrt);
-        for j = 1:length(coeffplt)
-            coeffplt{j}.YData = plt(:,3+j);
-        end
-        pause(.00001);
-        
-        if cont
-            errs(n)=err;
-            bprev = b;
-        else
-            b = bprev;
-        end
-                
-        % gradient descend
-        b = b + learnrt*derrdb;
-                
-        end
-        
-    end
-    
-    % 2 solve for x0
-    x0solved = fsolve(@(x0) eqnX0(x0, b,i,m0,c0), ...
-        xstart);
-    % 3 solve for b1
-    b1solved = fsolve(@(b1) eqnB1(b1, b,i,x0solved,m0), ...
-        bstart(2));
-    b(2) = b1solved;
-    
-    beta = b';
-    X0 = x0solved;
+    X0 = 0;
 end
