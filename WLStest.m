@@ -10,7 +10,7 @@ m = (y2-y1)/(x2-x1); k = y1-m*x1;
 coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
 b = WLS(X,Y,wts,10);
 y = coeff2fun(b', x); 
-N = 3;
+N = 5;
 [b2,x0] = WLStangent(X,Y,wts,N, m,k,0,zeros(1,N+1));
 x_2 = x0:.1:50;
 y_2 = coeff2fun(b2', x_2);
@@ -70,7 +70,7 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     
     beta = AdaptGradDesc(@(b) WLSgrad(b, x,y,N,w, m0,c0, coeff2fun, xstart,options),...
         @(b,x) getYvalue(b,x, N, m0,c0, coeff2fun, xstart,options),...
-        x, y, bstart, 0);
+        x, y, bstart, 1e-20);
     
     X0 = 0;
 end

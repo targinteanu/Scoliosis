@@ -10,8 +10,8 @@ nsteps = 10000;
 errs = nan(nsteps,1); derrs = nan(size(errs)); gradnorms = nan(size(errs));
 mus = nan(nsteps,1); mus(1) = mu;
 bs = nan(nsteps,length(b)); bs(1,:)=b;
-derr = 0;  
-KP = 1e-25; KI = KP/100;
+derr = 0; sum_derr = 0;
+KP = 1e-16; KI = KP/100;
 
 % initial gradient, error calculations
 err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b, Xtrue(j))).^2, 1:length(Xtrue)) );
@@ -61,7 +61,7 @@ while notyetfound
             err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b_new, Xtrue(j))).^2, 1:length(Xtrue)) );
         catch
             retry = true;
-            mu = mu/10;
+            mu = mu/2;
         end
         
         if ~retry
@@ -80,12 +80,14 @@ while notyetfound
                 end
                 
                 % ADJUST LEARNING RATE
-                PIDvar = -KP*derr +KI*err;
+                %PIDvar = -KP*derr +KI*err;
                 if (derr>(0*err))|(sum([b_new(:);err])==Inf)
                     retry = true;
-                    mu = .5*mu;
+                    sum_derr = sum_derr + derr;
+                    mu = mu*(1-KP*sum_derr);
                 else
-                    mu = mu + PIDvar;
+                    sum_derr = 0;
+                    mu = mu*(1-KP*derr)*(1+KI*err);
                 end
             else
                 retry = false;
