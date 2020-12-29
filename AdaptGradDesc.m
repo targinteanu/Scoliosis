@@ -10,7 +10,7 @@ function beta = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu, PID, p2s)
 %                Row 2: starting Vars0 points corresponding to equations 
 
 % init vars
-nsteps = 6000;
+nsteps = 3000;
 errs = nan(nsteps,1); derrs = nan(size(errs)); gradnorms = nan(size(errs));
 mus = nan(nsteps,1); mus(1) = mu;
 bs = nan(nsteps,length(b)); bs(1,:)=b;
@@ -35,7 +35,7 @@ colr = {'k',  'b',  'r',  'c',  'm',  'g',  'y'};
 styl = {'ok', 'ok', 'or', 'oc', 'om', 'og', 'oy'};
 figure('Position', [50 100 1300 700]);
 plts(1).ax = subplot(1,3,1); 
-plts(1).plt{2} = plot(errs, colr{1}); hold on; plts(1).plt{1} = plot(derrs, colr{2}); 
+plts(1).plt{1} = plot(errs, colr{1}); hold on; plts(1).plt{2} = plot(derrs, colr{2}); 
 %    plts(1).plt{3} = plot(gradnorms, colr{3});
 plts(1).nextval{1} = plot(2,err,styl{1}); plts(1).nextval{2} = plot(2,derr,styl{2}); 
 %    plts(1).nextval{3} = plot(2,err,styl{3});
@@ -62,7 +62,7 @@ pause(1);
 % iterate
 n = 1;
 notyetfound = true;
-mulimit = 1e-30; enablemulimit = false;
+mulimit = 1e-100; enablemulimit = false;
 while notyetfound
     n = n+1;
     retry = true;
@@ -140,7 +140,7 @@ while notyetfound
                 hp.nextval{j}.XData = n;
             end
         end
-        plts(1).nextval{2}.YData = err; plts(1).nextval{1}.YData = derr; 
+        plts(1).nextval{1}.YData = err; plts(1).nextval{2}.YData = derr; 
         %    plts(1).nextval{3}.YData = gradnorm;
         plts(2).nextval{1}.YData = mu;
         for j = 1:length(b_new)
@@ -149,7 +149,7 @@ while notyetfound
         
         % update plots
         if ~retry
-            plts(1).plt{2}.YData = errs; plts(1).plt{1}.YData = derrs; 
+            plts(1).plt{1}.YData = errs; plts(1).plt{2}.YData = derrs; 
             %    plts(1).plt{3}.YData = gradnorms;
             plts(2).plt{1}.YData = mus;
             for j = 1:length(b_new)

@@ -19,30 +19,31 @@ imgFiltered = imgFiltered/max(imgFiltered(:));
 
 % spline fitting 
 [r, c] = find(imgFiltered);
-[splineObj, gof] = fit(r*zscl, c*xscl, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
+[splineObj, gof] = fit(r, c, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
 z = min(r):max(r); 
-z = z*zscl;
-splineSample = [z/zscl; ppval(z, splineObj.p)/xscl]';
+%z = z*zscl;
+splineSample = [z; ppval(z, splineObj.p)]';
 % display results on current axes 
 % splineSample is in pixels, but splineObj is in mm
-
-x1=x1*xscl; x2=x2*xscl; y1=y1*zscl; y2=y2*zscl;
 
 imgFiltered = imgFiltered.*(imgFiltered > .7);
 [r, c] = find(imgFiltered);
 N = 10;
-coeff1 = WLS(c*xscl, r*zscl, imgFiltered(find(imgFiltered(:))), N);
-coeff2 = WLSperp(c*xscl, r*zscl, imgFiltered(find(imgFiltered(:))), N, ...
-    [x1,x2], [y1,y2], [1e-85,1e-85]);
+coeff1 = WLS(r, c, imgFiltered(find(imgFiltered(:))), N);
+coeff2 = WLSperp(r, c, imgFiltered(find(imgFiltered(:))), N, ...
+    [x1,x2], [y1,y2], [1,1e-103]);
 coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
+
+x1=x1*xscl; x2=x2*xscl; y1=y1*zscl; y2=y2*zscl;
 
 figure; imshow(imsag); hold on;
 plot([x1,x2]/xscl,[y1,y2]/zscl,'o', 'LineWidth',2);
 
 visboundaries(outln); 
+plot(c, r, 'ob');
 plot(splineSample(:,2), splineSample(:,1), 'b');
-plot(coeff2fun(coeff1',z)/xscl, z/zscl, 'r');
-plot(coeff2fun(coeff2',z)/xscl, z/zscl, 'm');
+plot(coeff2fun(coeff1',z), z, 'r', 'LineWidth', 1);
+plot(coeff2fun(coeff2',z), z, 'g', 'LineWidth', 1);
 
 % helper functions --------------------------------------------------
 
