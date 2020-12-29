@@ -1,21 +1,33 @@
-function beta = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu)
-% gradfun: of the form d_err/d_b = gradfun(b_old)
-% yfun: of the form y = yfun(b, x)
+function beta = AdaptGradDesc(gradfun, yfun, Xtrue, Ytrue, b, mu, PID, p2s)
+% gradfun: of the form d_err/d_b = gradfun(b_old, solvedParams)
+% yfun: of the form y = yfun(b, x, solvedParams)
 % Xtrue, Ytrue: paired actual vaules of Y, X used to calculate error 
 % b: initial coefficients 
 % mu: initial learning rate
+% PID: [KP, KI, KD]
+% p2s (paramsToSolve): function of b that returns 2xm cell array / solvedVars = fsolve(eqn, Vars)
+%                Row 1: sys of equations of the form 0 = funs(Vars, b, solvedParams)
+%                Row 2: starting Vars0 points corresponding to equations 
 
 % init vars
-nsteps = 10000;
+nsteps = 6000;
 errs = nan(nsteps,1); derrs = nan(size(errs)); gradnorms = nan(size(errs));
 mus = nan(nsteps,1); mus(1) = mu;
 bs = nan(nsteps,length(b)); bs(1,:)=b;
-derr = 0; sum_derr = 0;
-KP = 1e-16; KI = KP/100;
+derr = 0; 
+KP = PID(1); KI = PID(2);
 
 % initial gradient, error calculations
-err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b, Xtrue(j))).^2, 1:length(Xtrue)) );
-derr_db = gradfun(b); gradnorm = norm(derr_db); 
+options = optimoptions('fsolve','Display','none');
+paramsToSolve = p2s(b);
+solvedParams = cell(size(paramsToSolve,2),1);
+for j = 1:length(paramsToSolve)
+    SP = fsolve(@(Vars) paramsToSolve{1,j}(Vars, b, solvedParams), ...
+        paramsToSolve{2,j}, options);
+    solvedParams{j} = SP;
+end
+err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b, Xtrue(j), solvedParams)).^2, 1:length(Xtrue)) );
+derr_db = gradfun(b, solvedParams); gradnorm = norm(derr_db); 
 errs(1) = err; gradnorms(1) = gradnorm;
 
 % init plots
@@ -34,14 +46,17 @@ plts(2).nextval{1} = plot(2,mu,styl{1});
 plts(2).t = title(['\mu = ' num2str(mu)]);
 plts(3).ax = subplot(1,3,3); 
 for j = 1:length(b)
-    plts(3).plt{j} = plot(bs(:,j), colr{j}); hold on; 
-    plts(3).nextval{j} = plot(2,b(j),styl{j});
+    jj = mod(j,length(colr)) + 1;
+    plts(3).plt{j} = plot(bs(:,j), colr{jj}); hold on; 
+    plts(3).nextval{j} = plot(2,b(j),styl{jj});
 end
 plts(3).t = title(['b0 = ']);
+%{
 for hp = plts(1:2)
     xlim(hp.ax, [0, 10]);
 end
-pause(.01);
+%}
+pause(1);
 
 
 % iterate
@@ -57,14 +72,21 @@ while notyetfound
     
         % try performing a gradient step and getting the new error
         b_new = b + mu*derr_db;
+        
         try
-            err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b_new, Xtrue(j))).^2, 1:length(Xtrue)) );
+            paramsToSolve = p2s(b);
+            for j = 1:length(paramsToSolve)
+                solvedParams{j} = fsolve(@(Vars) paramsToSolve{1,j}(Vars, b_new, solvedParams), ...
+                    paramsToSolve{2,j}, options);
+            end
         catch
             retry = true;
             mu = mu/2;
         end
         
         if ~retry
+            err = sum( arrayfun(@(j) (Ytrue(j) - yfun(b_new, Xtrue(j), solvedParams)).^2, 1:length(Xtrue)) );
+            
             derr = err - errs(n-1); 
             db = norm(b_new-b);
             if db
@@ -73,21 +95,19 @@ while notyetfound
             
             if n > 5
                 if n > 7
-                    notyetfound = (n<nsteps)&(abs(derr)>1e-6);
+                    notyetfound = (n<nsteps);%&((abs(derr)>1e-6)|retry);
                     if enablemulimit&(abs(mu)<mulimit)
                         notyetfound = false;
                     end
                 end
                 
                 % ADJUST LEARNING RATE
-                %PIDvar = -KP*derr +KI*err;
+                PIDvar = -KP*derr +KI*err;
                 if (derr>(0*err))|(sum([b_new(:);err])==Inf)
                     retry = true;
-                    sum_derr = sum_derr + derr;
-                    mu = mu*(1-KP*sum_derr);
+                    mu = .5*mu;
                 else
-                    sum_derr = 0;
-                    mu = mu*(1-KP*derr)*(1+KI*err);
+                    mu = mu + PIDvar;
                 end
             else
                 retry = false;
@@ -97,7 +117,7 @@ while notyetfound
         if ~retry
             b = b_new;
             try
-                derr_db = gradfun(b); 
+                derr_db = gradfun(b, solvedParams); 
             catch
                 retry = true;
                 mu = mu/2;
@@ -140,6 +160,7 @@ while notyetfound
         % update title, view range
         for hp = plts(1:2)
             hp.t.String = num2str(hp.nextval{1}.YData(1));
+            %{
             win = [max(1, n-50), max(n, 10)];
             xlim(hp.ax, win);
             mn = zeros(length(hp.plt)); mx = zeros(size(mn));
@@ -151,6 +172,7 @@ while notyetfound
             if mx > mn
                 ylim(hp.ax, [mn,mx] + [-1,1]*.25*(mx-mn));
             end
+            %}
         end
         
         pause(.00001);

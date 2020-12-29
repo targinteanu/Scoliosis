@@ -1,8 +1,10 @@
+%%{
 X = ([0:5:50,0:5:50,0:5:50])'; 
 Y = (X - (30*rand + 10)).*(X - (30*rand + 10)).*(X - (30*rand + 10)) + 10000*(rand(size(X))-.5);
 wts = 100*rand(size(X)) + .001;
 x = 0:.1:50;
 a = (wts(1:11).*Y(1:11) + wts(12:22).*Y(12:22) + wts(23:33).*Y(23:33))./(wts(1:11)+wts(12:22)+wts(23:33));
+%}
 
 x1 = -5; x2 = 5; y1 = -1000; y2 = 1000;
 m = (y2-y1)/(x2-x1); k = y1-m*x1;
@@ -70,7 +72,7 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     
     beta = AdaptGradDesc(@(b) WLSgrad(b, x,y,N,w, m0,c0, coeff2fun, xstart,options),...
         @(b,x) getYvalue(b,x, N, m0,c0, coeff2fun, xstart,options),...
-        x, y, bstart, 1e-20);
+        x, y, bstart, 0, [1e-34, 1e-30]);
     
     X0 = 0;
 end
