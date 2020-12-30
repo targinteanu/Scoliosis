@@ -31,7 +31,7 @@ imgFiltered = imgFiltered.*(imgFiltered > .7);
 N = 10;
 coeff1 = WLS(r, c, imgFiltered(find(imgFiltered(:))), N);
 coeff2 = WLSperp(r, c, imgFiltered(find(imgFiltered(:))), N, ...
-    [x1,x2], [y1,y2], [1,1e-103]);
+    [x1,x2], [y1,y2], [1e-110,1e-110]);
 coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
 
 x1=x1*xscl; x2=x2*xscl; y1=y1*zscl; y2=y2*zscl;

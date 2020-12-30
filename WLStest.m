@@ -13,8 +13,8 @@ coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))),
 b = WLS(X,Y,wts,10);
 y = coeff2fun(b', x); 
 N = 5;
-[b2,x0] = WLStangent(X,Y,wts,N, m,k,0,zeros(1,N+1));
-x_2 = x0:.1:50;
+b2 = WLSperp(X,Y,wts,N, [x1,x2], [y1,y2], [0,1e-48]);
+x_2 = 0:.1:50;
 y_2 = coeff2fun(b2', x_2);
 dydx0 = (y_2(2)-y_2(1))/(x_2(2)-x_2(1));
 
@@ -29,6 +29,7 @@ function beta = WLS(x,y,w,N)
     beta = ((X'*diag(w)*X)^-1)*X'*diag(w)*y;
 end
 
+%{
 function derrdb = WLSgrad(b, x,y,N,w, m0,c0, coeff2fun, xstart,options)
 i = 2:N;
 
@@ -76,3 +77,4 @@ function [beta,X0] = WLStangent(x,y,w,N, m0,c0, xstart,bstart)
     
     X0 = 0;
 end
+%}

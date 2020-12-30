@@ -15,7 +15,7 @@ function [coeffs, y_out] = WLSperp(x_in,y_in,w,N, x_perp,y_perp, KPID)
     
     coeffs = AdaptGradDesc(@(b,SP) WLSgrad(b,SP, x_in,y_in,N,w, m0, coeff2fun),...
         @(b,x,SP) getYvalue(b,x, SP, coeff2fun),...
-        x_in, y_in, bstart, 0, KPID, paramsToSolve);
+        x_in, y_in, bstart, 1e-90, KPID, paramsToSolve);
         
     y_out = coeff2fun(coeffs', x_in);
 

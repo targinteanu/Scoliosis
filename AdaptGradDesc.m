@@ -71,10 +71,10 @@ while notyetfound
         enablemulimit = enablemulimit|(abs(mu)>mulimit);
     
         % try performing a gradient step and getting the new error
-        b_new = b + mu*derr_db;
+        b_new = b - mu*derr_db;
         
         try
-            paramsToSolve = p2s(b);
+            paramsToSolve = p2s(b_new);
             for j = 1:length(paramsToSolve)
                 solvedParams{j} = fsolve(@(Vars) paramsToSolve{1,j}(Vars, b_new, solvedParams), ...
                     paramsToSolve{2,j}, options);
