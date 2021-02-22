@@ -91,9 +91,17 @@ function inputCor_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesCor); 
 hold off; imshow(handles.imgCor); hold on;
+uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
+    'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
 [OL, vertx, verty] = roipoly; 
+uiwait(msgbox(['Separate C8 from T1 with a straight line. ' ...
+    'Click to set the two endpoints of the line. Double click when complete.'], 'Instructions'));
+[boundX, boundY] = getpts;
 handles.CorOL = OL; handles.CorVertX = vertx; handles.CorVertY = verty;
-[handles.imgCorFilt, handles.splCorObj, handles.splCorSmp] = processOL(handles.imgCor, OL, ...
+handles.CorBound = [boundX, boundY];
+[handles.imgCorFilt, handles.splCorObj, handles.splCorSmp, ...
+    handles.splCorObjBound, handles.splCorSmpBound] = ...
+    processOL(handles.imgCor, OL, boundX, boundY, ...
     handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2)); 
 guidata(hObject, handles);
 
@@ -104,13 +112,22 @@ function inputSag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesSag); 
 hold off; imshow(handles.imgSag); hold on;
+uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
+    'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
 [OL, vertx, verty] = roipoly; 
-handles.SagOL = OL; handles.SagVertX = vertx; handles.SagVertY = verty;
-[handles.imgSagFilt, handles.splSagObj, handles.splSagSmp] = processOL(handles.imgSag, OL, ...
+uiwait(msgbox(['Separate L5 from S1 with a straight line. ' ...
+    'Click to set the two endpoints of the line. Double click when complete.'], 'Instructions'));
+[boundX, boundY] = getpts;
+handles.SagOL = OL; handles.SagVertX = vertx; handles.SagVertY = verty; 
+handles.SagBound = [boundX, boundY];
+[handles.imgSagFilt, handles.splSagObj, handles.splSagSmp, ...
+    handles.splSagObjBound, handles.splSagSmpBound] = ...
+    processOL(handles.imgSag, OL, boundX, boundY, ...
     handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2)); 
 guidata(hObject, handles);
 
-function [imgFiltered, splineObj, splineSample] = processOL(img, outln, zscl, xscl)
+function [imgFiltered, splineObj, splineSample, splineObjBound, splineSampleBound] ...
+    = processOL(img, outln, boundX, boundY, zscl, xscl)
 % img is a double img [0, 1]; outln is a BW outline
 
 % filtering 
@@ -121,14 +138,26 @@ imgFiltered = imgFiltered .* outln;
 % spline fitting 
 [r, c] = find(imgFiltered);
 [splineObj, gof] = fit(r*zscl, c*xscl, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
+boundX = boundX*xscl; boundY = boundY*zscl;
+[xi, yi] = lineSeg_PP_intersect(splineObj.p, [boundX(1), boundY(1)], [boundX(2), boundY(2)]); %xi, yi in mm
+splineObjBound = [yi; xi];
 z = min(r):max(r); 
 z = z*zscl;
 splineSample = [z/zscl; ppval(z, splineObj.p)/xscl]';
+splineSampleBound = [yi/zscl; xi/xscl];
 % splineSample is in pixels, but splineObj is in mm
 
 % display results on current axes 
 visboundaries(outln); 
 plot(splineSample(:,2), splineSample(:,1), 'b');
+plot(splineSampleBound(2), splineSampleBound(1), '*r');
+
+function [xi, yi] = lineSeg_PP_intersect(pp, xy1, xy2)
+x1 = xy1(1); y1 = xy1(2); x2 = xy2(1); y2 = xy2(2);
+m = (y2-y1)./(x2-x1); b = y1-m*x1;
+ypp = linspace(min(y1, y2), max(y1, y2));
+xpp = ppval(pp, ypp); 
+[~, i] = min(ypp - m.*xpp - b); xi = xpp(i); yi = ypp(i);
 
 
 % --- Executes on button press in show3D.
@@ -144,14 +173,22 @@ zScl = max(zCor(1),zSag(1)):.5:min(zCor(end),zSag(end));
 xScl = ppval(zScl, splSagScl.p);
 yScl = ppval(zScl, splCorScl.p);
 
+botBoundScl = handles.splSagObjBound; 
+topBoundScl = handles.splCorObjBound; 
+[~,iBot] = min(sum(([zScl; xScl] - botBoundScl).^2));
+[~,iTop] = min(sum(([zScl; yScl] - topBoundScl).^2));
+
 % store 
 handles.splSclObj = {splSagScl, splCorScl};
 handles.splSclRng = [min(zScl); max(zScl)];
 handles.splSclSmp = [xScl', yScl', zScl'];
+handles.splSclBnd = [iBot, iTop];
 guidata(hObject, handles);
 
 % display 
-axes(handles.axes3); plot3(xScl, yScl, zScl, 'b'); grid on; 
+axes(handles.axes3); hold off;
+plot3(xScl, yScl, zScl, 'b'); grid on; hold on;
+plot3([xScl(iBot),xScl(iTop)], [yScl(iBot),yScl(iTop)], [zScl(iBot),zScl(iTop)], '*r');
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
 ylim([1, size(handles.imgCor,2)] * handles.ifoCor.PixelSpacing(2));
 xlabel('x(mm)'); ylabel('y(mm)'); zlabel('z(mm)');
@@ -170,19 +207,25 @@ fn = [handles.base_fp,...
 splSclObj = handles.splSclObj;
 splSclRng = handles.splSclRng;
 splSclSmp = handles.splSclSmp;
+splSclBnd = handles.splSclBnd;
 
 imgSagFilt = handles.imgSagFilt; 
 splSagObj = handles.splSagObj; 
 splSagSmp = handles.splSagSmp;
 SagOL = handles.SagOL;
+splSagObjBound = handles.splSagObjBound; 
+splSagSmpBound = handles.splSagSmpBound;
 imgCorFilt = handles.imgCorFilt; 
 splCorObj = handles.splCorObj; 
 splCorSmp = handles.splCorSmp;
 CorOL = handles.CorOL;
+splCorObjBound = handles.splCorObjBound; 
+splCorSmpBound = handles.splCorSmpBound;
 
-save(fn, 'splSclObj', 'splSclRng', 'splSclSmp', ...
+save(fn, 'splSclObj', 'splSclRng', 'splSclSmp', 'splSclBnd', ...
     'imgSagFilt', 'splSagObj', 'splSagSmp', 'SagOL', ...
-    'imgCorFilt', 'splCorObj', 'splCorSmp', 'CorOL');
+    'imgCorFilt', 'splCorObj', 'splCorSmp', 'CorOL', ...
+    'splCorObjBound', 'splCorSmpBound', 'splSagObjBound', 'splSagSmpBound');
 disp(['saving ',fn])
 
 
@@ -273,23 +316,30 @@ if exist(fn, 'file')
 handles.splSclObj = splSclObj;
 handles.splSclRng = splSclRng;
 handles.splSclSmp = splSclSmp;
+handles.splSclBnd = splSclBnd;
 
 handles.imgSagFilt = imgSagFilt; 
 handles.splSagObj = splSagObj; 
 handles.splSagSmp = splSagSmp;
 handles.SagOL = SagOL;
+handles.splSagObjBound = splSagObjBound; 
+handles.splSagSmpBound = splSagSmpBound;
 handles.imgCorFilt = imgCorFilt; 
 handles.splCorObj = splCorObj; 
 handles.splCorSmp = splCorSmp;
 handles.CorOL = CorOL;
+handles.splCorObjBound = splCorObjBound; 
+handles.splCorSmpBound = splCorSmpBound;
 
     axes(handles.axesCor); hold on; 
     visboundaries(CorOL); 
     plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
+    plot(splCorSmpBound(2), splCorSmpBound(1), '*b', 'LineWidth', 1.25);
     
     axes(handles.axesSag); hold on; 
     visboundaries(SagOL); 
     plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
+    plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
 
     if exist(fn2, 'file')
         disp(['loading ',fn2])

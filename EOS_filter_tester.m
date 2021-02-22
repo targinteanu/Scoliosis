@@ -34,6 +34,7 @@ for i = 1:ntot
     plot3(splSclSmp(:,1), splSclSmp(:,2), splSclSmp(:,3), ':');
     grid on; hold on;
     plot3(splSclSmp([1,end],1), splSclSmp([1,end],2), splSclSmp([1,end],3), 'ob', 'LineWidth', 2);
+    plot3(splSclSmp(splSclBnd,1), splSclSmp(splSclBnd,2), splSclSmp(splSclBnd,3), 'or', 'LineWidth', 2);
     %wr = getWrithe(splSclSmp); title(num2str(wr));
     
     fcutoff = 1/100; %1/mm
@@ -47,10 +48,14 @@ for i = 1:ntot
         'StopbandFrequency',1/80, 'DesignMethod','cheby2', ...
         'StopbandAttenuation',80, 'PassbandRipple',1);
     
-    splFIR = filtfilt3d(filt_fir, splSclSmp);
+    splFIR = filtfilt3d(filt_fir, splSclSmp); 
     splIIR = filtfilt3d(filt_iir, splSclSmp);
     splCHB = filtfilt3d(filt_chb, splSclSmp);
     plot3d(splFIR); plot3d(splIIR); plot3d(splCHB);
+    
+    splFIR = splFIR(splSclBnd(2):splSclBnd(1),:);
+    splIIR = splIIR(splSclBnd(2):splSclBnd(1),:);
+    splCHB = splCHB(splSclBnd(2):splSclBnd(1),:);
     
     xlim([min(splSclSmp(:,1)), max(splSclSmp(:,1))]);
     ylim([min(splSclSmp(:,2)), max(splSclSmp(:,2))]);
