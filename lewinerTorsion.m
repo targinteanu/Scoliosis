@@ -1,6 +1,6 @@
-function [Torsion, dr, ddr, dddr] = lewinerTorsion(p, t, q, w)
+function [Torsion, dr, ddr, dddr, Curvature] = lewinerTorsion(p, t, q, w)
 % estimates Torsion of a curve at a point (t) using method described by
-% Lewiner et al (doi:10.1016). 
+% Lewiner et al (doi.org/10.1016/j.cag.2005.08.004). 
 % p: matrix of x,y,z coordinates of all vertebrae 
 % t: index of point/vertebra at which to evaluate torsion 
 % q: width of window over which to estimate/curve fit
@@ -66,6 +66,7 @@ dddr = [Dx(3), Dy(3), Dz(3)];
 
 cx = cross(dr, ddr);
 Torsion = -(cx * dddr')/(norm(cx)^2);
+Curvature = norm(cx)/(norm(dr)^3);
 
 %%
 
