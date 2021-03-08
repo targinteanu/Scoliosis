@@ -76,7 +76,8 @@ handles.metricSelecter.String = {...
     'Lewiner 2nd Derivative', ...
     'Lewiner 3rd Derivative', ...
     'Lewiner Curvature', ...
-    'Lewiner Torsion'};
+    'Lewiner Torsion', ...
+    'Re-Filter'};
 
 handles.metricFuncs = {...
     @(HO,ED,H) showpatient(HO,ED,H), ...
@@ -91,7 +92,8 @@ handles.metricFuncs = {...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,2), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,3), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,5), ...
-    @(HO,ED,H) showLewinerQuantity(HO,ED,H,4)};
+    @(HO,ED,H) showLewinerQuantity(HO,ED,H,4), ...
+    @(HO,ED,H) refilter(HO,ED,H)};
 
 % Choose default command line output for EOSmetrics
 handles.output = hObject;
@@ -230,6 +232,46 @@ Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
 ds2 = sum(dRi.^2, 2);
 deriv2 = ddR./ds2; deriv2 = sum(deriv2.^2, 2).^.5;
 showLinearHeatmap(hObject, eventdata, handles, R(2:(end-1),:), deriv2)
+
+
+function refilter(hObject, eventdata, handles)
+filtfilt3d = @(filtobj, sig3d) [filtfilt(filtobj, sig3d(:,1)), filtfilt(filtobj, sig3d(:,2)), sig3d(:,3)];
+sig = handles.splSclSmp; splSclBnd = handles.splSclBnd;
+fs = 1/mean(diff(sig(:,3)));
+showpatient(hObject, eventdata, handles);
+
+if exist('handles.splfiltNew', 'var')
+    sigf = handles.splfiltNew;
+    axes(handles.axes3); hold on; plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c');
+end
+
+fTypeOpts = {'cheby2', 'cheby1', 'ellip', 'butter'};
+[sel, ok] = listdlg('ListString', fTypeOpts, 'SelectionMode', 'single');
+if ok
+    
+fType = fTypeOpts{sel};
+
+promptFields  = {'Passband Frequency (1/mm)', ...
+    'Stopband Frequency (1/mm)', ...
+    'Passband Ripple (dB)', ...
+    'Stopband Attenuation (dB)'};
+promptDefault = {'.01', '.0125', '1', '80'};
+filtspecs = inputdlg(promptFields, 'Build New Filter', 1, promptDefault);
+fPass = str2num(filtspecs{1}); fStop = str2num(filtspecs{2}); 
+aPass = str2num(filtspecs{3}); aStop = str2num(filtspecs{4}); 
+
+filt_chb = designfilt('lowpassiir', 'SampleRate',fs, ...
+    'DesignMethod',fType, ...
+    'PassbandFrequency',fPass, 'StopbandFrequency',fStop, ...
+    'PassbandRipple',aPass, 'StopbandAttenuation',aStop);
+
+plotFilterAndSignal(filt_chb, sig(:,1:2), fs);
+showpatient(hObject, eventdata, handles);
+sigf = filtfilt3d(filt_chb, sig); sigf = sigf(splSclBnd(2):splSclBnd(1),:);
+handles.splfiltNew = sigf;
+axes(handles.axes3); hold on; 
+plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
+end
 
 
 function showpatient(hObject, eventdata, handles)
@@ -448,3 +490,19 @@ function metricSelecter_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+function plotFilterAndSignal(filtObj, x, fs)
+X = abs(fftshift(fft(x)));
+w = linspace(-fs/2, fs/2, size(X,1));
+
+wmax = w(end-1); 
+wordr = log10(wmax);
+wunitlog = 3*floor(wordr/3); wunit = 10^wunitlog;
+
+w = w/wunit;
+pwr = X.^2; pwr_dB = 10*log10(pwr./sum(pwr));
+
+fvtool(filtObj); hold on;
+plot(w, pwr_dB, 'g');
+xlabel(['Frequency, ' num2str(wunit) '/mm']);
