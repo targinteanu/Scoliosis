@@ -464,7 +464,7 @@ end
 
 function update3Dview(eventdata, handles)
 axes(handles.axes3);
-view(handles.slider1.Value*360, handles.slider2.Value*360);
+view(handles.slider1.Value*90, handles.slider2.Value*90);
 
 
 % --- Executes on selection change in metricSelecter.
