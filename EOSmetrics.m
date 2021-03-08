@@ -61,6 +61,8 @@ handles.patient_list = patient_list;
 
 handles.current_patient = 1;
 
+handles.defaultFilter = {'.01', '.0125', '1', '80'};
+
 update3Dview(eventdata, handles);
 
 handles.metricSelecter.String = {...
@@ -260,8 +262,8 @@ promptFields  = {'Passband Frequency (1/mm)', ...
     'Stopband Frequency (1/mm)', ...
     'Passband Ripple (dB)', ...
     'Stopband Attenuation (dB)'};
-promptDefault = {'.01', '.0125', '1', '80'};
-filtspecs = inputdlg(promptFields, 'Build New Filter', 1, promptDefault);
+filtspecs = inputdlg(promptFields, 'Build New Filter', 1, handles.defaultFilter);
+handles.defaultFilter = filtspecs;
 fPass = str2num(filtspecs{1}); fStop = str2num(filtspecs{2}); 
 aPass = str2num(filtspecs{3}); aStop = str2num(filtspecs{4}); 
 
