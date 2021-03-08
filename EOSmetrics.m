@@ -22,7 +22,7 @@ function varargout = EOSmetrics(varargin)
 
 % Edit the above text to modify the response to help EOSmetrics
 
-% Last Modified by GUIDE v2.5 04-Mar-2021 23:34:47
+% Last Modified by GUIDE v2.5 08-Mar-2021 01:16:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -130,6 +130,10 @@ function saveButton_Callback(hObject, eventdata, handles)
 % hObject    handle to saveButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.splfilt = handles.splfiltNew;
+handles.splfiltNew = [];
+guidata(hObject, handles);
+showpatient(hObject, eventdata, handles);
 
 
 % --- Executes on button press in nextButton.
@@ -240,9 +244,10 @@ sig = handles.splSclSmp; splSclBnd = handles.splSclBnd;
 fs = 1/mean(diff(sig(:,3)));
 showpatient(hObject, eventdata, handles);
 
-if exist('handles.splfiltNew', 'var')
+if ~isempty(handles.splfiltNew)
     sigf = handles.splfiltNew;
-    axes(handles.axes3); hold on; plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c');
+    axes(handles.axes3); hold on; 
+    plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
 end
 
 fTypeOpts = {'cheby2', 'cheby1', 'ellip', 'butter'};
@@ -271,6 +276,8 @@ sigf = filtfilt3d(filt_chb, sig); sigf = sigf(splSclBnd(2):splSclBnd(1),:);
 handles.splfiltNew = sigf;
 axes(handles.axes3); hold on; 
 plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
+
+guidata(hObject, handles);
 end
 
 
@@ -315,7 +322,7 @@ splCorSmpBound = handles.splCorSmpBound;
         axes(handles.axesCor); hold on;
         plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
         
-        axes(handles.axes3); cla; 
+        axes(handles.axes3); cla; colorbar off;
         plot3(splSclSmp(:,1), splSclSmp(:,2), -splSclSmp(:,3), ':b'); hold on;
         plot3(splfilt(:,1), splfilt(:,2), -splfilt(:,3), 'm', 'LineWidth', 2);
         grid on; update3Dview(eventdata, handles); 
@@ -327,6 +334,8 @@ function shownewpatient(hObject, eventdata, handles)
 set(handles.PatientNum, 'String', ...
     num2str(handles.patient_list(handles.current_patient)));
 handles.metricSelecter.Value = 1;
+
+handles.splfiltNew = [];
 
 % get DICOM info 
 ifoCor = dicominfo([handles.base_fp,...
