@@ -61,7 +61,7 @@ handles.patient_list = patient_list;
 
 handles.current_patient = 1;
 
-handles.defaultFilter = {'.01', '.0125', '1', '80'};
+handles.defaultFilter = {'.0033', '.0034', '1', '50'};
 
 update3Dview(eventdata, handles);
 
@@ -79,6 +79,7 @@ handles.metricSelecter.String = {...
     'Lewiner 3rd Derivative', ...
     'Lewiner Curvature', ...
     'Lewiner Torsion', ...
+    'Writhe', ...
     'Re-Filter'};
 
 handles.metricFuncs = {...
@@ -95,6 +96,7 @@ handles.metricFuncs = {...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,3), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,5), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,4), ...
+    @(HO,ED,H) showWrithe(HO,ED,H), ...
     @(HO,ED,H) refilter(HO,ED,H)};
 
 % Choose default command line output for EOSmetrics
@@ -238,6 +240,24 @@ Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
 ds2 = sum(dRi.^2, 2);
 deriv2 = ddR./ds2; deriv2 = sum(deriv2.^2, 2).^.5;
 showLinearHeatmap(hObject, eventdata, handles, R(2:(end-1),:), deriv2)
+
+
+function showWrithe(hObject, eventdata, handles)
+cm = handles.splfilt;
+range = 2:size(cm,1);
+Wr = zeros(length(range));
+for i = range
+    for j = range
+        dr1 = cm(i,:) - cm((i-1),:);
+        dr2 = cm(j,:) - cm((j-1),:);
+        dr12 = cm(i,:) - cm(j,:);
+        if norm(dr12)
+            Wr(i,j) = ( cross(dr1, dr2)*dr12' )/( norm(dr12)^3 );
+        end
+    end
+end
+Wr = Wr/(4*pi); Writhe = sum(Wr(:));
+figure; imagesc(Wr); title(['Writhe = ' num2str(Writhe)]); colorbar;
 
 
 function refilter(hObject, eventdata, handles)
