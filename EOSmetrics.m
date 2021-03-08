@@ -22,7 +22,7 @@ function varargout = EOSmetrics(varargin)
 
 % Edit the above text to modify the response to help EOSmetrics
 
-% Last Modified by GUIDE v2.5 08-Mar-2021 01:16:49
+% Last Modified by GUIDE v2.5 08-Mar-2021 03:31:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -122,11 +122,38 @@ function varargout = EOSmetrics_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-% --- Executes on button press in pushbutton3.
-function pushbutton3_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton3 (see GCBO)
+% --- Executes on button press in localMinMax.
+function localMinMax_Callback(hObject, eventdata, handles)
+% hObject    handle to localMinMax (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
+SplSclHt = handles.SplSclHt;
+x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); h = SplSclHt(:,4);
+
+[pk_min,lc_min,pw_min,pp_min] = findpeaks(-h, 'MinPeakWidth', length(h)/20); 
+[pk_max,lc_max,pw_max,pp_max] = findpeaks(h, 'MinPeakWidth', length(h)/20);
+figure; plot(h); hold on; grid on;
+errorbar(lc_min, -pk_min, pp_min,pp_min, pw_min,pw_min, 'ob'); 
+errorbar(lc_max, pk_max, pp_max,pp_max, pw_max,pw_max, 'or');
+pp_min = 100*pp_min/max(pp_min); pp_max = 100*pp_max/max(pp_max);
+
+axes(handles.axes3); hold on;
+plot3(x(lc_min), y(lc_min), -z(lc_min), 'ob', 'LineWidth', 1.25);
+plot3(x(lc_max), y(lc_max), -z(lc_max), 'or', 'LineWidth', 1.25);
+
+axes(handles.axesSag); hold on; % x
+errorbar(x(lc_min)/ifoSag.PixelSpacing(2), z(lc_min)/ifoSag.PixelSpacing(1), ...
+    pw_min,pw_min, pp_min,pp_min, 'ob', 'LineWidth', 1.25);
+errorbar(x(lc_max)/ifoSag.PixelSpacing(2), z(lc_max)/ifoSag.PixelSpacing(1), ...
+    pw_max,pw_max, pp_max,pp_max, 'or', 'LineWidth', 1.25);
+
+axes(handles.axesCor); hold on; % y
+errorbar(y(lc_min)/ifoCor.PixelSpacing(2), z(lc_min)/ifoCor.PixelSpacing(1), ...
+    pw_min,pw_min, pp_min,pp_min, 'ob', 'LineWidth', 1.25);
+errorbar(y(lc_max)/ifoCor.PixelSpacing(2), z(lc_max)/ifoCor.PixelSpacing(1), ...
+    pw_max,pw_max, pp_max,pp_max, 'or', 'LineWidth', 1.25);
 
 
 % --- Executes on button press in saveButton.
@@ -168,12 +195,14 @@ end
 
 function showLinearHeatmap(hObject, eventdata, handles, XYZ, heatvals)
 axes(handles.axes3);
-x = XYZ(:,1)'; y = XYZ(:,2)'; z = XYZ(:,3)'; h = heatvals';
+x = XYZ(:,1); y = XYZ(:,2); z = XYZ(:,3); h = heatvals;
 cla;
-surface([x;x], [y;y], -[z;z], [h;h], ...
+surface([x,x]', [y,y]', -[z,z]', [h,h]', ...
     'facecol', 'no', 'edgecol', 'interp', 'LineWidth', 5);
 grid on;
 colorbar;
+handles.SplSclHt = [XYZ,h];
+guidata(hObject, handles);
 
 
 function showLewinerQuantity(hObject, eventdata, handles, varToShow)
