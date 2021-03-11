@@ -139,6 +139,9 @@ errorbar(lc_min, -pk_min, pp_min,pp_min, pw_min,pw_min, 'ob');
 errorbar(lc_max, pk_max, pp_max,pp_max, pw_max,pw_max, 'or');
 pp_min = 100*pp_min/max(pp_min); pp_max = 100*pp_max/max(pp_max);
 
+handles.lc_min = lc_min; handles.pw_min = pw_min; handles.pp_min = pp_min; handles.pk_min = pk_min;
+handles.lc_max = lc_max; handles.pw_max = pw_max; handles.pp_max = pp_max; handles.pk_max = pk_max;
+
 axes(handles.axes3); hold on;
 plot3(x(lc_min), y(lc_min), -z(lc_min), 'ob', 'LineWidth', 1.25);
 plot3(x(lc_max), y(lc_max), -z(lc_max), 'or', 'LineWidth', 1.25);
@@ -154,6 +157,36 @@ errorbar(y(lc_min)/ifoCor.PixelSpacing(2), z(lc_min)/ifoCor.PixelSpacing(1), ...
     pw_min,pw_min, pp_min,pp_min, 'ob', 'LineWidth', 1.25);
 errorbar(y(lc_max)/ifoCor.PixelSpacing(2), z(lc_max)/ifoCor.PixelSpacing(1), ...
     pw_max,pw_max, pp_max,pp_max, 'or', 'LineWidth', 1.25);
+
+guidata(hObject, handles);
+
+
+function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
+dR = diff(R); ddR = diff(dR);
+t1 = t1-1; t2 = t2-1;
+t1 = min(t1, size(ddR,1)); t1 = max(t1,0);
+t2 = min(t2, size(ddR,1)); t2 = max(t2,0);
+n1 = ddR(t1,:); n1 = n1/norm(n1);
+n2 = ddR(t2,:); n2 = n2/norm(n2);
+theta = acos(n1 * n2');
+
+function idx = minSgn(vals, sgn)
+origIdx = 1:length(vals);
+vals = vals*sgn; 
+sel = vals > 0;
+origIdx = origIdx(sel); vals = vals(sel);
+[~,i] = min(vals); idx = origIdx(i);
+
+function cobbAngleMinMax(hObject, eventdata, handles)
+SplSclHt = handles.SplSclHt;
+x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); 
+neutIdx = [1, handles.lc_min, length(z)]; apIdx = handles.lc_max;
+boundIdx = zeros(length(apIdx),2);
+for i = 1:length(apIdx)
+    d = z(neutIdx)-z(apIdx(i));
+    boundIdx(i,1) = minSgn(d, -1);
+    boundIdx(i,2) = minSgn(d, 1);
+end
 
 
 % --- Executes on button press in saveButton.
