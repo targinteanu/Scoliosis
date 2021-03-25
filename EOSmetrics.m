@@ -79,6 +79,9 @@ handles.metricSelecter.String = {...
     'Lewiner 3rd Derivative', ...
     'Lewiner Curvature', ...
     'Lewiner Torsion', ...
+    'Plumbline X', ...
+    'Plumbline Y', ...
+    'Plumbline 3D', ...
     'Writhe', ...
     'Cobb Angle', ...
     'Re-Filter'};
@@ -97,6 +100,9 @@ handles.metricFuncs = {...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,3), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,5), ...
     @(HO,ED,H) showLewinerQuantity(HO,ED,H,4), ...
+    @(HO,ED,H) showPlumblineDistance(HO,ED,H,1), ...
+    @(HO,ED,H) showPlumblineDistance(HO,ED,H,2), ...
+    @(HO,ED,H) showPlumblineDistance(HO,ED,H,3), ...
     @(HO,ED,H) showWrithe(HO,ED,H), ...
     @(HO,ED,H) cobbAngleMinMax(HO,ED,H), ...
     @(HO,ED,H) refilter(HO,ED,H)};
@@ -177,7 +183,7 @@ t2 = min(t2, size(ddR,1)); t2 = max(t2,1);
 n1 = ddR(t1,:); n1 = n1/norm(n1);
 n2 = ddR(t2,:); n2 = n2/norm(n2);
 theta = acos(n1 * n2') * 180/pi;
-theta = min(theta, 180-theta);
+theta = min(theta, 180-theta); % come up with a better way of picking the right angle 
 
 function xy3 = intersect2d(xy1, a, xy2, b)
 c = ([a, b])^-1 * (xy1 - xy2); 
@@ -190,8 +196,6 @@ ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
 % x - sag
 xy = R(:,[1,3]); 
 [thta, a, b] = numericCobbAngle(xy, t1, t2);
-%a = n1([1,3]); b = n2([1,3]);
-%thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -203,16 +207,14 @@ xytxt = xy3./flipud(ifoSag.PixelSpacing);
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoSag.Width);
 axes(handles.axesSag); hold on; 
 plot([xy1(1), xy3(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy2(2)]/ifoSag.PixelSpacing(1), 'c');
+    [xy1(2), xy3(2), xy2(2)]/ifoSag.PixelSpacing(1), 'g');
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'c');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
 
 % y - cor
 xy = R(:,[2,3]); 
 [thta, a, b] = numericCobbAngle(xy, t1, t2);
-%a = n1([2,3]); b = n2([2,3]);
-%thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -224,10 +226,10 @@ xytxt = xy3./flipud(ifoCor.PixelSpacing);
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoCor.Width);
 axes(handles.axesCor); hold on; 
 plot([xy1(1), xy3(1), xy2(1)]/ifoCor.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy2(2)]/ifoCor.PixelSpacing(1), 'c');
+    [xy1(2), xy3(2), xy2(2)]/ifoCor.PixelSpacing(1), 'g');
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'c');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
 
 % 3d 
 [theta, n1, n2] = numericCobbAngle(R, t1, t2);
@@ -235,9 +237,9 @@ xyz1 = R(t1,:); xyz2 = R(t2,:);
 xyz1 = xyz1 + [zeros(size(n1)); n1*100]; xyz2 = xyz2 + [zeros(size(n2)); n2*100];
 xyz3 = .5*( xyz1(2,:) + xyz2(2,:) );
 axes(handles.axes3); hold on;
-plot3(xyz1(:,1), xyz1(:,2), -xyz1(:,3), 'c');
-plot3(xyz2(:,1), xyz2(:,2), -xyz2(:,3), 'c');
-text(xyz3(:,1), xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'c');
+plot3(xyz1(:,1), xyz1(:,2), -xyz1(:,3), 'g');
+plot3(xyz2(:,1), xyz2(:,2), -xyz2(:,3), 'g');
+text(xyz3(:,1), xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'g');
 
 function idx = minSgn(vals, sgn)
 origIdx = 1:length(vals);
@@ -315,7 +317,31 @@ guidata(hObject, handles);
 
 
 function showPlumblineDistance(hObject, eventdata, handles, varToShow)
+projuv = @(u,v) ((u*v')/(v*v'))*v;
 R = handles.splfilt;
+ifoSag = handles.ifoSag; ifoCor = handles.ifoCor;
+
+if (nargin < 4)|(varToShow==3)
+    R0 = R;
+else
+    R0 = R(:,[varToShow,3]);
+end
+
+plumb = R0([1,end],:); plumb3 = R([1,end],:);
+vPlumb = diff(plumb); 
+R0 = R0 - plumb(1,:);
+
+axes(handles.axes3); 
+hold on; plot3(plumb3(:,1), plumb3(:,2), plumb3(:,3), 'c');
+axes(handles.axesSag); 
+hold on; plot(plumb3(:,1)/ifoSag.PixelSpacing(2), ...
+    plumb3(:,3)/ifoSag.PixelSpacing(1), 'c'); 
+axes(handles.axesCor); 
+hold on; plot(plumb3(:,2)/ifoCor.PixelSpacing(2), ...
+    plumb3(:,3)/ifoCor.PixelSpacing(1), 'c'); 
+
+dist = arrayfun(@(i) norm( R0(i,:) - projuv(R0(i,:), vPlumb) ), 1:size(R0,1))';
+showLinearHeatmap(hObject, eventdata, handles, R, dist);
 
 
 function showLewinerQuantity(hObject, eventdata, handles, varToShow)
