@@ -177,6 +177,7 @@ t2 = min(t2, size(ddR,1)); t2 = max(t2,1);
 n1 = ddR(t1,:); n1 = n1/norm(n1);
 n2 = ddR(t2,:); n2 = n2/norm(n2);
 theta = acos(n1 * n2') * 180/pi;
+theta = min(theta, 180-theta);
 
 function xy3 = intersect2d(xy1, a, xy2, b)
 c = ([a, b])^-1 * (xy1 - xy2); 
@@ -184,13 +185,13 @@ xy3 = c(2)*b + xy2;
 
 function dispCobbAngle(hObject, eventdata, handles, R, t1, t2)
 
-[theta, n1, n2] = numericCobbAngle(R, t1, t2);
 ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
 
 % x - sag
 xy = R(:,[1,3]); 
-a = n1([1,3]); b = n2([1,3]);
-thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
+[thta, a, b] = numericCobbAngle(xy, t1, t2);
+%a = n1([1,3]); b = n2([1,3]);
+%thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -209,8 +210,9 @@ text(xytxt(1), xytxt(2), ...
 
 % y - cor
 xy = R(:,[2,3]); 
-a = n1([2,3]); b = n2([2,3]);
-thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
+[thta, a, b] = numericCobbAngle(xy, t1, t2);
+%a = n1([2,3]); b = n2([2,3]);
+%thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -228,6 +230,7 @@ text(xytxt(1), xytxt(2), ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'c');
 
 % 3d 
+[theta, n1, n2] = numericCobbAngle(R, t1, t2);
 xyz1 = R(t1,:); xyz2 = R(t2,:); 
 xyz1 = xyz1 + [zeros(size(n1)); n1*100]; xyz2 = xyz2 + [zeros(size(n2)); n2*100];
 xyz3 = .5*( xyz1(2,:) + xyz2(2,:) );
