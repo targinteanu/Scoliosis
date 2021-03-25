@@ -37,7 +37,7 @@ for i = 1:ntot
     plot3(splSclSmp(splSclBnd,1), splSclSmp(splSclBnd,2), splSclSmp(splSclBnd,3), 'or', 'LineWidth', 2);
     %wr = getWrithe(splSclSmp); title(num2str(wr));
     
-    fcutoff = 1/100; %1/mm
+    fcutoff = .0033; %1/mm
     
     fs = 1/mean(diff(splSclSmp(:,3))); %1/mm
     filt_fir = designfilt('lowpassfir', 'CutoffFrequency',fcutoff, 'SampleRate',fs, ...
@@ -45,8 +45,8 @@ for i = 1:ntot
     filt_iir = designfilt('lowpassiir', 'HalfPowerFrequency',fcutoff, 'SampleRate',fs, ...
         'FilterOrder',5, 'DesignMethod','butter');
     filt_chb = designfilt('lowpassiir', 'PassbandFrequency',fcutoff, 'SampleRate',fs, ...
-        'StopbandFrequency',1/80, 'DesignMethod','cheby2', ...
-        'StopbandAttenuation',80, 'PassbandRipple',1);
+        'StopbandFrequency',.0034, 'DesignMethod','cheby2', ...
+        'StopbandAttenuation',50, 'PassbandRipple',1);
     
     splFIR = filtfilt3d(filt_fir, splSclSmp); 
     splIIR = filtfilt3d(filt_iir, splSclSmp);

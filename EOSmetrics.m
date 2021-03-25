@@ -251,7 +251,7 @@ origIdx = origIdx(sel); vals = vals(sel);
 function cobbAngleMinMax(hObject, eventdata, handles)
 SplSclHt = handles.SplSclHt;
 x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); R = [x,y,z];
-neutIdx = [1, handles.lc_min, length(z)]; apIdx = handles.lc_max;
+neutIdx = [1; handles.lc_min; length(z)]; apIdx = handles.lc_max;
 boundIdx = zeros(length(apIdx),2);
 for i = 1:length(apIdx)
     d = z(neutIdx)-z(apIdx(i));
@@ -458,14 +458,14 @@ handles.defaultFilter = filtspecs;
 fPass = str2num(filtspecs{1}); fStop = str2num(filtspecs{2}); 
 aPass = str2num(filtspecs{3}); aStop = str2num(filtspecs{4}); 
 
-filt_chb = designfilt('lowpassiir', 'SampleRate',fs, ...
+filtobj = designfilt('lowpassiir', 'SampleRate',fs, ...
     'DesignMethod',fType, ...
     'PassbandFrequency',fPass, 'StopbandFrequency',fStop, ...
     'PassbandRipple',aPass, 'StopbandAttenuation',aStop);
 
-plotFilterAndSignal(filt_chb, sig(:,1:2), fs);
+plotFilterAndSignal(filtobj, sig(:,1:2), fs);
 showpatient(hObject, eventdata, handles);
-sigf = filtfilt3d(filt_chb, sig); sigf = sigf(splSclBnd(2):splSclBnd(1),:);
+sigf = filtfilt3d(filtobj, sig); sigf = sigf(splSclBnd(2):splSclBnd(1),:);
 handles.splfiltNew = sigf;
 axes(handles.axes3); hold on; 
 plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
