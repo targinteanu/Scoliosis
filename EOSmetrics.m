@@ -252,8 +252,8 @@ for i = 1:length(apIdx)
     d = z(neutIdx)-z(apIdx(i));
     boundIdx(i,1) = neutIdx(minSgn(d, -1));
     boundIdx(i,2) = neutIdx(minSgn(d, 1));
-    dispCobbAngles(hObject, eventdata, handles, R, boundIdx);
 end
+dispCobbAngles(hObject, eventdata, handles, R, boundIdx);
 
 function dispCobbAngles(hObject, eventdata, handles, R, boundIdx)
 for i = 1:size(boundIdx,1)
