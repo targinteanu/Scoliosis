@@ -164,7 +164,13 @@ guidata(hObject, handles);
 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
-dR = diff(R); ddR = diff(dR);
+dR = diff(R); 
+Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
+ds = sum(dR.^2, 2).^.5;
+dsi = sum(dRi.^2, 2).^.5;
+dR = dR./ds;
+ddR = diff(dR);
+ddR = ddR./dsi;
 t1 = t1-1; t2 = t2-1;
 t1 = min(t1, size(ddR,1)); t1 = max(t1,1);
 t2 = min(t2, size(ddR,1)); t2 = max(t2,1);
@@ -182,8 +188,9 @@ function dispCobbAngle(hObject, eventdata, handles, R, t1, t2)
 ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
 
 % x - sag
-xy = R(:,[1,3]); a = n1([1,3]); b = n2([1,3]);
-thta = acos((a * b')/(norm(a)*norm(b)));
+xy = R(:,[1,3]); 
+a = n1([1,3]); b = n2([1,3]);
+thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -191,17 +198,19 @@ if xy3(1) > xy1(1)
 else
     al = 'right';
 end
+xytxt = xy3./flipud(ifoSag.PixelSpacing); 
+xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoSag.Width);
 axes(handles.axesSag); hold on; 
 plot([xy1(1), xy3(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
     [xy1(2), xy3(2), xy2(2)]/ifoSag.PixelSpacing(1), 'c');
-text(xy3(1)/ifoSag.PixelSpacing(2), ...
-    xy3(2)/ifoSag.PixelSpacing(1), ...
+text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'c');
 
 % y - cor
-xy = R(:,[2,3]); a = n1([2,3]); b = n2([2,3]);
-thta = acos((a * b')/(norm(a)*norm(b)));
+xy = R(:,[2,3]); 
+a = n1([2,3]); b = n2([2,3]);
+thta = acos((a * b')/(norm(a)*norm(b))) * 180/pi;
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
 xy3 = intersect2d(xy1', a', xy2', b');
 if xy3(1) > xy1(1)
@@ -209,11 +218,12 @@ if xy3(1) > xy1(1)
 else
     al = 'right';
 end
+xytxt = xy3./flipud(ifoCor.PixelSpacing); 
+xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoCor.Width);
 axes(handles.axesCor); hold on; 
 plot([xy1(1), xy3(1), xy2(1)]/ifoCor.PixelSpacing(2), ...
     [xy1(2), xy3(2), xy2(2)]/ifoCor.PixelSpacing(1), 'c');
-text(xy3(1)/ifoCor.PixelSpacing(2), ...
-    xy3(2)/ifoCor.PixelSpacing(1), ...
+text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'c');
 
@@ -242,9 +252,13 @@ for i = 1:length(apIdx)
     d = z(neutIdx)-z(apIdx(i));
     boundIdx(i,1) = neutIdx(minSgn(d, -1));
     boundIdx(i,2) = neutIdx(minSgn(d, 1));
-    
+    dispCobbAngles(hObject, eventdata, handles, R, boundIdx);
+end
+
+function dispCobbAngles(hObject, eventdata, handles, R, boundIdx)
+for i = 1:size(boundIdx,1)
     t1 = boundIdx(i,1); t2 = boundIdx(i,2);
-    dispCobbAngle(hObject, eventdata, handles, R, t1, t2)
+    dispCobbAngle(hObject, eventdata, handles, R, t1, t2);
 end
 
 
@@ -297,6 +311,10 @@ handles.SplSclHt = [XYZ,h];
 guidata(hObject, handles);
 
 
+function showPlumblineDistance(hObject, eventdata, handles, varToShow)
+R = handles.splfilt;
+
+
 function showLewinerQuantity(hObject, eventdata, handles, varToShow)
 % varToShow key: 
 %   1 - first derivative 
@@ -321,14 +339,17 @@ showLinearHeatmap(hObject, eventdata, handles, p(vertebrae,:), var');
 
 
 function showNumericCurvature(hObject, eventdata, handles)
-R = handles.splfilt; ddR = diff(diff(R));
+R = handles.splfilt; 
+dR = diff(R); ds = sum(dR.^2, 2).^.5; dR = dR./ds;
 Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) );
-dR = diff(Ri);
-K = arrayfun(@(i) norm(cross(dR(i,:), ddR(i,:)))./( norm(dR(i,:)).^3 ), ...
-    1:size(dR,1));
+dRi = diff(Ri); dsi = sum(dRi.^2, 2).^.5; dRi = dRi./dsi;
+ddR = diff(dR)./dsi;
+K = arrayfun(@(i) norm(cross(dRi(i,:), ddR(i,:)))./( norm(dRi(i,:)).^3 ), ...
+    1:size(dRi,1));
 showLinearHeatmap(hObject, eventdata, handles, R(2:(end-1),:), K');
 
 function showNumericTorsion(hObject, eventdata, handles)
+% change to include ds
 R = handles.splfilt; dddR = diff(diff(diff(R)));
 dR = diff(R(2:(end-1),:));
 Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) );
