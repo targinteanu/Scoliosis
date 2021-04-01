@@ -140,8 +140,8 @@ ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
 SplSclHt = handles.SplSclHt;
 x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); h = SplSclHt(:,4);
 
-[pk_min,lc_min,pw_min,pp_min] = findpeaks(-h, 'MinPeakWidth', length(h)/20); 
-[pk_max,lc_max,pw_max,pp_max] = findpeaks(h, 'MinPeakWidth', length(h)/20);
+[pk_min,lc_min,pw_min,pp_min] = findpeaks(-h);%, 'MinPeakWidth', length(h)/20); 
+[pk_max,lc_max,pw_max,pp_max] = findpeaks(h);%, 'MinPeakWidth', length(h)/20);
 figure; plot(h); hold on; grid on;
 errorbar(lc_min, -pk_min, pp_min,pp_min, pw_min,pw_min, 'ob'); 
 errorbar(lc_max, pk_max, pp_max,pp_max, pw_max,pw_max, 'or');
@@ -177,16 +177,21 @@ dsi = sum(dRi.^2, 2).^.5;
 dR = dR./ds;
 ddR = diff(dR);
 ddR = ddR./dsi;
+xy1 = R(t1,:); xy2 = R(t2,:);
 t1 = t1-1; t2 = t2-1;
 t1 = min(t1, size(ddR,1)); t1 = max(t1,1);
 t2 = min(t2, size(ddR,1)); t2 = max(t2,1);
 n1 = ddR(t1,:); n1 = n1/norm(n1);
 n2 = ddR(t2,:); n2 = n2/norm(n2);
+if length(xy1) < 3
+    [~,sgn] = intersect2d(xy1', n1', xy2', n2'); sgn=sign(sgn); 
+    n1=sgn(1)*n1; n2=sgn(2)*n2;
+end
 theta = acos(n1 * n2') * 180/pi;
-theta = min(theta, 180-theta); % come up with a better way of picking the right angle 
+%theta = min(theta, 180-theta); % come up with a better way of picking the right angle 
 
-function xy3 = intersect2d(xy1, a, xy2, b)
-c = ([a, b])^-1 * (xy1 - xy2); 
+function [xy3,c] = intersect2d(xy1, a, xy2, b)
+c = ([a, b])^-1 * (xy1 - xy2); c(1) = -c(1);
 xy3 = c(2)*b + xy2;
 
 function dispCobbAngle(hObject, eventdata, handles, R, t1, t2)
@@ -197,17 +202,18 @@ ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
 xy = R(:,[1,3]); 
 [thta, a, b] = numericCobbAngle(xy, t1, t2);
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
-xy3 = intersect2d(xy1', a', xy2', b');
+%xy3 = intersect2d(xy1', a', xy2', b');
+xy3 = xy1 + 100*a; xy4 = xy2 + 100*b;
 if xy3(1) > xy1(1)
     al = 'left';
 else
     al = 'right';
 end
-xytxt = xy3./flipud(ifoSag.PixelSpacing); 
+xytxt = xy3./flipud(ifoSag.PixelSpacing)'; 
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoSag.Width);
 axes(handles.axesSag); hold on; 
-plot([xy1(1), xy3(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy2(2)]/ifoSag.PixelSpacing(1), 'g');
+plot([xy1(1), xy3(1), xy4(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
+    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoSag.PixelSpacing(1), 'g');
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
@@ -216,17 +222,18 @@ text(xytxt(1), xytxt(2), ...
 xy = R(:,[2,3]); 
 [thta, a, b] = numericCobbAngle(xy, t1, t2);
 xy1 = xy(t1,:); xy2 = xy(t2,:); 
-xy3 = intersect2d(xy1', a', xy2', b');
+%xy3 = intersect2d(xy1', a', xy2', b');
+xy3 = xy1 + 100*a; xy4 = xy2 + 100*b;
 if xy3(1) > xy1(1)
     al = 'left';
 else
     al = 'right';
 end
-xytxt = xy3./flipud(ifoCor.PixelSpacing); 
+xytxt = xy3./flipud(ifoCor.PixelSpacing)'; 
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoCor.Width);
 axes(handles.axesCor); hold on; 
-plot([xy1(1), xy3(1), xy2(1)]/ifoCor.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy2(2)]/ifoCor.PixelSpacing(1), 'g');
+plot([xy1(1), xy3(1), xy4(1), xy2(1)]/ifoCor.PixelSpacing(2), ...
+    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoCor.PixelSpacing(1), 'g');
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
