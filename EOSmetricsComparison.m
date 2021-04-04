@@ -1,3 +1,4 @@
+%% load patients 
 clear;
 [fn, fp] = uigetfile('*.mat', 'Select Scan Directory File'); 
 load([fp, '\', fn]); 
@@ -10,14 +11,21 @@ for p = patient_list
     end
 end
 
+%% collect metrics for all patients 
+q = 10;
 ntot = length(patients_avail);
-vars = zeros(ntot, 5);
+vars = zeros(ntot, 9);
+varnames = {'Cobb', 'Wr', 'Curv', 'Tors', 'n', 'apex', 'neut', 'Lcurv', 'Ltors'};
 % vars key: 
 %   1 - max coronal cobb angle 
 %   2 - writhe 
 %   3 - max curvature 
 %   4 - max torsion 
 %   5 - # of coronal curves 
+%   6 - largest apex loc
+%   7 - neutral loc
+%   8 - max curvature loc
+%   9 - max torsion loc
 for i = 1:ntot   
     p = patients_avail(i);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
@@ -27,22 +35,36 @@ for i = 1:ntot
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasCor = thetas(:,3);
-    vars(i,1) = max(thetasCor);
+    [vars(i,1), idxMaxTheta] = max(thetasCor);
     vars(i,5) = length(thetasCor);
+    
+    idxMaxApex = idxMax(idxMaxTheta);
+    [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
+    idxClosestNeutral = idxMin(idxClosestNeutral);
+    vars(i,6) = idxMaxApex/size(XYZH,1);
+    if isempty(idxMin)
+        vars(i,7) = 0;
+    else
+        vars(i,7) = idxClosestNeutral/size(XYZH,1);
+    end
     
     vars(i,2) = getWrithe(splfilt);
     
-    [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, 10);
-    vars(i,3) = max(kappa); 
-    vars(i,4) = max(tau);
+    [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, q);
+    [vars(i,3), iK] = max(kappa); 
+    [vars(i,4), iT] = max(tau);
+    
+    vars(i,8) = (iK+q)/(2*q + length(kappa));
+    vars(i,9) = (iT+q)/(2*q + length(tau));
 
     i/ntot
 end
 
 [R, P] = corr(vars);
-figure('Position', [100 100 1100 400]); 
-subplot(121); heatmap(R); title('Correlation'); 
-subplot(122); heatmap(P); title('p-value');
+[r,c] = find(P <= .05);
+figure('Position', [20 100 1450 600]); 
+subplot(121); heatmap(varnames, varnames, R); title('Correlation'); 
+subplot(122); heatmap(varnames, varnames, P); title('p-value');
 
 figure; 
 plot(vars(:,1), abs(vars(:,2)), '.'); hold on; grid on;
@@ -50,19 +72,7 @@ text(vars(:,1), abs(vars(:,2)), ...
     arrayfun(@(n) num2str(n), vars(:,5), 'UniformOutput', false));
 xlabel('Max Coronal Cobb Angle'); ylabel('|Writhe|');
 
-figure; 
-plot(vars(:,3), (vars(:,2)), '.'); hold on; grid on;
-text(vars(:,3), (vars(:,2)), ...
-    arrayfun(@(n) num2str(n), vars(:,5), 'UniformOutput', false));
-xlabel('Max Curvature'); ylabel('Writhe');
-
-figure; 
-plot(vars(:,4), (vars(:,2)), '.'); hold on; grid on;
-text(vars(:,4), (vars(:,2)), ...
-    arrayfun(@(n) num2str(n), vars(:,5), 'UniformOutput', false));
-xlabel('Max Torsion'); ylabel('Writhe');
-
-%%
+%% functions 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
 dR = diff(R); 
