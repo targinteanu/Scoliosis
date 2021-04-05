@@ -1,4 +1,5 @@
 %% load patients 
+%{
 clear;
 [fn, fp] = uigetfile('*.mat', 'Select Scan Directory File'); 
 load([fp, '\', fn]); 
@@ -12,6 +13,7 @@ for p = patient_list
 end
 
 %% collect metrics for all patients 
+%%{
 q = 10;
 ntot = length(patients_avail);
 vars = zeros(ntot, 9);
@@ -72,6 +74,37 @@ text(vars(:,1), abs(vars(:,2)), ...
     arrayfun(@(n) num2str(n), vars(:,5), 'UniformOutput', false));
 xlabel('Max Coronal Cobb Angle'); ylabel('|Writhe|');
 
+%}
+
+%% more details for each curve 
+ncurves = unique(vars(:,5));
+for ncurve = ncurves'
+    pp = patients_avail(vars(:,5)'==ncurve);
+    cobbs = zeros(length(pp), ncurve);
+    subWr = zeros(size(cobbs));
+    for i = 1:length(pp)
+        p = pp(i);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+        
+        XYZH = PlumblineDistance(splfilt, 2);
+        [idxMin, idxMax] = localMinMax(XYZH);
+        thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
+        cobbs(i,:) = thetas(:,3)';
+        
+        boundIdx = getBoundIdx(idxMin, idxMax, XYZH(:,3));
+        for j = 1:size(boundIdx,1)
+            Rng = (max(boundIdx(j,1),2)):(min(boundIdx(j,2),size(XYZH,1)));
+            subWr(i,j) = getWrithe(XYZH(:,1:3), Rng);
+        end
+        
+        i/length(pp)
+    end
+    figure; 
+    subplot(211); plot(cobbs); title(num2str(ncurve)); grid on;
+    subplot(212); plot(subWr); title(num2str(ncurve)); grid on;
+end        
+
 %% functions 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
@@ -120,8 +153,7 @@ origIdx = origIdx(sel); vals = vals(sel);
 [~,i] = min(vals); idx = origIdx(i);
 end
 
-function thetas = cobbAngleMinMax(SplSclHt, lc_min, lc_max)
-x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); R = [x,y,z];
+function boundIdx = getBoundIdx(lc_min, lc_max, z)
 neutIdx = [1; lc_min; length(z)]; apIdx = lc_max;
 boundIdx = zeros(length(apIdx),2);
 for i = 1:length(apIdx)
@@ -129,6 +161,11 @@ for i = 1:length(apIdx)
     boundIdx(i,1) = neutIdx(minSgn(d, -1));
     boundIdx(i,2) = neutIdx(minSgn(d, 1));
 end
+end
+
+function thetas = cobbAngleMinMax(SplSclHt, lc_min, lc_max)
+x = SplSclHt(:,1); y = SplSclHt(:,2); z = SplSclHt(:,3); R = [x,y,z];
+boundIdx = getBoundIdx(lc_min, lc_max, z);
 thetas = getCobbAngles(R, boundIdx);
 end
 
