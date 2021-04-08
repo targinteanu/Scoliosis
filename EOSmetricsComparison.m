@@ -16,8 +16,8 @@ end
 %%{
 q = 10;
 ntot = length(patients_avail);
-vars = zeros(ntot, 9);
 varnames = {'Cobb', 'Wr', 'Curv', 'Tors', 'n', 'apex', 'neut', 'Lcurv', 'Ltors'};
+vars = zeros(ntot, length(varnames));
 % vars key: 
 %   1 - max coronal cobb angle 
 %   2 - writhe 
@@ -82,12 +82,17 @@ for ncurve = ncurves'
     pp = patients_avail(vars(:,5)'==ncurve);
     cobbs = zeros(length(pp), ncurve);
     subWr = zeros(size(cobbs));
+    wr = zeros(length(pp),1);
+    
+    imgs = cell(length(pp),5);
+    imgBounds_mm = [Inf, -Inf; Inf, -Inf; Inf, -Inf];
     for i = 1:length(pp)
         p = pp(i);
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
         
         XYZH = PlumblineDistance(splfilt, 2);
+        %{
         [idxMin, idxMax] = localMinMax(XYZH);
         thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
         cobbs(i,:) = thetas(:,3)';
@@ -97,12 +102,87 @@ for ncurve = ncurves'
             Rng = (max(boundIdx(j,1),2)):(min(boundIdx(j,2),size(XYZH,1)));
             subWr(i,j) = getWrithe(XYZH(:,1:3), Rng);
         end
+        wr(i) = getWrithe(XYZH(:,1:3));
+        %}
+        
+        % get DICOM img
+        imgCor = dicomread([base_fp, num2str(pp(i)), img_fp, 'cor']);
+        imgCor = double(imgCor); imgCor = imgCor - min(imgCor(:)); imgCor = imgCor/max(imgCor(:));
+        imgSag = dicomread([base_fp, num2str(pp(i)), img_fp, 'sag']);
+        imgSag = double(imgSag); imgSag = imgSag - min(imgSag(:)); imgSag = imgSag/max(imgSag(:));
+        % get DICOM info 
+        ifoCor = dicominfo([base_fp, num2str(pp(i)), img_fp, 'cor']);
+        ifoSag = dicominfo([base_fp, num2str(pp(i)), img_fp, 'sag']);
+        % PixelSpacing
+        if ~exist('ifoCor.PixelSpacing', 'var')
+            ifoCor.PixelSpacing = ifoCor.ImagerPixelSpacing;
+        end
+        if ~exist('ifoSag.PixelSpacing', 'var')
+            ifoSag.PixelSpacing = ifoSag.ImagerPixelSpacing;
+        end
+        % update cell array 
+        imgs{i,1} = imgCor; imgs{i,2} = imgSag; 
+        imgs{i,3} = XYZH(:,1:3); imgs{i,4} = [ifoSag, ifoCor];
+        % update bounds 
+        imgBounds_mm(1,1) = min(imgBounds_mm(1,1), min(XYZH(:,1)));
+        imgBounds_mm(1,2) = max(imgBounds_mm(1,2), max(XYZH(:,1)));
+        imgBounds_mm(2,1) = min(imgBounds_mm(2,1), min(XYZH(:,2)));
+        imgBounds_mm(2,2) = max(imgBounds_mm(2,2), max(XYZH(:,2)));
+        imgBounds_mm(3,1) = min(imgBounds_mm(3,1), min(XYZH(:,3)));
+        imgBounds_mm(3,2) = max(imgBounds_mm(3,2), max(XYZH(:,3)));
         
         i/length(pp)
     end
     figure; 
     subplot(211); plot(cobbs); title(num2str(ncurve)); grid on;
     subplot(212); plot(subWr); title(num2str(ncurve)); grid on;
+    
+    imgBounds_mm = imgBounds_mm + [-50, 50];
+    npts = 10000;
+    z_resample = linspace(imgBounds_mm(3,1), imgBounds_mm(3,2), npts)';
+    XYZs_resamp = zeros(npts, 3, length(pp));
+    for i = 1:length(pp)
+        XYZ = imgs{i,3}; XYZ = XYZ - XYZ(:,1); z = XYZ(:,3);
+        scl = diff(imgBounds_mm(3,:))/(max(z)-min(z));
+        imgs{i,5} = scl;
+        XYZ = XYZ*scl;
+        XYZs_resamp(:,:,i) = [interp1(z, XYZ(:,1), z_resample), ...
+            interp1(z, XYZ(:,2), z_resample), z_resample];
+        
+        %figure; plot3(XYZs_resamp(:,1,i), XYZs_resamp(:,2,i), XYZs_resamp(:,3,i)); 
+        %grid on; xlabel('x'); ylabel('y'); zlabel('z');
+    end
+    
+    nPixX = 1000; nPixY = 1000; nPixZ = 3000;
+    imgsSag_resamp = zeros(nPixZ, nPixX, length(pp));
+    imgsCor_resamp = zeros(nPixZ, nPixY, length(pp));
+    for i = 1:length(pp)
+        imgBounds_px_cor = imgBounds_mm([2,3],:)./flipud(imgs{i,4}(2).PixelSpacing);
+        imgBounds_px_sag = imgBounds_mm([1,3],:)./flipud(imgs{i,4}(1).PixelSpacing);
+        scl = 1/imgs{i,5};
+        imgBounds_px_cor = mean(imgBounds_px_cor,2) + ...
+            .5*scl*diff(imgBounds_px_cor,[],2).*[-1,1];
+        imgBounds_px_sag = mean(imgBounds_px_sag,2) + ...
+            .5*scl*diff(imgBounds_px_sag,[],2).*[-1,1];
+        
+        %[x,zSag] = meshgrid(1:size(imgs{i,2},2), 1:size(imgs{i,2},1));
+        [x_resamp,zSag_resamp] = meshgrid(...
+            linspace(imgBounds_px_sag(1,1),imgBounds_px_sag(1,2),nPixX), ...
+            linspace(imgBounds_px_sag(2,1),imgBounds_px_sag(2,2),nPixZ));
+        
+        %[y,zCor] = meshgrid(1:size(imgs{i,1},2), 1:size(imgs{i,1},1));
+        [y_resamp,zCor_resamp] = meshgrid(...
+            linspace(imgBounds_px_cor(1,1),imgBounds_px_cor(1,2),nPixX), ...
+            linspace(imgBounds_px_cor(2,1),imgBounds_px_cor(2,2),nPixZ));
+        
+        imgSag_resamp = interp2(imgs{i,1},x_resamp,zSag_resamp);
+        imgCor_resamp = interp2(imgs{i,2},y_resamp,zCor_resamp);
+        imgsSag_resamp(:,:,i) = imgSag_resamp;
+        imgsCor_resamp(:,:,i) = imgCor_resamp;
+        
+        %figure; imshow([imgSag_resamp, imgCor_resamp]);
+    end
+    figure; imshow([mean(imgsCor_resamp,3), mean(imgsSag_resamp,3)]);
 end        
 
 %% functions 
