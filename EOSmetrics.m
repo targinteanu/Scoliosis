@@ -84,6 +84,7 @@ handles.metricSelecter.String = {...
     'Plumbline 3D', ...
     'Writhe', ...
     'Cobb Angle', ...
+    'Sag/Cor Vertical Alignment', ...
     'Re-Filter'};
 
 handles.metricFuncs = {...
@@ -105,6 +106,7 @@ handles.metricFuncs = {...
     @(HO,ED,H) showPlumblineDistance(HO,ED,H,3), ...
     @(HO,ED,H) showWrithe(HO,ED,H), ...
     @(HO,ED,H) cobbAngleMinMax(HO,ED,H), ...
+    @(HO,ED,H) SCVA(HO,ED,H), ...
     @(HO,ED,H) refilter(HO,ED,H)};
 
 % Choose default command line output for EOSmetrics
@@ -167,6 +169,45 @@ errorbar(y(lc_max)/ifoCor.PixelSpacing(2), z(lc_max)/ifoCor.PixelSpacing(1), ...
     pw_max,pw_max, pp_max,pp_max, 'or', 'LineWidth', 1.25);
 
 guidata(hObject, handles);
+
+
+function SCVA(hObject, eventdata, handles)
+
+ifoCor = handles.ifoCor; ifoSag = handles.ifoSag;
+
+XYZ = handles.splfilt; 
+p1 = XYZ(1,:); p2 = XYZ(end,:); 
+p3 = [p1(1), p1(2), p2(3)];
+p4 = .5*(p2-p3) + p3;
+p123 = [p1; p3; p2];
+
+% x - sag
+SVA = -(p1(1)-p2(1));
+axes(handles.axesSag);
+xy = p123(:,[1,3])./flipud(ifoSag.PixelSpacing)';
+P4 = p4([1,3])./flipud(ifoSag.PixelSpacing)';
+plot(xy(:,1), xy(:,2), 'g');
+text(P4(1), P4(2), ...
+    [num2str(SVA) ' mm'], ...
+    'VerticalAlignment', 'top', 'Color', 'g');
+
+% y - cor
+CVA = (p1(2)-p2(2));
+axes(handles.axesCor);
+xy = p123(:,[2,3])./flipud(ifoCor.PixelSpacing)';
+P4 = p4([2,3])./flipud(ifoCor.PixelSpacing)';
+plot(xy(:,1), xy(:,2), 'g');
+text(P4(1), P4(2), ...
+    [num2str(CVA) ' mm'], ...
+    'VerticalAlignment', 'top', 'Color', 'g');
+
+% 3D
+VA3D = norm(p3-p2);
+axes(handles.axes3);
+plot3(p123(:,1), p123(:,2), -p123(:,3), 'g');
+text(p4(1), p4(2), -p4(3), ...
+    [num2str(VA3D), ' mm'], ...
+    'VerticalAlignment', 'top', 'Color', 'g');
 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
