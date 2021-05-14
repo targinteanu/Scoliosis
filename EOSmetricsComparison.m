@@ -17,120 +17,77 @@ end
 %%{
 q = 10;
 ntot = length(patients_avail);
-varnames = {'Cobb', 'Wr', '|Wr|', 'K', '|K|', 'T', '|T|', 'SVA', 'CVA', '3VA', 'n', 'apex', 'neut', 'Lcurv', 'Ltors'};
-vars = zeros(ntot, length(varnames));
-% vars key: 
-%   1 - max coronal cobb angle 
-%   2 - writhe
-%   3 - |Writhe|
-%   4 - max curvature 
-%   5 - |max curvature|
-%   6 - max torsion 
-%   7 - |max torsion|
-%   8 - SVA (Sag Vertical Alignment)
-%   9 - CVA (Cor Vertical Alignment)
-%   10 - 3D Vertical Alignment Norm
-%   11 - # of coronal curves 
-%   12 - largest apex loc
-%   13 - neutral loc
-%   14 - max curvature loc
-%   15 - max torsion loc
+
+    z = zeros(ntot, 1); % empty 
+    CobbCor = z; % Max Coronal Cobb Angle 
+    apex = z; % apex location of largest Coronal curve (by Cobb angle)
+    neut = z; % neutral location closest to 'apex'
+    LL = z; % Lumbar Lordosis Cobb Angle 
+    Wri = z; % Writhe (numeric integration) 
+    K = z; % Max Curvature (Lewiner) 
+    KL = z; % location of 'K'
+    T = z; % Max Torsion (Lewiner) 
+    TL = z; % location of 'T'
+    SVA = z; % Sagittal Vertical Alignment 
+    CVA = z; % Coronal Vertical Alignment
+    VA3D = z; % 3D Vertical Alignment norm
+    n = z; % number of Coronal curves 
+    
 for i = 1:ntot
     p = patients_avail(i);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
     
-    [SVA, CVA, VA3D] = SCVA(splfilt);
-    vars(i,8) = SVA; vars(i,9) = CVA; vars(i,10) = VA3D;
+    [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); % check!
+    
+    XYZH = PlumblineDistance(splfilt, 1);
+    [idxMin, idxMax] = localMinMax(XYZH);
+    thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
+    thetasSag = thetas(:,2);
+    LL(i) = thetasSag(end); % check!
     
     XYZH = PlumblineDistance(splfilt, 2);
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasCor = thetas(:,3);
-    [vars(i,1), idxMaxTheta] = max(thetasCor);
-    vars(i,11) = length(thetasCor);
+    [CobbCor(i), idxMaxTheta] = max(thetasCor);
+    n(i) = length(thetasCor);
     
     idxMaxApex = idxMax(idxMaxTheta);
     [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
     idxClosestNeutral = idxMin(idxClosestNeutral);
-    vars(i,12) = idxMaxApex/size(XYZH,1);
+    apex(i) = idxMaxApex/size(XYZH,1);
     if isempty(idxMin)
-        vars(i,13) = 0;
+        neut(i) = 0;
     else
-        vars(i,13) = idxClosestNeutral/size(XYZH,1);
+        neut(i) = idxClosestNeutral/size(XYZH,1);
     end
     
-    vars(i,2) = (getWrithe(splfilt));
-    vars(i,3) = abs(vars(i,2));
+    % check fix sign convention ?????
+    
+    Wri(i) = getWrithe(splfilt); 
     
     [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, q);
-    [vars(i,4), iK] = max(kappa); vars(i,5) = abs(vars(i,4));
-    [vars(i,6), iT] = max(tau); vars(i,7) = abs(vars(i,6));
+    [K(i), iK] = max(kappa); iK = iK+q; % check whether negative possible 
+    [T(i), iT] = max(tau); iT = iT+q; % check whether negative possible 
     
-    vars(i,14) = (iK+q)/(2*q + length(kappa));
-    vars(i,15) = (iT+q)/(2*q + length(tau));
+    KL(i) = (iK)/(2*q + length(kappa));
+    TL(i) = (iT)/(2*q + length(tau));
 
     i/ntot
 end
+%%
+VarTable = table(CobbCor, LL, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL, n);
+VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
+VarTable.absWri = abs(VarTable.Wri); 
+VarTable.absSVA = abs(VarTable.SVA); 
+VarTable.absCVA = abs(VarTable.CVA);
+varnames = VarTable.Properties.VariableNames;
 
-[R, P] = corr(vars);
+[R, P] = corr(VarTable.Variables);
 [r,c] = find(P <= .05);
-%figure('Position', [20 100 1450 600]); 
-%subplot(121); heatmap(varnames, varnames, R); title('Correlation'); 
-%subplot(122); heatmap(varnames, varnames, P); title('p-value');
 figure; heatmap(varnames, varnames, R); title('Correlation');
 figure; heatmap(varnames, varnames, P); title('p-value');
-
-figure; 
-plot(vars(:,1), abs(vars(:,2)), '.'); hold on; grid on;
-text(vars(:,1), abs(vars(:,2)), ...
-    arrayfun(@(n) num2str(n), vars(:,5), 'UniformOutput', false));
-xlabel('Max Coronal Cobb Angle'); ylabel('|Writhe|');
-
-%}
-
-%% more details for each curve 
-%{
-ncurves = unique(vars(:,5));
-for ncurve = ncurves'
-    pp = patients_avail(vars(:,5)'==ncurve);
-    cobbs = zeros(length(pp), ncurve);
-    subWr = zeros(size(cobbs));
-    wr = zeros(length(pp),1);
-    for i = 1:length(pp)
-        p = pp(i);
-        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
-        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
-        
-        XYZH = PlumblineDistance(splfilt, 2);
-        %%{
-        [idxMin, idxMax] = localMinMax(XYZH);
-        thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
-        [thetas, thetaIdx] = sort(thetas(:,3)');
-        cobbs(i,:) = thetas;
-        
-        boundIdx = getBoundIdx(idxMin, idxMax, XYZH(:,3));
-        sw = zeros(size(boundIdx,1),1);
-        for j = 1:size(boundIdx,1)
-            Rng = (max(boundIdx(j,1),2)):(min(boundIdx(j,2),size(XYZH,1)));
-            sw(j) = getWrithe(XYZH(:,1:3), Rng);
-        end
-        subWr(i,:) = sw(thetaIdx);
-        wr(i) = getWrithe(XYZH(:,1:3));
-        %%}
-        
-        i/length(pp)
-    end
-    figure; 
-    subplot(211); plot(cobbs); title(num2str(ncurve)); grid on;
-    subplot(212); plot(subWr); title(num2str(ncurve)); grid on;
-    
-    [R, P] = corr([abs(wr), cobbs, abs(subWr)]);
-    figure('Position', [20 100 1450 600]); 
-    subplot(121); heatmap(R); title('Correlation'); 
-    subplot(122); heatmap(P); title('p-value');
-    
-end        
 
 %}
 
