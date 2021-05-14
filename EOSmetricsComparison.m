@@ -17,57 +17,69 @@ end
 %%{
 q = 10;
 ntot = length(patients_avail);
-varnames = {'Cobb', 'Wr', 'Curv', 'Tors', 'n', 'apex', 'neut', 'Lcurv', 'Ltors'};
+varnames = {'Cobb', 'Wr', '|Wr|', 'K', '|K|', 'T', '|T|', 'SVA', 'CVA', '3VA', 'n', 'apex', 'neut', 'Lcurv', 'Ltors'};
 vars = zeros(ntot, length(varnames));
 % vars key: 
 %   1 - max coronal cobb angle 
-%   2 - writhe 
-%   3 - max curvature 
-%   4 - max torsion 
-%   5 - # of coronal curves 
-%   6 - largest apex loc
-%   7 - neutral loc
-%   8 - max curvature loc
-%   9 - max torsion loc
+%   2 - writhe
+%   3 - |Writhe|
+%   4 - max curvature 
+%   5 - |max curvature|
+%   6 - max torsion 
+%   7 - |max torsion|
+%   8 - SVA (Sag Vertical Alignment)
+%   9 - CVA (Cor Vertical Alignment)
+%   10 - 3D Vertical Alignment Norm
+%   11 - # of coronal curves 
+%   12 - largest apex loc
+%   13 - neutral loc
+%   14 - max curvature loc
+%   15 - max torsion loc
 for i = 1:ntot
     p = patients_avail(i);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+    
+    [SVA, CVA, VA3D] = SCVA(splfilt);
+    vars(i,8) = SVA; vars(i,9) = CVA; vars(i,10) = VA3D;
     
     XYZH = PlumblineDistance(splfilt, 2);
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasCor = thetas(:,3);
     [vars(i,1), idxMaxTheta] = max(thetasCor);
-    vars(i,5) = length(thetasCor);
+    vars(i,11) = length(thetasCor);
     
     idxMaxApex = idxMax(idxMaxTheta);
     [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
     idxClosestNeutral = idxMin(idxClosestNeutral);
-    vars(i,6) = idxMaxApex/size(XYZH,1);
+    vars(i,12) = idxMaxApex/size(XYZH,1);
     if isempty(idxMin)
-        vars(i,7) = 0;
+        vars(i,13) = 0;
     else
-        vars(i,7) = idxClosestNeutral/size(XYZH,1);
+        vars(i,13) = idxClosestNeutral/size(XYZH,1);
     end
     
-    vars(i,2) = abs(getWrithe(splfilt));
+    vars(i,2) = (getWrithe(splfilt));
+    vars(i,3) = abs(vars(i,2));
     
     [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, q);
-    [vars(i,3), iK] = max(kappa); 
-    [vars(i,4), iT] = max(tau);
+    [vars(i,4), iK] = max(kappa); vars(i,5) = abs(vars(i,4));
+    [vars(i,6), iT] = max(tau); vars(i,7) = abs(vars(i,6));
     
-    vars(i,8) = (iK+q)/(2*q + length(kappa));
-    vars(i,9) = (iT+q)/(2*q + length(tau));
+    vars(i,14) = (iK+q)/(2*q + length(kappa));
+    vars(i,15) = (iT+q)/(2*q + length(tau));
 
     i/ntot
 end
 
 [R, P] = corr(vars);
 [r,c] = find(P <= .05);
-figure('Position', [20 100 1450 600]); 
-subplot(121); heatmap(varnames, varnames, R); title('Correlation'); 
-subplot(122); heatmap(varnames, varnames, P); title('p-value');
+%figure('Position', [20 100 1450 600]); 
+%subplot(121); heatmap(varnames, varnames, R); title('Correlation'); 
+%subplot(122); heatmap(varnames, varnames, P); title('p-value');
+figure; heatmap(varnames, varnames, R); title('Correlation');
+figure; heatmap(varnames, varnames, P); title('p-value');
 
 figure; 
 plot(vars(:,1), abs(vars(:,2)), '.'); hold on; grid on;
@@ -78,7 +90,7 @@ xlabel('Max Coronal Cobb Angle'); ylabel('|Writhe|');
 %}
 
 %% more details for each curve 
-%%{
+%{
 ncurves = unique(vars(:,5));
 for ncurve = ncurves'
     pp = patients_avail(vars(:,5)'==ncurve);
@@ -233,4 +245,22 @@ function [d1, d2, d3, tau, kappa] = LewinerQuantity(p, q)
             lewinerTorsion(p, vertebra, q);
         d2(vertebra-q) = norm(dd); d1(vertebra-q) = norm(d); d3(vertebra-q) = norm(ddd);
     end
+end
+
+
+
+function [SVA, CVA, VA3D] = SCVA(XYZ)
+
+p1 = XYZ(1,:); p2 = XYZ(end,:); 
+p3 = [p1(1), p1(2), p2(3)];
+
+% x - sag
+SVA = -(p1(1)-p2(1));
+
+% y - cor
+CVA = (p1(2)-p2(2));
+
+% 3D
+VA3D = norm(p3-p2);
+
 end
