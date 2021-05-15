@@ -91,6 +91,59 @@ figure; heatmap(varnames, varnames, P); title('p-value');
 
 %}
 
+%% More details for each coronal curve 
+ncurves = unique(VarTable.n);
+for ncurve = ncurves'
+    pp = patients_avail(VarTable.n'==ncurve);
+    cobbs = zeros(length(pp), ncurve);
+    subWr = zeros(size(cobbs));
+    wr = zeros(length(pp),1);
+    for i = 1:length(pp)
+        p = pp(i);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+        
+        XYZH = PlumblineDistance(splfilt, 2);
+        %%{
+        [idxMin, idxMax] = localMinMax(XYZH);
+        thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
+        [thetas, thetaIdx] = sort(thetas(:,3)');
+        cobbs(i,:) = thetas;
+        
+        boundIdx = getBoundIdx(idxMin, idxMax, XYZH(:,3));
+        sw = zeros(size(boundIdx,1),1);
+        for j = 1:size(boundIdx,1)
+            Rng = (max(boundIdx(j,1),2)):(min(boundIdx(j,2),size(XYZH,1)));
+            sw(j) = getWrithe(XYZH(:,1:3), Rng);
+        end
+        subWr(i,:) = sw(thetaIdx);
+        wr(i) = getWrithe(XYZH(:,1:3));
+        %%}
+        
+        i/length(pp)
+    end
+    
+    subVarTable = table(cobbs, wr, subWr); 
+    subVarTable.absWr = abs(subVarTable.wr);
+    subVarTable.absSubWr = abs(subVarTable.subWr);
+    vars = subVarTable.Variables; 
+    varnames = subVarTable.Properties.VariableNames;
+    varnames2 = cell(1, size(vars,2));
+    v2 = 1;
+    for v = 1:length(varnames)
+        vn = size(subVarTable(:,v).Variables,2);
+        for v3 = 1:vn
+            varnames2{v2} = [varnames{v},' ',num2str(v3)];
+            v2 = v2+1;
+        end
+    end
+    
+    [R, P] = corr(vars);
+    figure; heatmap(varnames2, varnames2, R); title([num2str(ncurve),'Curves Correlation']); 
+    figure; heatmap(varnames2, varnames2, P); title([num2str(ncurve),'Curves p-value']);
+    
+end        
+
 %% functions 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
