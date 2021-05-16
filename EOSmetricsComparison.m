@@ -44,7 +44,7 @@ for i = 1:ntot
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasSag = thetas(:,2);
-    LL(i) = thetasSag(end); % check!
+    LL(i) = thetasSag(end); % mostly correct BUT some patients show only one sag angle
     
     XYZH = PlumblineDistance(splfilt, 2);
     [idxMin, idxMax] = localMinMax(XYZH);
@@ -68,8 +68,8 @@ for i = 1:ntot
     Wri(i) = getWrithe(splfilt); 
     
     [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, q);
-    [K(i), iK] = max(kappa); iK = iK+q; % check whether negative possible 
-    [T(i), iT] = max(tau); iT = iT+q; % check whether negative possible 
+    [K(i), iK] = max(kappa); iK = iK+q; % only positive values possible 
+    [~, iT] = max(abs(tau)); T(i) = tau(iT); iT = iT+q;
     
     KL(i) = (iK)/(2*q + length(kappa));
     TL(i) = (iT)/(2*q + length(tau));
@@ -80,6 +80,7 @@ end
 VarTable = table(CobbCor, LL, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL, n);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.absWri = abs(VarTable.Wri); 
+VarTable.absT = abs(VarTable.T);
 VarTable.absSVA = abs(VarTable.SVA); 
 VarTable.absCVA = abs(VarTable.CVA);
 varnames = VarTable.Properties.VariableNames;
