@@ -2,6 +2,8 @@
 %%{
 clear;
 
+patients_loaded = [];
+
 qst = questdlg('Add a new directory?', 'Directory Selection', 'Yes', 'No', 'No');
 
 while strcmp(qst, 'Yes')
@@ -17,6 +19,16 @@ while strcmp(qst, 'Yes')
         end
     end
     
+    blankPatient.splfilt = [];
+    PL = repmat(blankPatient, size(patients_avail));
+    for i = 1:length(patients_avail)
+        p = patients_avail(i);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+        PL(i).splfilt = splfilt;
+    end
+    
+    patients_loaded = [patients_loaded, PL];
+    
 qst = questdlg('Add a new directory?', 'Directory Selection', 'Yes', 'No', 'No');
 end
 
@@ -25,7 +37,7 @@ end
 %% collect metrics for all patients 
 %%{
 q = 10;
-ntot = length(patients_avail);
+ntot = length(patients_loaded);
 
     z = zeros(ntot, 1); % empty 
     CobbCor = z; % Max Coronal Cobb Angle 
@@ -43,10 +55,9 @@ ntot = length(patients_avail);
     n = z; % number of Coronal curves 
     
 for i = 1:ntot
-    p = patients_avail(i);
-    load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+    splfilt = patients_loaded(i).splfilt;
     
-    [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); % check!
+    [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); 
     
     XYZH = PlumblineDistance(splfilt, 1);
     [idxMin, idxMax] = localMinMax(XYZH);
@@ -93,23 +104,22 @@ VarTable.absSVA = abs(VarTable.SVA);
 VarTable.absCVA = abs(VarTable.CVA);
 varnames = VarTable.Properties.VariableNames;
 
-[R, P] = corr(VarTable.Variables);
-[r,c] = find(P <= .05);
+[R, blankPatient] = corr(VarTable.Variables);
+[r,c] = find(blankPatient <= .05);
 figure; heatmap(varnames, varnames, R); title('Correlation');
-figure; heatmap(varnames, varnames, P); title('p-value');
+figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 
 %}
 
 %% More details for each coronal curve 
 ncurves = unique(VarTable.n);
 for ncurve = ncurves'
-    pp = patients_avail(VarTable.n'==ncurve);
+    pp = patients_loaded(VarTable.n'==ncurve);
     cobbs = zeros(length(pp), ncurve);
     subWr = zeros(size(cobbs));
     wr = zeros(length(pp),1);
     for i = 1:length(pp)
-        p = pp(i);
-        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+        splfilt = pp(i).splfilt;
         
         XYZH = PlumblineDistance(splfilt, 2);
         %%{
@@ -146,9 +156,9 @@ for ncurve = ncurves'
         end
     end
     
-    [R, P] = corr(vars);
+    [R, blankPatient] = corr(vars);
     figure; heatmap(varnames2, varnames2, R); title([num2str(ncurve),'Curves Correlation']); 
-    figure; heatmap(varnames2, varnames2, P); title([num2str(ncurve),'Curves p-value']);
+    figure; heatmap(varnames2, varnames2, blankPatient); title([num2str(ncurve),'Curves p-value']);
     
 end        
 
