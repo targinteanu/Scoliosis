@@ -1,16 +1,25 @@
 %% load patients 
 %%{
 clear;
-[fn, fp] = uigetfile('*.mat', 'Select Scan Directory File'); 
-load([fp, '\', fn]); 
 
-patients_avail = [];
-for p = patient_list 
-    fnp = [base_fp, num2str(p), img_fp];
-    if exist([fnp, 'patient',num2str(p),' EOSoutline data.mat'], 'file')
-        patients_avail = [patients_avail, p];
+qst = questdlg('Add a new directory?', 'Directory Selection', 'Yes', 'No', 'No');
+
+while strcmp(qst, 'Yes')
+
+    [fn, fp] = uigetfile('*.mat', 'Select Scan Directory File'); 
+    load([fp, '\', fn]); 
+
+    patients_avail = [];
+    for p = patient_list 
+        fnp = [base_fp, num2str(p), img_fp];
+        if exist([fnp, 'patient',num2str(p),' EOSoutline data.mat'], 'file')
+            patients_avail = [patients_avail, p];
+        end
     end
+    
+qst = questdlg('Add a new directory?', 'Directory Selection', 'Yes', 'No', 'No');
 end
+
 %}
 
 %% collect metrics for all patients 
@@ -35,7 +44,6 @@ ntot = length(patients_avail);
     
 for i = 1:ntot
     p = patients_avail(i);
-    load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
     load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
     
     [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); % check!
@@ -101,7 +109,6 @@ for ncurve = ncurves'
     wr = zeros(length(pp),1);
     for i = 1:length(pp)
         p = pp(i);
-        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
         
         XYZH = PlumblineDistance(splfilt, 2);
