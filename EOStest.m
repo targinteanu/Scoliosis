@@ -1,76 +1,60 @@
-fn = 'C:\Users\Toren\Desktop\scoliosis\EOS patient 36\selected DICOM\sag';
-imsag = dicomread(fn);
-imsag = double(imsag); imsag = imsag - min(imsag(:)); imsag = imsag/max(imsag(:));
+fn = 'C:\Users\Toren\Desktop\scoliosis\EOS patient 36\selected DICOM\cor';
+imcor = dicomread(fn);
+imcor = double(imcor); imcor = imcor - min(imcor(:)); imcor = imcor/max(imcor(:));
 ifo = dicominfo(fn);
 xscl = ifo.PixelSpacing(1); zscl = ifo.PixelSpacing(2);
 
-%[outln, vertx, verty] = roipoly; 
+%[outln, vertx, verty] = roipoly(imcor); 
 load('EOStestROI.mat');
-[y1,idx1, y2,idx2] = minmax2(@(v) max(v), verty);
-x1 = vertx(idx1); x2 = vertx(idx2);
 
 % img is a double img [0, 1]; outln is a BW outline
 
 % filtering 
-im = imreconstruct(double(~outln), imsag); 
-imgFiltered = imsag - im; 
+im = imreconstruct(double(outln), imcor); 
+%imgFiltered = imcor - im; 
+imgFiltered = im;
 imgFiltered = imgFiltered .* outln;
 imgFiltered = imgFiltered/max(imgFiltered(:));
 
-% spline fitting 
-[r, c] = find(imgFiltered);
-[splineObj, gof] = fit(r, c, 'smoothingspline', 'Weights', imgFiltered(find(imgFiltered(:))));
-z = min(r):max(r); 
-%z = z*zscl;
-splineSample = [z; ppval(z, splineObj.p)]';
-% display results on current axes 
-% splineSample is in pixels, but splineObj is in mm
+figure; 
+subplot(131); imshow(imcor, []); hold on; visboundaries(outln); 
+subplot(132); imshow(im, []);
+subplot(133); imshow(imgFiltered, []);
 
-imgFiltered = imgFiltered.*(imgFiltered > .7);
-[r, c] = find(imgFiltered);
-N = 10;
-coeff1 = WLS(r, c, imgFiltered(find(imgFiltered(:))), N);
-coeff2 = WLSperp(r, c, imgFiltered(find(imgFiltered(:))), N, ...
-    [x1,x2], [y1,y2], [1e-110,1e-110]);
-coeff2fun = @(coeff, x) arrayfun(@(i) sum(coeff.*(x(i).^(0:(length(coeff)-1)))), 1:length(x));
+rcref = round(CenterOfMass(outln));
 
-x1=x1*xscl; x2=x2*xscl; y1=y1*zscl; y2=y2*zscl;
+%% various processes 
+imcorfill = imfill(imcor);
 
-figure; imshow(imsag); hold on;
-plot([x1,x2]/xscl,[y1,y2]/zscl,'o', 'LineWidth',2);
+ws = label2rgb(watershed(imcorfill)); 
+ff = labeloverlay(imcorfill, grayconnected(imcorfill, rcref(1), rcref(2)));
+fm = labeloverlay(imcorfill, imsegfmm(graydiffweight(imcorfill, outln, 'GrayDifferenceCutoff', 25), outln, graythresh(imcorfill)));
+km = label2rgb(imsegkmeans(single(imcorfill), 10));
+ac = label2rgb(activecontour(imcorfill, outln));
 
-visboundaries(outln); 
-plot(c, r, 'ob');
-plot(splineSample(:,2), splineSample(:,1), 'b');
-plot(coeff2fun(coeff1',z), z, 'r', 'LineWidth', 1);
-plot(coeff2fun(coeff2',z), z, 'g', 'LineWidth', 1);
+ej_sob = edge(imcorfill, 'Sobel');
+ej_prw = edge(imcorfill, 'Prewitt');
+ej_rob = edge(imcorfill, 'Roberts');
+ej_log = edge(imcorfill, 'log');
+ej_can = edge(imcorfill, 'Canny');
 
-% helper functions --------------------------------------------------
+[circC, circR, circM] = imfindcircles(imcorfill, [130,170]);
+[Gmag, Gdir] = imgradient(imcorfill);
 
-function [v1,idx1, v2,idx2] = minmax2(fun, vals)
-    [vals,idxs] = unique(vals);
-    [v1, idx1] = fun(vals); 
-    i2 = [1:(idx1-1), (idx1+1):length(vals)];
-    vals2 = vals(i2); idx1 = idxs(idx1); idxs = idxs(i2);
-    [v2, idx2] = fun(vals2); idx2 = idxs(idx2);
-    %idx2 = find(vals == v2); 
-end
+figure; 
+subplot(331); imshow(ws); title('watershed'); 
+subplot(332); imshow(ff); title('flood fill'); 
+subplot(333); imshow(fm); title('fast marching'); 
+subplot(334); imshow(km); title('k means');
+subplot(335); imshow(ac); title('active contour');
+subplot(336); imshow(ej_sob); title('edge'); 
+subplot(337); imshow(Gmag); title('grad mag'); 
+subplot(338); imshow(Gdir); title('grad dir'); 
+subplot(339); imshow(imcorfill); hold on; viscircles(circC, circR);
 
-function beta = WLS(x,y,w,N)
-    X = cell2mat(arrayfun(@(xi) xi.^(0:N), x, 'UniformOutput', false));
-    beta = ((X'*diag(w)*X)^-1)*X'*diag(w)*y;
-end
-
-%{
-function beta = WLStangent(x,y,w,N, m0,c0,xstart)
-    X = cell2mat(arrayfun(@(xi) xi.^([0,2:N]), x, 'UniformOutput', false));
-    b = ((X'*diag(w)*X)^-1)*X'*diag(w)*y;
-    
-    i = 2:N;
-    eqn = @(x0) b(1) - c0 + x0.*(m0 + 1/m0) + sum((i-1).*b(2:end).*(x0.^i));
-    %options = optimoptions('fsolve','Display','none','PlotFcn',@optimplotfirstorderopt);
-    solx = fsolve(eqn, xstart);
-    b1 = m0 - sum(i.*b(2:end)'.*(solx.^(i-1)));
-    beta = [b(1); b1; b(2:end)];
-end
-%}
+figure; 
+subplot(321); imshow(ej_sob); title('Sobel');
+subplot(322); imshow(ej_prw); title('Prewitt');
+subplot(323); imshow(ej_rob); title('Roberts');
+subplot(324); imshow(ej_log); title('log');
+subplot(325); imshow(ej_can); title('Canny');
