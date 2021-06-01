@@ -386,29 +386,27 @@ axes(handles.axesCor); hold off; imshow(imgCor);
 axes(handles.axesSag); hold off; imshow(imgSag);
 
 % initialize vars that may not have been set
-varinit = [];
+femheadsScl = [0,0;0,0;0,0];
+femheadsCor = [0,0;0,0];
+femheadsSag = [0,0;0,0];
 
-femheadsScl = varinit;
-femheadsCor = varinit;
-femheadsSag = varinit;
+splSclObj = []; % fix!!!
+splSclRng = [0;0];
+splSclSmp = [0,0,0];
+splSclBnd = [0,0];
 
-splSclObj = varinit;
-splSclRng = varinit;
-splSclSmp = varinit;
-splSclBnd = varinit;
-
-imgSagFilt = varinit;
-splSagObj = varinit;
-splSagSmp = varinit;
-SagOL = varinit;
-splSagObjBound = varinit;
-splSagSmpBound = varinit;
-imgCorFilt = varinit;
-splCorObj = varinit;
-splCorSmp = varinit;
-CorOL = varinit;
-splCorObjBound = varinit;
-splCorSmpBound = varinit;
+imgSagFilt = [];
+splSagObj = [];
+splSagSmp = [0,0];
+SagOL = [];
+splSagObjBound = [];
+splSagSmpBound = [0,0];
+imgCorFilt = [];
+splCorObj = [];
+splCorSmp = [0,0];
+CorOL = [];
+splCorObjBound = [];
+splCorSmpBound = [0,0];
 
 % use saved file if available
 fn = [handles.base_fp,...
