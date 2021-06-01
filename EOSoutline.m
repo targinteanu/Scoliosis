@@ -385,6 +385,31 @@ handles.imgCor = imgCor; handles.imgSag = imgSag;
 axes(handles.axesCor); hold off; imshow(imgCor); 
 axes(handles.axesSag); hold off; imshow(imgSag);
 
+% initialize vars that may not have been set
+varinit = [];
+
+femheadsScl = varinit;
+femheadsCor = varinit;
+femheadsSag = varinit;
+
+splSclObj = varinit;
+splSclRng = varinit;
+splSclSmp = varinit;
+splSclBnd = varinit;
+
+imgSagFilt = varinit;
+splSagObj = varinit;
+splSagSmp = varinit;
+SagOL = varinit;
+splSagObjBound = varinit;
+splSagSmpBound = varinit;
+imgCorFilt = varinit;
+splCorObj = varinit;
+splCorSmp = varinit;
+CorOL = varinit;
+splCorObjBound = varinit;
+splCorSmpBound = varinit;
+
 % use saved file if available
 fn = [handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
@@ -401,9 +426,7 @@ fn2 = [handles.base_fp,...
 if exist(fn, 'file')
     disp(['loading ',fn])
     load(fn);
-    
-% ADD IF EXIST('', 'VAR') CLAUSES!!!
-    
+      
 handles.femheadsScl = femheadsScl;
 handles.femheadsCor = femheadsCor; 
 handles.femheadsSag = femheadsSag; 
