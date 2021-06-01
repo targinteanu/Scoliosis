@@ -91,19 +91,58 @@ function inputCor_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesCor); 
 hold off; imshow(handles.imgCor); hold on;
-uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
-    'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
-[OL, vertx, verty] = roipoly; 
-uiwait(msgbox(['Separate C8 from T1 with a straight line. ' ...
-    'Click to set the two endpoints of the line. Double click when complete.'], 'Instructions'));
-[boundX, boundY] = getpts;
-handles.CorOL = OL; handles.CorVertX = vertx; handles.CorVertY = verty;
-handles.CorBound = [boundX, boundY];
+
+qstOL = questdlg('Outline Spine?', 'Outline', 'Yes', 'No', 'Yes');
+qstOL = strcmp(qstOL, 'Yes');
+if qstOL
+    uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
+        'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
+    [OL, vertx, verty] = roipoly;
+    handles.CorOL = OL; handles.CorVertX = vertx; handles.CorVertY = verty; 
+end
+
+qstBnd = questdlg('Separate C8 Bound?', 'Bound', 'Yes', 'No', 'Yes');
+qstBnd = strcmp(qstBnd, 'Yes');
+if qstBnd
+    uiwait(msgbox(['Separate C8 from T1 with a straight line. ' ...
+        'Click to set the two endpoints of the line. Double click when complete.'], ...
+        'Instructions'));
+    [boundX, boundY] = getpts;
+    handles.CorBound = [boundX, boundY];
+end
+
+qstFH = questdlg('Locate Femoral Heads?', 'Femoral Heads', 'Yes', 'No', 'Yes');
+qstFH = strcmp(qstFH, 'Yes');
+if qstFH
+    uiwait(msgbox(['Indicate a diameter line of the left femoral head. ' ...
+        'Click to set the two endpoints of the line. Double click when complete. ' ...
+        'Only the first two points will be considered. '], ...
+        'Instructions'));
+    [FH_L_X, FH_L_Y] = getpts; FH_L = [FH_L_X'; FH_L_Y']; 
+    FH_L = FH_L(1:2,:);
+    FH_L = mean(FH_L, 2);
+    
+    uiwait(msgbox(['Indicate a diameter line of the right femoral head. ' ...
+        'Click to set the two endpoints of the line. Double click when complete. '...
+        'Only the first two points will be considered. '], ...
+        'Instructions'));
+    [FH_R_X, FH_R_Y] = getpts; FH_R = [FH_R_X'; FH_R_Y']; 
+    FH_R = FH_R(1:2,:);
+    FH_R = mean(FH_R, 2);
+    
+    handles.femheadsCor = [FH_L, FH_R];
+end
+
+if qstOL | qstBnd
 [handles.imgCorFilt, handles.splCorObj, handles.splCorSmp, ...
     handles.splCorObjBound, handles.splCorSmpBound] = ...
     processOL(handles.imgCor, OL, boundX, boundY, ...
     handles.ifoCor.PixelSpacing(1), handles.ifoCor.PixelSpacing(2)); 
+end
+
+if qstOL | qstBnd | qstFH
 guidata(hObject, handles);
+end
 
 % --- Executes on button press in inputSag.
 function inputSag_Callback(hObject, eventdata, handles)
@@ -112,19 +151,58 @@ function inputSag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axesSag); 
 hold off; imshow(handles.imgSag); hold on;
-uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
-    'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
-[OL, vertx, verty] = roipoly; 
-uiwait(msgbox(['Separate L5 from S1 with a straight line. ' ...
-    'Click to set the two endpoints of the line. Double click when complete.'], 'Instructions'));
-[boundX, boundY] = getpts;
-handles.SagOL = OL; handles.SagVertX = vertx; handles.SagVertY = verty; 
-handles.SagBound = [boundX, boundY];
+
+qstOL = questdlg('Outline Spine?', 'Outline', 'Yes', 'No', 'Yes');
+qstOL = strcmp(qstOL, 'Yes');
+if qstOL
+    uiwait(msgbox(['Closely outline as much of the spine as possible. ' ...
+        'Include at least C8-S1. Include vertebral bodies only.'], 'Instructions'));
+    [OL, vertx, verty] = roipoly;
+    handles.SagOL = OL; handles.SagVertX = vertx; handles.SagVertY = verty; 
+end
+
+qstBnd = questdlg('Separate L5 Bound?', 'Bound', 'Yes', 'No', 'Yes');
+qstBnd = strcmp(qstBnd, 'Yes');
+if qstBnd
+    uiwait(msgbox(['Separate L5 from S1 with a straight line. ' ...
+        'Click to set the two endpoints of the line. Double click when complete.'], ...
+        'Instructions'));
+    [boundX, boundY] = getpts;
+    handles.SagBound = [boundX, boundY];
+end
+
+qstFH = questdlg('Locate Femoral Heads?', 'Femoral Heads', 'Yes', 'No', 'Yes');
+qstFH = strcmp(qstFH, 'Yes');
+if qstFH
+    uiwait(msgbox(['Indicate a diameter line of the left femoral head. ' ...
+        'Click to set the two endpoints of the line. Double click when complete. ' ...
+        'Only the first two points will be considered. '], ...
+        'Instructions'));
+    [FH_L_X, FH_L_Y] = getpts; FH_L = [FH_L_X'; FH_L_Y']; 
+    FH_L = FH_L(1:2,:);
+    FH_L = mean(FH_L, 2);
+    
+    uiwait(msgbox(['Indicate a diameter line of the right femoral head. ' ...
+        'Click to set the two endpoints of the line. Double click when complete. '...
+        'Only the first two points will be considered. '], ...
+        'Instructions'));
+    [FH_R_X, FH_R_Y] = getpts; FH_R = [FH_R_X'; FH_R_Y']; 
+    FH_R = FH_R(1:2,:);
+    FH_R = mean(FH_R, 2);
+    
+    handles.femheadsSag = [FH_L, FH_R];
+end
+
+if qstOL | qstBnd
 [handles.imgSagFilt, handles.splSagObj, handles.splSagSmp, ...
     handles.splSagObjBound, handles.splSagSmpBound] = ...
     processOL(handles.imgSag, OL, boundX, boundY, ...
     handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2)); 
+end
+
+if qstOL | qstBnd | qstFH
 guidata(hObject, handles);
+end
 
 function [imgFiltered, splineObj, splineSample, splineObjBound, splineSampleBound] ...
     = processOL(img, outln, boundX, boundY, zscl, xscl)
@@ -178,17 +256,23 @@ topBoundScl = handles.splCorObjBound;
 [~,iBot] = min(sum(([zScl; xScl] - botBoundScl).^2));
 [~,iTop] = min(sum(([zScl; yScl] - topBoundScl).^2));
 
+fhXZsag = handles.femheadsSag./flipud(handles.ifoSag.PixelSpacing); % [x1, x2; z1, z2]
+fhYZcor = handles.femheadsCor./flipud(handles.ifoCor.PixelSpacing); % [y1, y2; z1, z2]
+fhXYZ = [fhXZsag(1,:), fhYZcor(1,:), mean([fhXZsag(2,:); fhYZcor(2,:)])];
+
 % store 
 handles.splSclObj = {splSagScl, splCorScl};
 handles.splSclRng = [min(zScl); max(zScl)];
 handles.splSclSmp = [xScl', yScl', zScl'];
 handles.splSclBnd = [iBot, iTop];
+handles.femheadsScl = fhXYZ; % [x1, x2; y1, y2; z1, z2]
 guidata(hObject, handles);
 
 % display 
 axes(handles.axes3); hold off;
 plot3(xScl, yScl, zScl, 'b'); grid on; hold on;
 plot3([xScl(iBot),xScl(iTop)], [yScl(iBot),yScl(iTop)], [zScl(iBot),zScl(iTop)], '*r');
+plot3(fhXYZ(1,:), fhXYZ(2,:), fhXYZ(3,:), 'or');
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
 ylim([1, size(handles.imgCor,2)] * handles.ifoCor.PixelSpacing(2));
 xlabel('x(mm)'); ylabel('y(mm)'); zlabel('z(mm)');
@@ -222,9 +306,14 @@ CorOL = handles.CorOL;
 splCorObjBound = handles.splCorObjBound; 
 splCorSmpBound = handles.splCorSmpBound;
 
+femheadsCor = handles.femheadsCor;
+femheadsSag = handles.femheadsSag; 
+femheadsScl = handles.femheadsScl;
+
 save(fn, 'splSclObj', 'splSclRng', 'splSclSmp', 'splSclBnd', ...
     'imgSagFilt', 'splSagObj', 'splSagSmp', 'SagOL', ...
     'imgCorFilt', 'splCorObj', 'splCorSmp', 'CorOL', ...
+    'femheadsCor', 'femheadsSag', 'femheadsScl', ...
     'splCorObjBound', 'splCorSmpBound', 'splSagObjBound', 'splSagSmpBound');
 disp(['saving ',fn])
 
@@ -313,6 +402,12 @@ if exist(fn, 'file')
     disp(['loading ',fn])
     load(fn);
     
+% ADD IF EXIST('', 'VAR') CLAUSES!!!
+    
+handles.femheadsScl = femheadsScl;
+handles.femheadsCor = femheadsCor; 
+handles.femheadsSag = femheadsSag; 
+    
 handles.splSclObj = splSclObj;
 handles.splSclRng = splSclRng;
 handles.splSclSmp = splSclSmp;
@@ -335,12 +430,14 @@ handles.splCorSmpBound = splCorSmpBound;
     visboundaries(CorOL); 
     plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
     plot(splCorSmpBound(2), splCorSmpBound(1), '*b', 'LineWidth', 1.25);
+    plot(femheadsCor(1,:), femheadsCor(2,:), 'ob', 'LineWidth', 1.25);
     
     axes(handles.axesSag); hold on; 
     visboundaries(SagOL); 
     plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
     plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
-
+    plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
+    
     if exist(fn2, 'file')
         disp(['loading ',fn2])
         load(fn2);
@@ -356,9 +453,10 @@ handles.splCorSmpBound = splCorSmpBound;
     end
     
 else
-clear handles.splSclObj handles.splSclRng handles.splSclSmp
+clear handles.splSclObj handles.splSclRng handles.splSclSmp 
 clear handles.imgSagFilt handles.splSagObj handles.splSagSmp handles.SagOL
 clear handles.imgCorFilt handles.splCorObj handles.splCorSmp handles.CorOL
+clear handles.femheadsSag handles.femheadsCor handles.femheadsScl
 end
 
 % Update handles structure
