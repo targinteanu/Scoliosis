@@ -362,6 +362,9 @@ grid on;
 colorbar;
 handles.SplSclHt = [XYZ,h];
 guidata(hObject, handles);
+    hold on; 
+    fhXYZ = handles.femheadsScl;
+    plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
 
 
 function showPlumblineDistance(hObject, eventdata, handles, varToShow)
@@ -570,12 +573,26 @@ splCorSmpBound = handles.splCorSmpBound;
         xlim([0, size(imgSag,2)]*ifoSag.PixelSpacing(2));
         ylim([0, size(imgCor,2)]*ifoCor.PixelSpacing(2));
         zlim(-[size(imgCor,1), 0]*ifoCor.PixelSpacing(1));
+        
+            hold on;
+            fhXYZ = handles.femheadsScl;
+            plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
+            
+            femheadsSag = handles.femheadsSag; femheadsCor = handles.femheadsCor;
+            axes(handles.axesSag); 
+            plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
+            axes(handles.axesCor); 
+            plot(femheadsCor(1,:), femheadsCor(2,:), 'ob', 'LineWidth', 1.25);
 
 function shownewpatient(hObject, eventdata, handles)
 set(handles.PatientNum, 'String', ...
     num2str(handles.patient_list(handles.current_patient)));
 handles.metricSelecter.Value = 1;
 
+% initialize vars that may not have been set
+femheadsScl = [0,0;0,0;0,0];
+femheadsCor = [0,0;0,0];
+femheadsSag = [0,0;0,0];
 handles.splfiltNew = [];
 
 % get DICOM info 
@@ -645,6 +662,10 @@ handles.splCorSmp = splCorSmp;
 handles.CorOL = CorOL;
 handles.splCorObjBound = splCorObjBound; 
 handles.splCorSmpBound = splCorSmpBound;
+
+    handles.femheadsScl = femheadsScl; 
+    handles.femheadsSag = femheadsSag; 
+    handles.femheadsCor = femheadsCor;
 
     if exist(fn2, 'file')
         disp(['loading ',fn2])
