@@ -114,7 +114,7 @@ end
 qstFH = questdlg('Locate Femoral Heads?', 'Femoral Heads', 'Yes', 'No', 'Yes');
 qstFH = strcmp(qstFH, 'Yes');
 if qstFH
-    uiwait(msgbox(['Indicate a diameter line of the left femoral head. ' ...
+    uiwait(msgbox(['Indicate a diameter line of the LEFT femoral head. ' ...
         'Click to set the two endpoints of the line. Double click when complete. ' ...
         'Only the first two points will be considered. '], ...
         'Instructions'));
@@ -122,15 +122,17 @@ if qstFH
     FH_L = FH_L(1:2,:);
     FH_L = mean(FH_L, 2);
     
-    uiwait(msgbox(['Indicate a diameter line of the right femoral head. ' ...
+    uiwait(msgbox(['Indicate a diameter line of the RIGHT femoral head. ' ...
         'Click to set the two endpoints of the line. Double click when complete. '...
         'Only the first two points will be considered. '], ...
         'Instructions'));
     [FH_R_X, FH_R_Y] = getpts; FH_R = [FH_R_X'; FH_R_Y']; 
     FH_R = FH_R(1:2,:);
     FH_R = mean(FH_R, 2);
-    
+        
     handles.femheadsCor = [FH_L, FH_R];
+    
+    plot(handles.femheadsCor(1,:), handles.femheadsCor(2,:), 'ob', 'LineWidth', 1.25);
 end
 
 if qstOL | qstBnd
@@ -174,7 +176,7 @@ end
 qstFH = questdlg('Locate Femoral Heads?', 'Femoral Heads', 'Yes', 'No', 'Yes');
 qstFH = strcmp(qstFH, 'Yes');
 if qstFH
-    uiwait(msgbox(['Indicate a diameter line of the left femoral head. ' ...
+    uiwait(msgbox(['Indicate a diameter line of the LEFT femoral head. ' ...
         'Click to set the two endpoints of the line. Double click when complete. ' ...
         'Only the first two points will be considered. '], ...
         'Instructions'));
@@ -182,7 +184,7 @@ if qstFH
     FH_L = FH_L(1:2,:);
     FH_L = mean(FH_L, 2);
     
-    uiwait(msgbox(['Indicate a diameter line of the right femoral head. ' ...
+    uiwait(msgbox(['Indicate a diameter line of the RIGHT femoral head. ' ...
         'Click to set the two endpoints of the line. Double click when complete. '...
         'Only the first two points will be considered. '], ...
         'Instructions'));
@@ -191,6 +193,8 @@ if qstFH
     FH_R = mean(FH_R, 2);
     
     handles.femheadsSag = [FH_L, FH_R];
+    
+    plot(handles.femheadsSag(1,:), handles.femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
 end
 
 if qstOL | qstBnd
@@ -256,9 +260,9 @@ topBoundScl = handles.splCorObjBound;
 [~,iBot] = min(sum(([zScl; xScl] - botBoundScl).^2));
 [~,iTop] = min(sum(([zScl; yScl] - topBoundScl).^2));
 
-fhXZsag = handles.femheadsSag./flipud(handles.ifoSag.PixelSpacing); % [x1, x2; z1, z2]
-fhYZcor = handles.femheadsCor./flipud(handles.ifoCor.PixelSpacing); % [y1, y2; z1, z2]
-fhXYZ = [fhXZsag(1,:), fhYZcor(1,:), mean([fhXZsag(2,:); fhYZcor(2,:)])];
+fhXZsag = handles.femheadsSag.*flipud(handles.ifoSag.PixelSpacing); % [x1, x2; z1, z2]
+fhYZcor = handles.femheadsCor.*flipud(handles.ifoCor.PixelSpacing); % [y1, y2; z1, z2]
+fhXYZ = [fhXZsag(1,:); fhYZcor(1,:); mean([fhXZsag(2,:); fhYZcor(2,:)])];
 
 % store 
 handles.splSclObj = {splSagScl, splCorScl};
@@ -270,9 +274,9 @@ guidata(hObject, handles);
 
 % display 
 axes(handles.axes3); hold off;
-plot3(xScl, yScl, zScl, 'b'); grid on; hold on;
-plot3([xScl(iBot),xScl(iTop)], [yScl(iBot),yScl(iTop)], [zScl(iBot),zScl(iTop)], '*r');
-plot3(fhXYZ(1,:), fhXYZ(2,:), fhXYZ(3,:), 'or');
+plot3(xScl, yScl, -zScl, 'b'); grid on; hold on;
+plot3([xScl(iBot),xScl(iTop)], [yScl(iBot),yScl(iTop)], -[zScl(iBot),zScl(iTop)], '*r');
+plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
 ylim([1, size(handles.imgCor,2)] * handles.ifoCor.PixelSpacing(2));
 xlabel('x(mm)'); ylabel('y(mm)'); zlabel('z(mm)');
