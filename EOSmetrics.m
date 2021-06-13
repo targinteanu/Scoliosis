@@ -153,8 +153,8 @@ handles.lc_min = lc_min; handles.pw_min = pw_min; handles.pp_min = pp_min; handl
 handles.lc_max = lc_max; handles.pw_max = pw_max; handles.pp_max = pp_max; handles.pk_max = pk_max;
 
 axes(handles.axes3); hold on;
-plot3(x(lc_min), y(lc_min), -z(lc_min), 'ob', 'LineWidth', 1.25);
-plot3(x(lc_max), y(lc_max), -z(lc_max), 'or', 'LineWidth', 1.25);
+plot3(x(lc_min), -y(lc_min), -z(lc_min), 'ob', 'LineWidth', 1.25);
+plot3(x(lc_max), -y(lc_max), -z(lc_max), 'or', 'LineWidth', 1.25);
 
 axes(handles.axesSag); hold on; % x
 errorbar(x(lc_min)/ifoSag.PixelSpacing(2), z(lc_min)/ifoSag.PixelSpacing(1), ...
@@ -204,8 +204,8 @@ text(P4(1), P4(2), ...
 % 3D
 VA3D = norm(p3-p2);
 axes(handles.axes3);
-plot3(p123(:,1), p123(:,2), -p123(:,3), 'g');
-text(p4(1), p4(2), -p4(3), ...
+plot3(p123(:,1), -p123(:,2), -p123(:,3), 'g');
+text(p4(1), -p4(2), -p4(3), ...
     [num2str(VA3D), ' mm'], ...
     'VerticalAlignment', 'top', 'Color', 'g');
 
@@ -285,9 +285,9 @@ xyz1 = R(t1,:); xyz2 = R(t2,:);
 xyz1 = xyz1 + [zeros(size(n1)); n1*100]; xyz2 = xyz2 + [zeros(size(n2)); n2*100];
 xyz3 = .5*( xyz1(2,:) + xyz2(2,:) );
 axes(handles.axes3); hold on;
-plot3(xyz1(:,1), xyz1(:,2), -xyz1(:,3), 'g');
-plot3(xyz2(:,1), xyz2(:,2), -xyz2(:,3), 'g');
-text(xyz3(:,1), xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'g');
+plot3(xyz1(:,1), -xyz1(:,2), -xyz1(:,3), 'g');
+plot3(xyz2(:,1), -xyz2(:,2), -xyz2(:,3), 'g');
+text(xyz3(:,1), -xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'g');
 
 function idx = minSgn(vals, sgn)
 origIdx = 1:length(vals);
@@ -356,7 +356,7 @@ function showLinearHeatmap(hObject, eventdata, handles, XYZ, heatvals)
 axes(handles.axes3);
 x = XYZ(:,1); y = XYZ(:,2); z = XYZ(:,3); h = heatvals;
 cla;
-surface([x,x]', [y,y]', -[z,z]', [h,h]', ...
+surface([x,x]', -[y,y]', -[z,z]', [h,h]', ...
     'facecol', 'no', 'edgecol', 'interp', 'LineWidth', 5);
 grid on;
 colorbar;
@@ -364,7 +364,7 @@ handles.SplSclHt = [XYZ,h];
 guidata(hObject, handles);
     hold on; 
     fhXYZ = handles.femheadsScl;
-    plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
+    plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
 
 
 function showPlumblineDistance(hObject, eventdata, handles, varToShow)
@@ -383,7 +383,7 @@ vPlumb = diff(plumb);
 R0 = R0 - plumb(1,:);
 
 axes(handles.axes3); 
-hold on; plot3(plumb3(:,1), plumb3(:,2), plumb3(:,3), 'c');
+hold on; plot3(plumb3(:,1), -plumb3(:,2), -plumb3(:,3), 'c');
 axes(handles.axesSag); 
 hold on; plot(plumb3(:,1)/ifoSag.PixelSpacing(2), ...
     plumb3(:,3)/ifoSag.PixelSpacing(1), 'c'); 
@@ -491,7 +491,7 @@ showpatient(hObject, eventdata, handles);
 if ~isempty(handles.splfiltNew)
     sigf = handles.splfiltNew;
     axes(handles.axes3); hold on; 
-    plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
+    plot3(sigf(:,1), -sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
 end
 
 fTypeOpts = {'cheby2', 'cheby1', 'ellip', 'butter'};
@@ -519,7 +519,7 @@ showpatient(hObject, eventdata, handles);
 sigf = filtfilt3d(filtobj, sig); sigf = sigf(splSclBnd(2):splSclBnd(1),:);
 handles.splfiltNew = sigf;
 axes(handles.axes3); hold on; 
-plot3(sigf(:,1), sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
+plot3(sigf(:,1), -sigf(:,2), -sigf(:,3), 'c', 'LineWidth', 1.5);
 
 guidata(hObject, handles);
 end
@@ -567,16 +567,16 @@ splCorSmpBound = handles.splCorSmpBound;
         plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
         
         axes(handles.axes3); cla; colorbar off;
-        plot3(splSclSmp(:,1), splSclSmp(:,2), -splSclSmp(:,3), ':b'); hold on;
-        plot3(splfilt(:,1), splfilt(:,2), -splfilt(:,3), 'm', 'LineWidth', 2);
+        plot3(splSclSmp(:,1), -splSclSmp(:,2), -splSclSmp(:,3), ':b'); hold on;
+        plot3(splfilt(:,1), -splfilt(:,2), -splfilt(:,3), 'm', 'LineWidth', 2);
         grid on; update3Dview(eventdata, handles); 
         xlim([0, size(imgSag,2)]*ifoSag.PixelSpacing(2));
-        ylim([0, size(imgCor,2)]*ifoCor.PixelSpacing(2));
+        ylim(-[size(imgCor,2), 0]*ifoCor.PixelSpacing(2));
         zlim(-[size(imgCor,1), 0]*ifoCor.PixelSpacing(1));
         
             hold on;
             fhXYZ = handles.femheadsScl;
-            plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
+            plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
             
             femheadsSag = handles.femheadsSag; femheadsCor = handles.femheadsCor;
             axes(handles.axesSag); 
@@ -733,9 +733,9 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-function update3Dview(eventdata, handles)
+function update3Dview(eventdata, handles) 
 axes(handles.axes3);
-view(handles.slider1.Value*90, handles.slider2.Value*90);
+view(-handles.slider1.Value*90, handles.slider2.Value*90);
 
 
 % --- Executes on selection change in metricSelecter.

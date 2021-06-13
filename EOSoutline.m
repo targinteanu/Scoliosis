@@ -274,11 +274,11 @@ guidata(hObject, handles);
 
 % display 
 axes(handles.axes3); hold off;
-plot3(xScl, yScl, -zScl, 'b'); grid on; hold on;
-plot3([xScl(iBot),xScl(iTop)], [yScl(iBot),yScl(iTop)], -[zScl(iBot),zScl(iTop)], '*r');
-plot3(fhXYZ(1,:), fhXYZ(2,:), -fhXYZ(3,:), 'or');
+plot3(xScl, -yScl, -zScl, 'b'); grid on; hold on;
+plot3([xScl(iBot),xScl(iTop)], -[yScl(iBot),yScl(iTop)], -[zScl(iBot),zScl(iTop)], '*r');
+plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
-ylim([1, size(handles.imgCor,2)] * handles.ifoCor.PixelSpacing(2));
+ylim(-[size(handles.imgCor,2), 1] * handles.ifoCor.PixelSpacing(2));
 xlabel('x(mm)'); ylabel('y(mm)'); zlabel('z(mm)');
 
 % --- Executes on button press in saveButton.
