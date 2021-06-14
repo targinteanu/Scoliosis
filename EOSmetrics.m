@@ -402,7 +402,7 @@ axes(handles.axesSag); hold on;
 ifoSag = handles.ifoSag;
 projuv = @(u,v) ((u*v')/(v*v'))*v;
 fhXYZ = handles.femheadsScl;
-femaxis = diff(fhXYZ,[],2);
+femaxis = fhXYZ(:,2) - fhXYZ(:,1);
 R = handles.splfilt; R = R(:,[1,3]);
 
 % Sacral Slope
@@ -420,8 +420,22 @@ SS = acos(n_sacralPlate * n2') * 180/pi;
 xy1 = xy2 + 100*n_sacralPlate; xy3 = xy2 + 100*n2;
 plot([xy1(1), xy2(1), xy3(1)]/ifoSag.PixelSpacing(2), ...
     [xy1(2), xy2(2), xy3(2)]/ifoSag.PixelSpacing(1), 'g');
-text(xy2(1)/ifoSag.PixelSpacing(2), xy2(2)/ifoSag.PixelSpacing(1), ...
+xytxtSS = mean([xy1; xy3]);
+text(xytxtSS(1)/ifoSag.PixelSpacing(2), xytxtSS(2)/ifoSag.PixelSpacing(1), ...
     ['SS = ',num2str(SS),'\circ'], ...
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right', 'Color', 'g');
+
+% Pelvic Tilt
+a1 = fhXYZ(:,1)'; a12 = femaxis'; b = handles.splfilt(end,:) - a1; 
+b_parl = projuv(b, a12); b_perp = b - b_parl; b_perp = -[b_perp(1), b_perp(3)];
+b0 = xy2 + b_perp; 
+n3 = [0,1]; xy4 = xy2 + 100*n3;
+PT = acos(b_perp/norm(b_perp) * n3') * 180/pi;
+plot([b0(1), xy2(1), xy4(1)]/ifoSag.PixelSpacing(2), ...
+    [b0(2), xy2(2), xy4(2)]/ifoSag.PixelSpacing(1), 'g');
+xytxtPT = mean([b0; xy4]);
+text(xytxtPT(1)/ifoSag.PixelSpacing(2), xytxtPT(2)/ifoSag.PixelSpacing(1), ...
+    ['PT = ',num2str(PT),'\circ'], ...
     'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left', 'Color', 'g');
 
 
