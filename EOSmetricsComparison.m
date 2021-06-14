@@ -1,5 +1,4 @@
 %% load patients 
-%%{
 clear;
 
 patients_loaded = [];
@@ -19,12 +18,13 @@ while strcmp(qst, 'Yes')
         end
     end
     
-    blankPatient.splfilt = [];
+    blankPatient.splfilt = []; blankPatient.femheadsScl = [];
     PL = repmat(blankPatient, size(patients_avail));
     for i = 1:length(patients_avail)
         p = patients_avail(i);
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
         PL(i).splfilt = splfilt;
+        PL(i).femheadsScl = femheadsScl;
     end
     
     patients_loaded = [patients_loaded, PL];
@@ -32,10 +32,8 @@ while strcmp(qst, 'Yes')
 qst = questdlg('Add a new directory?', 'Directory Selection', 'Yes', 'No', 'No');
 end
 
-%}
 
 %% collect metrics for all patients 
-%%{
 q = 10;
 ntot = length(patients_loaded);
 
@@ -44,6 +42,8 @@ ntot = length(patients_loaded);
     apex = z; % apex location of largest Coronal curve (by Cobb angle)
     neut = z; % neutral location closest to 'apex'
     LL = z; % Lumbar Lordosis Cobb Angle 
+    SS = z; % Sacral Slope 
+    PT = z; % Pelvic Tilt
     Wri = z; % Writhe (numeric integration) 
     K = z; % Max Curvature (Lewiner) 
     KL = z; % location of 'K'
@@ -52,25 +52,29 @@ ntot = length(patients_loaded);
     SVA = z; % Sagittal Vertical Alignment 
     CVA = z; % Coronal Vertical Alignment
     VA3D = z; % 3D Vertical Alignment norm
-    n = z; % number of Coronal curves 
+    nCor = z; % number of Coronal curves 
+    nSag = z; % number of Sagittal curves 
     
 for i = 1:ntot
     splfilt = patients_loaded(i).splfilt;
+    femheadsScl = patients_loaded(i).femheadsScl;
     
     [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); 
+    [SS(i), PT(i)] = getPelvicParams(splfilt, femheadsScl);
     
     XYZH = PlumblineDistance(splfilt, 1);
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasSag = thetas(:,2);
-    LL(i) = thetasSag(end); % mostly correct BUT some patients show only one sag angle
+    LL(i) = thetasSag(end); % mostly correct BUT some patients show only one sag angle ????
+    nSag(i) = length(thetasSag);
     
     XYZH = PlumblineDistance(splfilt, 2);
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasCor = thetas(:,3);
     [CobbCor(i), idxMaxTheta] = max(thetasCor);
-    n(i) = length(thetasCor);
+    nCor(i) = length(thetasCor);
     
     idxMaxApex = idxMax(idxMaxTheta);
     [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
@@ -95,13 +99,15 @@ for i = 1:ntot
 
     i/ntot
 end
-%%
-VarTable = table(CobbCor, LL, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL, n);
+%% construct table and view correlations
+VarTable = table(CobbCor, LL, SS, PT, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL, nCor, nSag);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
+VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
 VarTable.absWri = abs(VarTable.Wri); 
 VarTable.absT = abs(VarTable.T);
 VarTable.absSVA = abs(VarTable.SVA); 
 VarTable.absCVA = abs(VarTable.CVA);
+VarTable.ODI = 0.089 * VarTable.SVA + 0.253 * (VarTable.PI - VarTable.LL) + 25.332; % ODI predictor (Schwab et al)
 varnames = VarTable.Properties.VariableNames;
 
 [R, blankPatient] = corr(VarTable.Variables);
@@ -109,7 +115,26 @@ varnames = VarTable.Properties.VariableNames;
 figure; heatmap(varnames, varnames, R); title('Correlation');
 figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 
-%}
+%% split into surgical rates groups 
+SVAcutoff = 47; % mm
+PTcutoff = 22; % deg
+PILLcutoff = 11; % deg
+
+gSVA = VarTable.SVA < SVAcutoff; 
+gPT = VarTable.PT < PTcutoff; 
+gPILL = VarTable.PI - VarTable.LL < PILLcutoff; 
+gSVA_PT = gSVA&gPT; gSVA_PILL = gSVA&gPILL; gPT_PILL = gPT&gPILL; gSVA_PT_PILL = gSVA&gPT&gPILL;
+
+groups = {gSVA, gPT, gPILL, gSVA_PT, gSVA_PILL, gPT_PILL, gSVA_PT_PILL}; 
+pVarDiff = false(length(groups), length(varnames));
+
+for gi = 1:length(groups)
+    g = groups{gi};
+    vars1 = VarTable.Variables(g,:); vars2 = VarTable.Variables(~g,:);
+    for vi = 1:length(varnames)
+        [~,pVarDiff(gi,vi)] = ttest2(vars1(vi,:), vars2(vi,:), 'Vartype', 'unequal');
+    end
+end
 
 %% More details for each coronal curve 
 ncurves = unique(VarTable.n);
@@ -273,6 +298,33 @@ function [d1, d2, d3, tau, kappa] = LewinerQuantity(p, q)
             lewinerTorsion(p, vertebra, q);
         d2(vertebra-q) = norm(dd); d1(vertebra-q) = norm(d); d3(vertebra-q) = norm(ddd);
     end
+end
+
+
+
+function [SS, PT] = getPelvicParams(splfilt, femheadsScl)
+projuv = @(u,v) ((u*v')/(v*v'))*v;
+fhXYZ = femheadsScl;
+femaxis = fhXYZ(:,2) - fhXYZ(:,1);
+R = splfilt; R = R(:,[1,3]);
+
+% Sacral Slope
+dR = diff(R); 
+Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
+ds = sum(dR.^2, 2).^.5;
+dsi = sum(dRi.^2, 2).^.5;
+dR = dR./ds;
+ddR = diff(dR);
+ddR = ddR./dsi;
+n_sacralPlate = ddR(end,:); n_sacralPlate = -n_sacralPlate/norm(n_sacralPlate);
+n2 = [-1,0];
+SS = acos(n_sacralPlate * n2') * 180/pi;
+
+% Pelvic Tilt
+a1 = fhXYZ(:,1)'; a12 = femaxis'; b = splfilt(end,:) - a1; 
+b_parl = projuv(b, a12); b_perp = b - b_parl; b_perp = -[b_perp(1), b_perp(3)];
+n3 = [0,1]; 
+PT = acos(b_perp/norm(b_perp) * n3') * 180/pi;
 end
 
 
