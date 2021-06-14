@@ -85,6 +85,7 @@ handles.metricSelecter.String = {...
     'Writhe', ...
     'Cobb Angle', ...
     'Sag/Cor Vertical Alignment', ...
+    'Pelvic Parameters', ...
     'Re-Filter'};
 
 handles.metricFuncs = {...
@@ -107,6 +108,7 @@ handles.metricFuncs = {...
     @(HO,ED,H) showWrithe(HO,ED,H), ...
     @(HO,ED,H) cobbAngleMinMax(HO,ED,H), ...
     @(HO,ED,H) SCVA(HO,ED,H), ...
+    @(HO,ED,H) showPelvicParams(HO,ED,H), ...
     @(HO,ED,H) refilter(HO,ED,H)};
 
 % Choose default command line output for EOSmetrics
@@ -393,6 +395,34 @@ hold on; plot(plumb3(:,2)/ifoCor.PixelSpacing(2), ...
 
 dist = arrayfun(@(i) norm( R0(i,:) - projuv(R0(i,:), vPlumb) ), 1:size(R0,1))';
 showLinearHeatmap(hObject, eventdata, handles, R, dist);
+
+
+function showPelvicParams(hObject, eventdata, handles)
+axes(handles.axesSag); hold on;
+ifoSag = handles.ifoSag;
+projuv = @(u,v) ((u*v')/(v*v'))*v;
+fhXYZ = handles.femheadsScl;
+femaxis = diff(fhXYZ,[],2);
+R = handles.splfilt; R = R(:,[1,3]);
+
+% Sacral Slope
+dR = diff(R); 
+Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
+ds = sum(dR.^2, 2).^.5;
+dsi = sum(dRi.^2, 2).^.5;
+dR = dR./ds;
+ddR = diff(dR);
+ddR = ddR./dsi;
+xy2 = R(end,:); 
+n_sacralPlate = ddR(end,:); n_sacralPlate = -n_sacralPlate/norm(n_sacralPlate);
+n2 = [-1,0];
+SS = acos(n_sacralPlate * n2') * 180/pi;
+xy1 = xy2 + 100*n_sacralPlate; xy3 = xy2 + 100*n2;
+plot([xy1(1), xy2(1), xy3(1)]/ifoSag.PixelSpacing(2), ...
+    [xy1(2), xy2(2), xy3(2)]/ifoSag.PixelSpacing(1), 'g');
+text(xy2(1)/ifoSag.PixelSpacing(2), xy2(2)/ifoSag.PixelSpacing(1), ...
+    ['SS = ',num2str(SS),'\circ'], ...
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left', 'Color', 'g');
 
 
 function showLewinerQuantity(hObject, eventdata, handles, varToShow)
