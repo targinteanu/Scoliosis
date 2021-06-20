@@ -126,6 +126,7 @@ gPILL = VarTable.PI - VarTable.LL < PILLcutoff;
 gSVA_PT = gSVA&gPT; gSVA_PILL = gSVA&gPILL; gPT_PILL = gPT&gPILL; gSVA_PT_PILL = gSVA&gPT&gPILL;
 
 groups = {gSVA, gPT, gPILL, gSVA_PT, gSVA_PILL, gPT_PILL, gSVA_PT_PILL}; 
+groupnames = {'SVA', 'PT', 'PI-LL', 'SVA & PT', 'PT & PI-LL', 'all'};
 pVarDiff = false(length(groups), length(varnames));
 
 for gi = 1:length(groups)
@@ -135,6 +136,10 @@ for gi = 1:length(groups)
         [~,pVarDiff(gi,vi)] = ttest2(vars1(vi,:), vars2(vi,:), 'Vartype', 'unequal');
     end
 end
+
+showComparison = sum((pVarDiff < .05)) > 0;
+pVarSel = pVarDiff(:, showComparison); varnamesSel = varnames(showComparison);
+figure; heatmap(varnamesSel, groupnames, pVarSel);
 
 %% More details for each coronal curve 
 ncurves = unique(VarTable.n);
