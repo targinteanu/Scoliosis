@@ -23,6 +23,7 @@ while strcmp(qst, 'Yes')
     for i = 1:length(patients_avail)
         p = patients_avail(i);
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' filtered data.mat']);
+        load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
         PL(i).splfilt = splfilt;
         PL(i).femheadsScl = femheadsScl;
     end
@@ -126,20 +127,21 @@ gPILL = VarTable.PI - VarTable.LL < PILLcutoff;
 gSVA_PT = gSVA&gPT; gSVA_PILL = gSVA&gPILL; gPT_PILL = gPT&gPILL; gSVA_PT_PILL = gSVA&gPT&gPILL;
 
 groups = {gSVA, gPT, gPILL, gSVA_PT, gSVA_PILL, gPT_PILL, gSVA_PT_PILL}; 
-groupnames = {'SVA', 'PT', 'PI-LL', 'SVA & PT', 'PT & PI-LL', 'all'};
-pVarDiff = false(length(groups), length(varnames));
+groupnames = {'SVA', 'PT', 'PI-LL', 'SVA & PT', 'SVA & PI-LL', 'PT & PI-LL', 'all'};
+pVarDiff = zeros(length(groups), length(varnames));
 
 for gi = 1:length(groups)
     g = groups{gi};
-    vars1 = VarTable.Variables(g,:); vars2 = VarTable.Variables(~g,:);
+    vars1 = VarTable{g,:}; vars2 = VarTable{~g,:};
     for vi = 1:length(varnames)
-        [~,pVarDiff(gi,vi)] = ttest2(vars1(vi,:), vars2(vi,:), 'Vartype', 'unequal');
+        [~,pVarDiff(gi,vi)] = ttest2(vars1(:,vi), vars2(:,vi), 'Vartype', 'unequal');
     end
 end
 
-showComparison = sum((pVarDiff < .05)) > 0;
+showComparison = sum((pVarDiff < .1)) > 0;
 pVarSel = pVarDiff(:, showComparison); varnamesSel = varnames(showComparison);
 figure; heatmap(varnamesSel, groupnames, pVarSel);
+%figure; heatmap(varnames, groupnames, pVarDiff);
 
 %% More details for each coronal curve 
 ncurves = unique(VarTable.n);
