@@ -204,7 +204,28 @@ if qstOL | qstBnd
     handles.ifoSag.PixelSpacing(1), handles.ifoSag.PixelSpacing(2)); 
 end
 
-if qstOL | qstBnd | qstFH
+qstBnd_L1 = questdlg('Separate L1 Bound?', 'Bound', 'Yes', 'No', 'Yes');
+qstBnd_L1 = strcmp(qstBnd_L1, 'Yes');
+if qstBnd_L1
+    uiwait(msgbox(['Separate T12 from L1 with a straight line. ' ...
+        'Click to set the two endpoints of the line. Double click when complete.'], ...
+        'Instructions'));
+    [boundX, boundY] = getpts;
+    handles.L1Bound = [boundX, boundY];
+    
+    zscl = handles.ifoSag.PixelSpacing(1); 
+    xscl = handles.ifoSag.PixelSpacing(2);
+    
+    boundX = boundX*xscl; boundY = boundY*zscl;
+    [xi, yi] = lineSeg_PP_intersect(handles.splSagObj.p, [boundX(1), boundY(1)], [boundX(2), boundY(2)]); %xi, yi in mm
+    handles.L1ObjBound = [yi; xi];
+    handles.L1SampleBound = [yi/zscl; xi/xscl];
+    % splineSample is in pixels, but splineObj is in mm
+    
+    plot(handles.L1SampleBound(2), handles.L1SampleBound(1), 'sr');
+end
+
+if qstOL | qstBnd | qstFH | qstBnd_L1
 guidata(hObject, handles);
 end
 
@@ -257,8 +278,10 @@ yScl = ppval(zScl, splCorScl.p);
 
 botBoundScl = handles.splSagObjBound; 
 topBoundScl = handles.splCorObjBound; 
+L1BoundScl  = handles.L1ObjBound;
 [~,iBot] = min(sum(([zScl; xScl] - botBoundScl).^2));
 [~,iTop] = min(sum(([zScl; yScl] - topBoundScl).^2));
+[~,iL1]  = min(sum(([zScl; xScl] - L1BoundScl ).^2));
 
 fhXZsag = handles.femheadsSag.*flipud(handles.ifoSag.PixelSpacing); % [x1, x2; z1, z2]
 fhYZcor = handles.femheadsCor.*flipud(handles.ifoCor.PixelSpacing); % [y1, y2; z1, z2]
@@ -275,7 +298,8 @@ guidata(hObject, handles);
 % display 
 axes(handles.axes3); hold off;
 plot3(xScl, -yScl, -zScl, 'b'); grid on; hold on;
-plot3([xScl(iBot),xScl(iTop)], -[yScl(iBot),yScl(iTop)], -[zScl(iBot),zScl(iTop)], '*r');
+plot3([xScl(iBot),xScl(iL1),xScl(iTop)], -[yScl(iBot),yScl(iL1),yScl(iTop)], ...
+    -[zScl(iBot),zScl(iL1),zScl(iTop)], '*r');
 plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
 xlim([1, size(handles.imgSag,2)] * handles.ifoSag.PixelSpacing(2));
 ylim(-[size(handles.imgCor,2), 1] * handles.ifoCor.PixelSpacing(2));
@@ -310,6 +334,9 @@ CorOL = handles.CorOL;
 splCorObjBound = handles.splCorObjBound; 
 splCorSmpBound = handles.splCorSmpBound;
 
+L1ObjBound = handles.L1ObjBound; 
+L1SampleBound = handles.L1SampleBound;
+
 femheadsCor = handles.femheadsCor;
 femheadsSag = handles.femheadsSag; 
 femheadsScl = handles.femheadsScl;
@@ -318,7 +345,8 @@ save(fn, 'splSclObj', 'splSclRng', 'splSclSmp', 'splSclBnd', ...
     'imgSagFilt', 'splSagObj', 'splSagSmp', 'SagOL', ...
     'imgCorFilt', 'splCorObj', 'splCorSmp', 'CorOL', ...
     'femheadsCor', 'femheadsSag', 'femheadsScl', ...
-    'splCorObjBound', 'splCorSmpBound', 'splSagObjBound', 'splSagSmpBound');
+    'splCorObjBound', 'splCorSmpBound', 'splSagObjBound', 'splSagSmpBound', ...
+    'L1ObjBound', 'L1SampleBound');
 disp(['saving ',fn])
 
 
@@ -412,6 +440,9 @@ CorOL = [];
 splCorObjBound = [];
 splCorSmpBound = [0,0];
 
+L1ObjBound = [0; 0]; 
+L1SampleBound = [0; 0];
+
 % use saved file if available
 fn = [handles.base_fp,...
     num2str(handles.patient_list(handles.current_patient)),...
@@ -451,6 +482,9 @@ handles.CorOL = CorOL;
 handles.splCorObjBound = splCorObjBound; 
 handles.splCorSmpBound = splCorSmpBound;
 
+handles.L1ObjBound = L1ObjBound; 
+handles.L1SampleBound = L1SampleBound;
+
     axes(handles.axesCor); hold on; 
     visboundaries(CorOL); 
     plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
@@ -461,6 +495,7 @@ handles.splCorSmpBound = splCorSmpBound;
     visboundaries(SagOL); 
     plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
     plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
+    plot(L1SampleBound(2), L1SampleBound(1), 'sb', 'LineWidth', 1.25);
     plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
     
     if exist(fn2, 'file')
@@ -482,6 +517,7 @@ clear handles.splSclObj handles.splSclRng handles.splSclSmp
 clear handles.imgSagFilt handles.splSagObj handles.splSagSmp handles.SagOL
 clear handles.imgCorFilt handles.splCorObj handles.splCorSmp handles.CorOL
 clear handles.femheadsSag handles.femheadsCor handles.femheadsScl
+clear handles.L1ObjBound handles.L1SampleBound 
 end
 
 % Update handles structure
