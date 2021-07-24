@@ -18,7 +18,7 @@ while strcmp(qst, 'Yes')
         end
     end
     
-    blankPatient.splfilt = []; blankPatient.femheadsScl = [];
+    blankPatient.splfilt = []; blankPatient.femheadsScl = []; blankPatient.num = 0;
     PL = repmat(blankPatient, size(patients_avail));
     for i = 1:length(patients_avail)
         p = patients_avail(i);
@@ -26,6 +26,7 @@ while strcmp(qst, 'Yes')
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
         PL(i).splfilt = splfilt;
         PL(i).femheadsScl = femheadsScl;
+        PL(i).num = p;
     end
     
     patients_loaded = [patients_loaded, PL];
@@ -144,9 +145,9 @@ figure; heatmap(varnamesSel, groupnames, pVarSel);
 %figure; heatmap(varnames, groupnames, pVarDiff);
 
 %% More details for each coronal curve 
-ncurves = unique(VarTable.n);
+ncurves = unique(VarTable.nCor);
 for ncurve = ncurves'
-    pp = patients_loaded(VarTable.n'==ncurve);
+    pp = patients_loaded(VarTable.nCor'==ncurve);
     cobbs = zeros(length(pp), ncurve);
     subWr = zeros(size(cobbs));
     wr = zeros(length(pp),1);
