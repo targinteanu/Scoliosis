@@ -291,7 +291,7 @@ fhXYZ = [fhXZsag(1,:); fhYZcor(1,:); mean([fhXZsag(2,:); fhYZcor(2,:)])];
 handles.splSclObj = {splSagScl, splCorScl};
 handles.splSclRng = [min(zScl); max(zScl)];
 handles.splSclSmp = [xScl', yScl', zScl'];
-handles.splSclBnd = [iBot, iTop];
+handles.splSclBnd = [iBot, iTop, iL1];
 handles.femheadsScl = fhXYZ; % [x1, x2; y1, y2; z1, z2]
 guidata(hObject, handles);
 
@@ -425,7 +425,7 @@ femheadsSag = [0,0;0,0];
 splSclObj = []; % fix!!!
 splSclRng = [0;0];
 splSclSmp = [0,0,0];
-splSclBnd = [0,0];
+splSclBnd = [0,0,0];
 
 imgSagFilt = [];
 splSagObj = [];
