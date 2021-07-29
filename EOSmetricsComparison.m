@@ -18,7 +18,8 @@ while strcmp(qst, 'Yes')
         end
     end
     
-    blankPatient.splfilt = []; blankPatient.femheadsScl = []; blankPatient.num = 0;
+    blankPatient.splfilt = []; blankPatient.femheadsScl = []; blankPatient.splSclBnd = [];
+    blankPatient.num = 0;
     PL = repmat(blankPatient, size(patients_avail));
     for i = 1:length(patients_avail)
         p = patients_avail(i);
@@ -26,6 +27,7 @@ while strcmp(qst, 'Yes')
         load([base_fp, num2str(p), img_fp, 'patient',num2str(p),' EOSoutline data.mat']);
         PL(i).splfilt = splfilt;
         PL(i).femheadsScl = femheadsScl;
+        PL(i).splSclBnd = splSclBnd;
         PL(i).num = p;
     end
     
@@ -44,6 +46,7 @@ ntot = length(patients_loaded);
     apex = z; % apex location of largest Coronal curve (by Cobb angle)
     neut = z; % neutral location closest to 'apex'
     LL = z; % Lumbar Lordosis Cobb Angle 
+    TK = z; % Thoracic Kyphosis Cobb Angle
     SS = z; % Sacral Slope 
     PT = z; % Pelvic Tilt
     Wri = z; % Writhe (numeric integration) 
@@ -60,15 +63,18 @@ ntot = length(patients_loaded);
 for i = 1:ntot
     splfilt = patients_loaded(i).splfilt;
     femheadsScl = patients_loaded(i).femheadsScl;
+    splSclBnd = patients_loaded(i).splSclBnd;
     
     [SVA(i), CVA(i), VA3D(i)] = SCVA(splfilt); 
     [SS(i), PT(i)] = getPelvicParams(splfilt, femheadsScl);
     
-    XYZH = PlumblineDistance(splfilt, 1);
-    [idxMin, idxMax] = localMinMax(XYZH);
-    thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
+%    XYZH = PlumblineDistance(splfilt, 1);
+%    [idxMin, idxMax] = localMinMax(XYZH);
+%    thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
+    thetas = getLL(splfilt, splSclBnd);
     thetasSag = thetas(:,2);
-    LL(i) = thetasSag(end); % mostly correct BUT some patients show only one sag angle ????
+    LL(i) = thetasSag(end); 
+    TK(i) = thetasSag(1);
     nSag(i) = length(thetasSag);
     
     XYZH = PlumblineDistance(splfilt, 2);
@@ -102,7 +108,7 @@ for i = 1:ntot
     i/ntot
 end
 %% construct table and view correlations
-VarTable = table(CobbCor, LL, SS, PT, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL, nCor, nSag);
+VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
 VarTable.absWri = abs(VarTable.Wri); 
@@ -267,6 +273,15 @@ for i = 1:size(boundIdx,1)
 end
 end
 
+
+function thetas = getLL(splfilt, splSclBnd)
+R = splfilt; 
+t0 = 1;
+t1 = splSclBnd(3) - splSclBnd(2); 
+t2 = size(R,1);
+boundIdx = [t0 t1; t1 t2];
+thetas = getCobbAngles(R, boundIdx); 
+end
 
 
 function [lc_min, lc_max] = localMinMax(SplSclHt)

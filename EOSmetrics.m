@@ -321,29 +321,11 @@ end
 
 function dispLL(hObject, eventdata, handles)
 R = handles.splfilt;
+t0 = 1;
 t1 = handles.splSclBnd(3) - handles.splSclBnd(2); 
 t2 = size(R,1);
-ifoSag = handles.ifoSag;
-
-% x - sag
-xy = R(:,[1,3]); 
-[thta, a, b] = numericCobbAngle(xy, t1, t2);
-xy1 = xy(t1,:); xy2 = xy(t2,:); 
-xy3 = xy1 + 100*a; xy4 = xy2 + 100*b;
-if xy3(1) > xy1(1)
-    al = 'left';
-else
-    al = 'right';
-end
-xytxt = xy3./flipud(ifoSag.PixelSpacing)'; 
-xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoSag.Width);
-axes(handles.axesSag); hold on; 
-plot(handles.L1SampleBound(2), handles.L1SampleBound(1), 'sg', 'LineWidth', 1.25);
-plot([xy1(1), xy3(1), xy4(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoSag.PixelSpacing(1), 'g');
-text(xytxt(1), xytxt(2), ...
-    [num2str(thta) '\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
+boundIdx = [t0 t1; t1 t2];
+dispCobbAngles(hObject, eventdata, handles, R, boundIdx);
 
 
 % --- Executes on button press in saveButton.
