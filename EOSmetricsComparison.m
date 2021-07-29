@@ -113,6 +113,9 @@ VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
 VarTable.absWri = abs(VarTable.Wri); 
 VarTable.absT = abs(VarTable.T);
+VarTable.absCobbCor = abs(VarTable.CobbCor);
+VarTable.absLL = abs(VarTable.LL);
+VarTable.absTK = abs(VarTable.TK);
 VarTable.absSVA = abs(VarTable.SVA); 
 VarTable.absCVA = abs(VarTable.CVA);
 VarTable.ODI = 0.089 * VarTable.SVA + 0.253 * (VarTable.PI - VarTable.LL) + 25.332; % ODI predictor (Schwab et al)
@@ -217,12 +220,17 @@ t1 = min(t1, size(ddR,1)); t1 = max(t1,1);
 t2 = min(t2, size(ddR,1)); t2 = max(t2,1);
 n1 = ddR(t1,:); n1 = n1/norm(n1);
 n2 = ddR(t2,:); n2 = n2/norm(n2);
+sgn = 1;
 if length(xy1) < 3
-    [~,sgn] = intersect2d(xy1', n1', xy2', n2'); sgn=sign(sgn); 
+    [xy3,sgn] = intersect2d(xy1', n1', xy2', n2'); sgn=sign(sgn); 
     n1=sgn(1)*n1; n2=sgn(2)*n2;
+    if xy3(1) > xy1(1)
+        sgn = 1;
+    else
+        sgn = -1;
+    end
 end
-theta = acos(n1 * n2') * 180/pi;
-%theta = min(theta, 180-theta); % come up with a better way of picking the right angle 
+theta = acos(n1 * n2') * 180/pi; theta = sgn*theta; 
 end
 
 function [xy3,c] = intersect2d(xy1, a, xy2, b)
