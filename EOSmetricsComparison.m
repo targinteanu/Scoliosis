@@ -42,7 +42,7 @@ q = 10;
 ntot = length(patients_loaded);
 
     z = zeros(ntot, 1); % empty 
-    CobbCor = z; % Max Coronal Cobb Angle 
+    CobbCor = z; % Coronal Cobb Angle with max magnitude
     apex = z; % apex location of largest Coronal curve (by Cobb angle)
     neut = z; % neutral location closest to 'apex'
     LL = z; % Lumbar Lordosis Cobb Angle 
@@ -154,9 +154,9 @@ figure; heatmap(varnamesSel, groupnames, pVarSel);
 %figure; heatmap(varnames, groupnames, pVarDiff);
 
 %% More details for each coronal curve 
-ncurves = unique(VarTable.nCor);
+ncurves = unique(nCor);
 for ncurve = ncurves'
-    pp = patients_loaded(VarTable.nCor'==ncurve);
+    pp = patients_loaded(nCor'==ncurve);
     cobbs = zeros(length(pp), ncurve);
     subWr = zeros(size(cobbs));
     wr = zeros(length(pp),1);
