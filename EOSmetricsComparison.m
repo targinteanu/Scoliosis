@@ -81,8 +81,9 @@ for i = 1:ntot
     [idxMin, idxMax] = localMinMax(XYZH);
     thetas = cobbAngleMinMax(XYZH, idxMin, idxMax);
     thetasCor = thetas(:,3);
-    [CobbCor(i), idxMaxTheta] = max(thetasCor);
+    [~, idxMaxTheta] = max(abs(thetasCor));
     nCor(i) = length(thetasCor);
+    CobbCor(i) = thetasCor(idxMaxTheta);
     
     idxMaxApex = idxMax(idxMaxTheta);
     [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
@@ -108,7 +109,7 @@ for i = 1:ntot
     i/ntot
 end
 %% construct table and view correlations
-VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, VA3D, K, T, Wri, apex, neut, KL, TL);
+VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, K, T, Wri, apex, neut, KL, TL);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
 VarTable.absWri = abs(VarTable.Wri); 
