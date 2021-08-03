@@ -430,9 +430,13 @@ dR = dR./ds;
 ddR = diff(dR);
 ddR = ddR./dsi;
 xy2 = R(end,:); 
-n_sacralPlate = ddR(end,:); n_sacralPlate = -n_sacralPlate/norm(n_sacralPlate);
+n_sacralPlate = ddR(end,:); n_sacralPlate = n_sacralPlate/norm(n_sacralPlate);
 n2 = [-1,0];
-SS = acos(n_sacralPlate * n2') * 180/pi;
+SS = 180; 
+while SS > 90
+    n_sacralPlate = -n_sacralPlate; 
+    SS = acos(n_sacralPlate * n2') * 180/pi;
+end
 xy1 = xy2 + 100*n_sacralPlate; xy3 = xy2 + 100*n2;
 plot([xy1(1), xy2(1), xy3(1)]/ifoSag.PixelSpacing(2), ...
     [xy1(2), xy2(2), xy3(2)]/ifoSag.PixelSpacing(1), 'g');

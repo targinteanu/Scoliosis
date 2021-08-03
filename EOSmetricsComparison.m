@@ -108,7 +108,8 @@ for i = 1:ntot
 
     i/ntot
 end
-%% construct table and view correlations
+
+% construct table 
 VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, K, T, Wri, apex, neut, KL, TL);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
@@ -122,6 +123,23 @@ VarTable.absCVA = abs(VarTable.CVA);
 VarTable.ODI = 0.089 * VarTable.SVA + 0.253 * (VarTable.PI - VarTable.LL) + 25.332; % ODI predictor (Schwab et al)
 varnames = VarTable.Properties.VariableNames;
 
+%% view table variable ranges 
+mtot = size(VarTable,2);
+ncol = 5; nrow = ceil(mtot+2/ncol);
+figure;
+for i = 1:mtot
+    subplot(nrow, ncol, i)
+    histogram(VarTable.(i));
+    title(VarTable(:,i).Properties.VariableNames{1});
+end
+i = i+1;
+subplot(nrow, ncol, i)
+histogram(nCor); title('nCor');
+i = i+1;
+subplot(nrow, ncol, i)
+histogram(nSag); title('nSag');
+
+%% view correlations
 [R, blankPatient] = corr(VarTable.Variables);
 [r,c] = find(blankPatient <= .05);
 figure; heatmap(varnames, varnames, R); title('Correlation');
@@ -348,9 +366,13 @@ dsi = sum(dRi.^2, 2).^.5;
 dR = dR./ds;
 ddR = diff(dR);
 ddR = ddR./dsi;
-n_sacralPlate = ddR(end,:); n_sacralPlate = -n_sacralPlate/norm(n_sacralPlate);
+n_sacralPlate = ddR(end,:); n_sacralPlate = n_sacralPlate/norm(n_sacralPlate);
 n2 = [-1,0];
-SS = acos(n_sacralPlate * n2') * 180/pi;
+SS = 180; 
+while SS > 90
+    n_sacralPlate = -n_sacralPlate; 
+    SS = acos(n_sacralPlate * n2') * 180/pi;
+end
 
 % Pelvic Tilt
 a1 = fhXYZ(:,1)'; a12 = femaxis'; b = splfilt(end,:) - a1; 
