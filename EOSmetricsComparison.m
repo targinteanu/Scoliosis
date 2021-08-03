@@ -29,6 +29,7 @@ while strcmp(qst, 'Yes')
         PL(i).femheadsScl = femheadsScl;
         PL(i).splSclBnd = splSclBnd;
         PL(i).num = p;
+        i/length(patients_avail)
     end
     
     patients_loaded = [patients_loaded, PL];
@@ -125,12 +126,16 @@ varnames = VarTable.Properties.VariableNames;
 
 %% view table variable ranges 
 mtot = size(VarTable,2);
-ncol = 5; nrow = ceil(mtot+2/ncol);
+ncol = 5; nrow = ceil((mtot+2)/ncol);
 figure;
 for i = 1:mtot
     subplot(nrow, ncol, i)
-    histogram(VarTable.(i));
-    title(VarTable(:,i).Properties.VariableNames{1});
+    dta = VarTable.(i);
+    histogram(dta,10);
+    ttl = VarTable(:,i).Properties.VariableNames{1};
+    title([ttl,': ',...
+        num2str(mean(dta),3),'\pm',num2str(std(dta),3),...
+        ' [',num2str(min(dta),3),',',num2str(max(dta),3),']']);
 end
 i = i+1;
 subplot(nrow, ncol, i)
