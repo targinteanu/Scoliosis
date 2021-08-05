@@ -53,8 +53,10 @@ ntot = length(patients_loaded);
     Wri = z; % Writhe (numeric integration) 
     K = z; % Max Curvature (Lewiner) 
     KL = z; % location of 'K'
+    Ka = z; % Curvature (Lewiner) at 'apex'
     T = z; % Max Torsion (Lewiner) 
     TL = z; % location of 'T'
+    Tn = z; % Torsion (Lewiner) at 'neut'
     SVA = z; % Sagittal Vertical Alignment 
     CVA = z; % Coronal Vertical Alignment
     VA3D = z; % 3D Vertical Alignment norm
@@ -89,23 +91,23 @@ for i = 1:ntot
     idxMaxApex = idxMax(idxMaxTheta);
     [~,idxClosestNeutral] = min(abs(idxMin - idxMaxApex));
     idxClosestNeutral = idxMin(idxClosestNeutral);
-    apex(i) = idxMaxApex/size(XYZH,1);
+    apex(i) = dist3frac(splfilt, idxMaxApex);
     if isempty(idxMin)
         neut(i) = 0;
     else
-        neut(i) = idxClosestNeutral/size(XYZH,1);
+        neut(i) = dist3frac(splfilt, idxClosestNeutral);
     end
-    
-    % check fix sign convention ?????
-    
+        
     Wri(i) = getWrithe(splfilt); 
     
     [d1, d2, d3, tau, kappa] = LewinerQuantity(splfilt, q);
     [K(i), iK] = max(kappa); iK = iK+q; % only positive values possible 
     [~, iT] = max(abs(tau)); T(i) = tau(iT); iT = iT+q;
     
-    KL(i) = (iK)/(2*q + length(kappa));
-    TL(i) = (iT)/(2*q + length(tau));
+%    KL(i) = (iK)/(2*q + length(kappa));
+%    TL(i) = (iT)/(2*q + length(tau));
+    KL(i) = dist3frac(splfilt, iK);
+    TL(i) = dist3frac(splfilt, iT);
 
     i/ntot
 end
@@ -158,14 +160,16 @@ PILLcutoff = 11; % deg
 gSVA = VarTable.SVA < SVAcutoff; 
 gPT = VarTable.PT < PTcutoff; 
 gPILL = VarTable.PI - VarTable.LL < PILLcutoff; 
-gSVA_PT = gSVA&gPT; gSVA_PILL = gSVA&gPILL; gPT_PILL = gPT&gPILL; gSVA_PT_PILL = gSVA&gPT&gPILL;
+gSVA_PT = gSVA|gPT; gSVA_PILL = gSVA|gPILL; gPT_PILL = gPT|gPILL; gSVA_PT_PILL = gSVA|gPT|gPILL;
 
 groups = {gSVA, gPT, gPILL, gSVA_PT, gSVA_PILL, gPT_PILL, gSVA_PT_PILL}; 
 groupnames = {'SVA', 'PT', 'PI-LL', 'SVA & PT', 'SVA & PI-LL', 'PT & PI-LL', 'all'};
 pVarDiff = zeros(length(groups), length(varnames));
+nGroups = zeros(length(groups),1);
 
 for gi = 1:length(groups)
     g = groups{gi};
+    nGroups(gi) = sum(g);
     vars1 = VarTable{g,:}; vars2 = VarTable{~g,:};
     for vi = 1:length(varnames)
         [~,pVarDiff(gi,vi)] = ttest2(vars1(:,vi), vars2(:,vi), 'Vartype', 'unequal');
@@ -175,6 +179,7 @@ end
 showComparison = sum((pVarDiff < .1)) > 0;
 pVarSel = pVarDiff(:, showComparison); varnamesSel = varnames(showComparison);
 figure; heatmap(varnamesSel, groupnames, pVarSel);
+nGroups
 %figure; heatmap(varnames, groupnames, pVarDiff);
 
 %% More details for each coronal curve 
@@ -229,6 +234,20 @@ for ncurve = ncurves'
 end        
 
 %% functions 
+
+function s = dist3(R, t1, t2)
+Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
+dsi = sum(dRi.^2, 2).^.5;
+t1 = max(1, t1-1); t2 = max(1, t2-1);
+t1 = min(size(dsi,1), t1); t2 = min(size(dsi,1), t2);
+s = sum(dsi(t1:t2));
+end
+
+function s = dist3frac(R, t)
+s1 = dist3(R, 1, t); s2 = dist3(R, t, size(R,1));
+s = s1/(s1+s2);
+end
+
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
 dR = diff(R); 
