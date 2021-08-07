@@ -104,6 +104,13 @@ for i = 1:ntot
     [K(i), iK] = max(kappa); iK = iK+q; % only positive values possible 
     [~, iT] = max(abs(tau)); T(i) = tau(iT); iT = iT+q;
     
+    Ka(i) = kappa(idxMaxApex - q);
+    if isempty(idxMin)
+        Tn(i) = tau(1);
+    else
+        Tn(i) = tau(idxClosestNeutral - q); 
+    end
+    
 %    KL(i) = (iK)/(2*q + length(kappa));
 %    TL(i) = (iT)/(2*q + length(tau));
     KL(i) = dist3frac(splfilt, iK);
@@ -113,11 +120,12 @@ for i = 1:ntot
 end
 
 % construct table 
-VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, K, T, Wri, apex, neut, KL, TL);
+VarTable = table(CobbCor, LL, TK, SS, PT, SVA, CVA, K, T, Wri, apex, neut, KL, TL, Ka, Tn);
 VarTable.Properties.DimensionNames = {'Patient', 'Variables'};
 VarTable.PI = VarTable.SS + VarTable.PT; % Pelvic Incidence 
 VarTable.absWri = abs(VarTable.Wri); 
 VarTable.absT = abs(VarTable.T);
+VarTable.absTn = abs(VarTable.Tn);
 VarTable.absCobbCor = abs(VarTable.CobbCor);
 VarTable.absLL = abs(VarTable.LL);
 VarTable.absTK = abs(VarTable.TK);
@@ -145,6 +153,30 @@ histogram(nCor); title('nCor');
 i = i+1;
 subplot(nrow, ncol, i)
 histogram(nSag); title('nSag');
+
+figure('Color', 'white'); 
+boxplot([VarTable.CobbCor, VarTable.LL, -VarTable.TK, VarTable.SS, VarTable.PT, VarTable.PI],...
+    'Labels', {'(i)Cobb', '(ii)L.L.', '(iii)T.K.', '(iv)S.S.', '(v)P.T.', '(vi)P.I.'});
+ylabel('Angle (degrees)'); title('A'); grid on;
+
+figure('Color', 'white');
+boxplot([VarTable.SVA, VarTable.CVA], 'Labels', {'(i)S.V.A.', '(ii)C.V.A.'});
+ylabel('Alignment (millimeters)'); title('B'); grid on;
+
+figure('Color', 'white');
+subplot(141);
+boxplot(VarTable.Wri, 'Labels', {'Writhe'});
+ylabel('Writhe'); grid on; title('C');
+subplot(142);
+boxplot([VarTable.K, VarTable.Ka], 'Labels', ...
+    {'(i)Cur.Max.', '(ii)Cur.Ap.'});
+ylabel('[millimeters]^{-1}'); grid on;
+subplot(143);
+boxplot(VarTable.T, 'Labels', {'(iii)Tor.Max.'});
+ylabel('[millimeters]^{-1}'); grid on; title('D');
+subplot(144);
+boxplot(VarTable.Tn, 'Labels', {'(iv)Tor.Nt.'});
+ylabel('[millimeters]^{-1}'); grid on;
 
 %% view correlations
 [R, blankPatient] = corr(VarTable.Variables);
