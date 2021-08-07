@@ -158,26 +158,28 @@ histogram(nSag); title('nSag');
 % box plots 
 figure('Color', 'white'); 
 boxplot([-VarTable.CobbCor, VarTable.LL, -VarTable.TK, VarTable.SS, VarTable.PT, VarTable.PI],...
-    'Labels', {'(i)Cobb', '(ii)L.L.', '(iii)T.K.', '(iv)S.S.', '(v)P.T.', '(vi)P.I.'});
+    'Labels', {'(i)Cobb', '(ii)L.L.', '(iii)T.K.', '(iv)S.S.', '(v)P.T.', '(vi)P.I.'},...
+    'PlotStyle','compact');
 ylabel('Angle (degrees)'); title('A'); grid on;
 
 figure('Color', 'white');
-boxplot([VarTable.SVA, -VarTable.CVA], 'Labels', {'(i)S.V.A.', '(ii)C.V.A.'});
+boxplot([VarTable.SVA, -VarTable.CVA], 'Labels', {'(i)S.V.A.', '(ii)C.V.A.'},...
+    'PlotStyle','compact');
 ylabel('Alignment (millimeters)'); title('B'); grid on;
 
 figure('Color', 'white');
 subplot(141);
-boxplot(VarTable.Wri, 'Labels', {'Writhe'});
+boxplot(VarTable.Wri, 'Labels', {'Writhe'},'PlotStyle','compact');
 ylabel('Writhe'); grid on; title('C');
 subplot(142);
 boxplot([VarTable.K, VarTable.Ka], 'Labels', ...
-    {'(i)Cur.Max.', '(ii)Cur.Ap.'});
+    {'(i)Cur.Max.', '(ii)Cur.Ap.'},'PlotStyle','compact');
 ylabel('[millimeters]^{-1}'); grid on;
 subplot(143);
-boxplot(VarTable.T, 'Labels', {'(iii)Tor.Max.'});
+boxplot(VarTable.T, 'Labels', {'(iii)Tor.Max.'},'PlotStyle','compact');
 ylabel('[millimeters]^{-1}'); grid on; title('D');
 subplot(144);
-boxplot(VarTable.Tn, 'Labels', {'(iv)Tor.Nt.'});
+boxplot(VarTable.Tn, 'Labels', {'(iv)Tor.Nt.'},'PlotStyle','compact');
 ylabel('[millimeters]^{-1}'); grid on;
 
 %% view correlations
@@ -189,11 +191,13 @@ figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 
 %% featured linear relationships 
 lw = 1;
-figure('Color', 'white');
+figure('Color', 'white', 'Position', [10, 100, 1400, 500]);
 subplot(121);
-plot(-VarTable.CobbCor, VarTable.Wri, 'xk', 'LineWidth', lw); grid on;
+plotwithfit(-VarTable.CobbCor, VarTable.Wri, lw); grid on;
+title('A: Cobb Angle and Writhe'); xlabel('Cobb Angle (degrees)'); ylabel('Writhe');
 subplot(122);
-plot(-VarTable.CobbCor, VarTable.CVA, 'xk', 'LineWidth', lw); grid on;
+plotwithfit(-VarTable.CobbCor, -VarTable.CVA, lw); grid on;
+title('B: Cobb Angle and C.V.A'); xlabel('Cobb Angle (degrees)'); ylabel('C.V.A. (millimeters)');
 
 %% split into surgical rates groups 
 SVAcutoff = 47; % mm
@@ -277,6 +281,33 @@ for ncurve = ncurves'
 end        
 
 %% functions 
+
+function plotwithfit(x, y, lineW, lineSpc, fo_lineSpc, fitTyp)
+if nargin < 6
+    fitTyp = 'poly1';
+    if nargin < 4
+        lineSpc = 'xk';
+        fo_lineSpc = '--k';
+        if nargin < 3
+            lineW = 1;
+        end
+    else
+        fo_lineSpc = ['--', lineSpc(end)];
+    end
+end
+
+plot(x, y, lineSpc, 'LineWidth', lineW);
+[fo, gof] = fit(x, y, fitTyp);
+hold on; plot(fo, fo_lineSpc);
+legend('off');
+
+txtDst = .1;
+txtX = min(x) + txtDst*(max(x) - min(x));
+txtY = max(y) - txtDst*(max(y) - min(y));
+text(txtX, txtY, ['R^2 = ',num2str(gof.rsquare)], ...
+    'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
+end
+
 
 function s = dist3(R, t1, t2)
 Ri = .5 * ( R(2:end,:) + R(1:(end-1),:) ); dRi = diff(Ri);
