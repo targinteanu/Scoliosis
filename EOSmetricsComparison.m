@@ -191,13 +191,30 @@ figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 
 %% featured linear relationships 
 lw = 1;
-figure('Color', 'white', 'Position', [10, 100, 1400, 500]);
+figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
 subplot(121);
 plotwithfit(-VarTable.CobbCor, VarTable.Wri, lw); grid on;
 title('A: Cobb Angle and Writhe'); xlabel('Cobb Angle (degrees)'); ylabel('Writhe');
 subplot(122);
 plotwithfit(-VarTable.CobbCor, -VarTable.CVA, lw); grid on;
 title('B: Cobb Angle and C.V.A'); xlabel('Cobb Angle (degrees)'); ylabel('C.V.A. (millimeters)');
+
+figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
+subplot(131);
+plotwithfit(VarTable.Ka, VarTable.absCobbCor, lw); grid on; 
+title('A: Apical Curvature and Cobb Angle'); 
+xlabel('Curvature (mm^{-1})'); ylabel('Cobb Angle Magnitude (deg)');
+subplot(132);
+plotwithfit(VarTable.Ka, VarTable.absTn, lw); grid on; 
+title('B: Apical Curvature and Neutral Torsion'); 
+xlabel('Curvature (mm^{-1})'); ylabel('Torsion (mm^{-1})');
+subplot(133);
+plotwithfit(VarTable.Ka, VarTable.absT, lw); grid on;
+title('C: Apical Curvature and Max Torsion');
+xlabel('Curvature (mm^{-1})'); ylabel('Torsion (mm^{-1})');
+
+%%
+
 
 %% split into surgical rates groups 
 SVAcutoff = 47; % mm
