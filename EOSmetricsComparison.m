@@ -157,12 +157,12 @@ histogram(nSag); title('nSag');
 
 % box plots 
 figure('Color', 'white'); 
-boxplot([VarTable.CobbCor, VarTable.LL, -VarTable.TK, VarTable.SS, VarTable.PT, VarTable.PI],...
+boxplot([-VarTable.CobbCor, VarTable.LL, -VarTable.TK, VarTable.SS, VarTable.PT, VarTable.PI],...
     'Labels', {'(i)Cobb', '(ii)L.L.', '(iii)T.K.', '(iv)S.S.', '(v)P.T.', '(vi)P.I.'});
 ylabel('Angle (degrees)'); title('A'); grid on;
 
 figure('Color', 'white');
-boxplot([VarTable.SVA, VarTable.CVA], 'Labels', {'(i)S.V.A.', '(ii)C.V.A.'});
+boxplot([VarTable.SVA, -VarTable.CVA], 'Labels', {'(i)S.V.A.', '(ii)C.V.A.'});
 ylabel('Alignment (millimeters)'); title('B'); grid on;
 
 figure('Color', 'white');
@@ -190,12 +190,10 @@ figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 %% featured linear relationships 
 lw = 1;
 figure('Color', 'white');
-subplot(131);
+subplot(121);
 plot(-VarTable.CobbCor, VarTable.Wri, 'xk', 'LineWidth', lw); grid on;
-subplot(132);
+subplot(122);
 plot(-VarTable.CobbCor, VarTable.CVA, 'xk', 'LineWidth', lw); grid on;
-subplot(133);
-plot(-VarTable.CobbCor, VarTable.Ka, 'xk', 'LineWidth', lw); grid on;
 
 %% split into surgical rates groups 
 SVAcutoff = 47; % mm
