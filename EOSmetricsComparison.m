@@ -189,32 +189,76 @@ ylabel('[millimeters]^{-1}'); grid on;
 figure; heatmap(varnames, varnames, R); title('Correlation');
 figure; heatmap(varnames, varnames, blankPatient); title('p-value');
 
-%% featured linear relationships 
+% featured linear relationships 
 lw = 1;
 figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
-subplot(121);
+subplot(131);
 plotwithfit(-VarTable.CobbCor, VarTable.Wri, lw); grid on;
 title('A: Cobb Angle and Writhe'); xlabel('Cobb Angle (degrees)'); ylabel('Writhe');
-subplot(122);
+subplot(132);
 plotwithfit(-VarTable.CobbCor, -VarTable.CVA, lw); grid on;
-title('B: Cobb Angle and C.V.A'); xlabel('Cobb Angle (degrees)'); ylabel('C.V.A. (millimeters)');
+title('B: Cobb Angle and C.V.A.'); xlabel('Cobb Angle (degrees)'); ylabel('C.V.A. (millimeters)');
+subplot(133); 
+plotwithfit(VarTable.absCVA, VarTable.absWri, lw); grid on;
+title('C: C.V.A. and Writhe'); xlabel('C.V.A. Magnitude (mm)'); ylabel('Writhe Magnitude');
 
 figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
 subplot(131);
 plotwithfit(VarTable.Ka, VarTable.absCobbCor, lw); grid on; 
 title('A: Apical Curvature and Cobb Angle'); 
-xlabel('Curvature (mm^{-1})'); ylabel('Cobb Angle Magnitude (deg)');
+xlabel('Curvature (mm^{-1})'); ylabel('Cobb Angle Magnitude (deg.)');
 subplot(132);
 plotwithfit(VarTable.Ka, VarTable.absTn, lw); grid on; 
 title('B: Apical Curvature and Neutral Torsion'); 
-xlabel('Curvature (mm^{-1})'); ylabel('Torsion (mm^{-1})');
+xlabel('Curvature (mm^{-1})'); ylabel('Torsion Magnitude (mm^{-1})');
 subplot(133);
 plotwithfit(VarTable.Ka, VarTable.absT, lw); grid on;
 title('C: Apical Curvature and Max Torsion');
-xlabel('Curvature (mm^{-1})'); ylabel('Torsion (mm^{-1})');
+xlabel('Curvature (mm^{-1})'); ylabel('Torsion Magnitude (mm^{-1})');
 
-%%
+figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
+subplot(121);
+[~,gof1] = plotwithfit(VarTable.K, VarTable.LL, lw, 'sb', '--b', false); grid on; hold on;
+[~,gof2] = plotwithfit(VarTable.K, VarTable.SS, lw, 'or', '-.r', false); 
+R2LL = gof1.rsquare; R2SS = gof2.rsquare;
+title('A: Max Curvature, Lumbar Lordosis, and Sacral Slope'); 
+xlabel('Curvature (mm^{-1})'); ylabel('Angle (deg.)');
+legend('Lumbar Lordosis', ['L.L. fit (R^2=',num2str(R2LL),')'], ...
+       'Sacral Slope',    ['S.S. fit (R^2=',num2str(R2SS),')'], ...
+       'Location', 'southeast');
+subplot(122); 
+plotwithfit(VarTable.K, VarTable.SVA, lw); grid on;
+title('B: Max Curvature and S.V.A.'); 
+xlabel('Curvature (mm^{-1})'); ylabel('S.V.A. (mm)');
 
+figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
+subplot(121);
+[~,gof1] = plotwithfit(VarTable.absTn, VarTable.LL, lw, 'sb', '--b', false); grid on; hold on;
+[~,gof2] = plotwithfit(VarTable.absTn, -VarTable.TK, lw, 'or', '-.r', false); 
+R2LL = gof1.rsquare; R2TK = gof2.rsquare;
+title('A: Neutral Torsion, Lumbar Lordosis, and Thoracic Kyphosis'); 
+xlabel('Torsion Magnitude (mm^{-1})'); ylabel('Angle (deg.)');
+legend('Lumbar Lordosis',   ['L.L. fit (R^2=',num2str(R2LL),')'], ...
+       'Thoracic Kyphosis', ['T.K. fit (R^2=',num2str(R2TK),')'], ...
+       'Location', 'northeast');
+subplot(122); 
+plotwithfit(VarTable.absTn, VarTable.absSVA, lw); grid on;
+title('B: Neutral Torsion and S.V.A.'); 
+xlabel('Torsion Magnitude (mm^{-1})'); ylabel('S.V.A. Magnitude (mm)');
+
+figure('Color', 'white', 'Position', [10, 100, 1450, 500]);
+subplot(131);
+plotwithfit(VarTable.ODI, VarTable.K, lw); grid on; 
+title('A: ODI model and Max Curvature'); 
+xlabel('ODI prediction'); ylabel('Curvature (mm^{-1})');
+subplot(132);
+plotwithfit(VarTable.ODI, VarTable.absTn, lw); grid on; 
+title('B: ODI model and Neutral Torsion'); 
+xlabel('ODI prediction'); ylabel('Torsion Magnitude (mm^{-1})');
+subplot(133);
+plotwithfit(VarTable.ODI, VarTable.absT, lw); grid on;
+title('C: ODI model and C.V.A.');
+xlabel('ODI prediction'); ylabel('C.V.A. Magnitude (mm)');
 
 %% split into surgical rates groups 
 SVAcutoff = 47; % mm
@@ -299,17 +343,20 @@ end
 
 %% functions 
 
-function plotwithfit(x, y, lineW, lineSpc, fo_lineSpc, fitTyp)
-if nargin < 6
+function [fo, gof] = plotwithfit(x, y, lineW, lineSpc, fo_lineSpc, showR2, fitTyp)
+if nargin < 7
     fitTyp = 'poly1';
-    if nargin < 4
-        lineSpc = 'xk';
-        fo_lineSpc = '--k';
-        if nargin < 3
-            lineW = 1;
+    if nargin < 6
+        showR2 = true;
+        if nargin < 4
+            lineSpc = 'xk';
+            fo_lineSpc = '--k';
+            if nargin < 3
+                lineW = 1;
+            end
+        else
+            fo_lineSpc = ['--', lineSpc(end)];
         end
-    else
-        fo_lineSpc = ['--', lineSpc(end)];
     end
 end
 
@@ -318,11 +365,13 @@ plot(x, y, lineSpc, 'LineWidth', lineW);
 hold on; plot(fo, fo_lineSpc);
 legend('off');
 
-txtDst = .1;
-txtX = min(x) + txtDst*(max(x) - min(x));
-txtY = max(y) - txtDst*(max(y) - min(y));
-text(txtX, txtY, ['R^2 = ',num2str(gof.rsquare)], ...
-    'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
+if showR2
+    txtDst = .1;
+    txtX = min(x) + txtDst*(max(x) - min(x));
+    txtY = max(y) - txtDst*(max(y) - min(y));
+    text(txtX, txtY, ['R^2 = ',num2str(gof.rsquare)], ...
+        'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
+end
 end
 
 
