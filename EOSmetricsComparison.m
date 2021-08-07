@@ -135,6 +135,7 @@ VarTable.ODI = 0.089 * VarTable.SVA + 0.253 * (VarTable.PI - VarTable.LL) + 25.3
 varnames = VarTable.Properties.VariableNames;
 
 %% view table variable ranges 
+% histograms 
 mtot = size(VarTable,2);
 ncol = 5; nrow = ceil((mtot+2)/ncol);
 figure;
@@ -154,6 +155,7 @@ i = i+1;
 subplot(nrow, ncol, i)
 histogram(nSag); title('nSag');
 
+% box plots 
 figure('Color', 'white'); 
 boxplot([VarTable.CobbCor, VarTable.LL, -VarTable.TK, VarTable.SS, VarTable.PT, VarTable.PI],...
     'Labels', {'(i)Cobb', '(ii)L.L.', '(iii)T.K.', '(iv)S.S.', '(v)P.T.', '(vi)P.I.'});
@@ -179,10 +181,21 @@ boxplot(VarTable.Tn, 'Labels', {'(iv)Tor.Nt.'});
 ylabel('[millimeters]^{-1}'); grid on;
 
 %% view correlations
+% matrix 
 [R, blankPatient] = corr(VarTable.Variables);
 [r,c] = find(blankPatient <= .05);
 figure; heatmap(varnames, varnames, R); title('Correlation');
 figure; heatmap(varnames, varnames, blankPatient); title('p-value');
+
+%% featured linear relationships 
+lw = 1;
+figure('Color', 'white');
+subplot(131);
+plot(-VarTable.CobbCor, VarTable.Wri, 'xk', 'LineWidth', lw); grid on;
+subplot(132);
+plot(-VarTable.CobbCor, VarTable.CVA, 'xk', 'LineWidth', lw); grid on;
+subplot(133);
+plot(-VarTable.CobbCor, VarTable.Ka, 'xk', 'LineWidth', lw); grid on;
 
 %% split into surgical rates groups 
 SVAcutoff = 47; % mm
