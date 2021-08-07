@@ -290,6 +290,38 @@ figure; heatmap(varnamesSel, groupnames, pVarSel);
 nGroups
 %figure; heatmap(varnames, groupnames, pVarDiff);
 
+%% box plots
+figure('Color', 'white'); 
+subplot(221);
+boxplot(VarTable.absWri, gSVA,'PlotStyle','compact','Orientation','horizontal',...
+    'Labels', {['SVA',hex2dec('2265'),num2str(SVAcutoff),'mm'], ...
+    ['SVA<',num2str(SVAcutoff),'mm']}); 
+grid on;
+ylim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
+ylabel('Writhe'); title('A'); 
+subplot(222); 
+boxplot(VarTable.absWri, gPILL,'PlotStyle','compact','Orientation','horizontal',...
+    'Labels', {['    PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
+    ['    PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
+grid on;
+ylim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
+ylabel('Writhe'); title('B'); 
+
+subplot(223);
+boxplot(VarTable.K, gSVA,'PlotStyle','compact','Orientation','horizontal',...
+    'Labels', {['SVA',hex2dec('2265'),num2str(SVAcutoff),'mm'], ...
+    ['SVA<',num2str(SVAcutoff),'mm']}); 
+grid on;
+ylim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
+ylabel('Curvature'); title('C'); 
+subplot(224); 
+boxplot(VarTable.K, gPILL,'PlotStyle','compact','Orientation','horizontal',...
+    'Labels', {['    PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
+    ['    PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
+grid on;
+ylim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
+ylabel('Curvature'); title('D'); 
+
 %% More details for each coronal curve 
 ncurves = unique(nCor);
 for ncurve = ncurves'
