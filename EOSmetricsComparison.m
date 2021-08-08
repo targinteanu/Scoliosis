@@ -297,30 +297,30 @@ boxplot(VarTable.absWri, gSVA,'PlotStyle','compact','Orientation','horizontal',.
     'Labels', {['SVA',hex2dec('2265'),num2str(SVAcutoff),'mm'], ...
     ['SVA<',num2str(SVAcutoff),'mm']}); 
 grid on;
-ylim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
-ylabel('Writhe'); title('A'); 
-subplot(222); 
+xlim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
+xlabel('Writhe'); title('A'); 
+subplot(223); 
 boxplot(VarTable.absWri, gPILL,'PlotStyle','compact','Orientation','horizontal',...
-    'Labels', {['    PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
-    ['    PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
+    'Labels', {['PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
+    ['PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
 grid on;
-ylim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
-ylabel('Writhe'); title('B'); 
+xlim([min(VarTable.absWri)-.25*std(VarTable.absWri), max(VarTable.absWri)+.25*std(VarTable.absWri)]); 
+xlabel('Writhe'); title('C'); 
 
-subplot(223);
+subplot(222);
 boxplot(VarTable.K, gSVA,'PlotStyle','compact','Orientation','horizontal',...
     'Labels', {['SVA',hex2dec('2265'),num2str(SVAcutoff),'mm'], ...
     ['SVA<',num2str(SVAcutoff),'mm']}); 
 grid on;
-ylim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
-ylabel('Curvature'); title('C'); 
+xlim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
+xlabel('Curvature'); title('B'); 
 subplot(224); 
 boxplot(VarTable.K, gPILL,'PlotStyle','compact','Orientation','horizontal',...
-    'Labels', {['    PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
-    ['    PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
+    'Labels', {['PI-LL',hex2dec('2265'),num2str(PILLcutoff),hex2dec('00B0')], ...
+    ['PI-LL<',num2str(PILLcutoff),hex2dec('00B0')]}); 
 grid on;
-ylim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
-ylabel('Curvature'); title('D'); 
+xlim([min(VarTable.K)-.25*std(VarTable.K), max(VarTable.K)+.25*std(VarTable.K)]); 
+xlabel('Curvature'); title('D'); 
 
 %% More details for each coronal curve 
 ncurves = unique(nCor);
