@@ -614,11 +614,11 @@ splCorObjBound = handles.splCorObjBound;
 splCorSmpBound = handles.splCorSmpBound;
 
     axes(handles.axesCor); hold on; 
-    plot(splCorSmp(:,2), splCorSmp(:,1), 'b');
+    plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
     plot(splCorSmpBound(2), splCorSmpBound(1), '*b', 'LineWidth', 1.25);
     
     axes(handles.axesSag); hold on; 
-    plot(splSagSmp(:,2), splSagSmp(:,1), 'b');
+    plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
     plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
     
         splfilt = handles.splfilt; 
@@ -631,7 +631,7 @@ splCorSmpBound = handles.splCorSmpBound;
         plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
         
         axes(handles.axes3); cla; colorbar off;
-        plot3(splSclSmp(:,1), -splSclSmp(:,2), -splSclSmp(:,3), 'b'); hold on;
+        plot3(splSclSmp(:,1), -splSclSmp(:,2), -splSclSmp(:,3), ':b'); hold on;
         plot3(splfilt(:,1), -splfilt(:,2), -splfilt(:,3), 'm', 'LineWidth', 2);
         grid on; update3Dview(eventdata, handles); 
         xlim([0, size(imgSag,2)]*ifoSag.PixelSpacing(2));
