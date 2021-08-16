@@ -136,6 +136,10 @@ if qstFH
 end
 
 if qstOL | qstBnd
+    if ~qstOL
+        OL = handles.CorOL; 
+        boundX = handles.CorBound(:,1); boundY = handles.CorBound(:,2);
+    end
 [handles.imgCorFilt, handles.splCorObj, handles.splCorSmp, ...
     handles.splCorObjBound, handles.splCorSmpBound] = ...
     processOL(handles.imgCor, OL, boundX, boundY, ...
@@ -198,6 +202,10 @@ if qstFH
 end
 
 if qstOL | qstBnd
+    if ~qstOL
+        OL = handles.SagOL; 
+        boundX = handles.SagBound(:,1); boundY = handles.SagBound(:,2);
+    end
 [handles.imgSagFilt, handles.splSagObj, handles.splSagSmp, ...
     handles.splSagObjBound, handles.splSagSmpBound] = ...
     processOL(handles.imgSag, OL, boundX, boundY, ...
@@ -487,16 +495,18 @@ handles.L1SampleBound = L1SampleBound;
 
     axes(handles.axesCor); hold on; 
     visboundaries(CorOL); 
-    plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
+%    plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
     plot(splCorSmpBound(2), splCorSmpBound(1), '*b', 'LineWidth', 1.25);
     plot(femheadsCor(1,:), femheadsCor(2,:), 'ob', 'LineWidth', 1.25);
     
     axes(handles.axesSag); hold on; 
     visboundaries(SagOL); 
-    plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
+%    plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
     plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
     plot(L1SampleBound(2), L1SampleBound(1), 'sb', 'LineWidth', 1.25);
     plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
+    
+    %{
     
     if exist(fn2, 'file')
         disp(['loading ',fn2])
@@ -511,6 +521,8 @@ handles.L1SampleBound = L1SampleBound;
         axes(handles.axesCor); hold on;
         plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
     end
+    
+    %}
     
 else
 clear handles.splSclObj handles.splSclRng handles.splSclSmp 
