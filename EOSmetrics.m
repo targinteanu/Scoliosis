@@ -382,7 +382,7 @@ handles.SplSclHt = [XYZ,h];
 guidata(hObject, handles);
     hold on; 
     fhXYZ = handles.femheadsScl;
-    plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
+    plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or', 'LineWidth', 1.5);
 
 
 function showPlumblineDistance(hObject, eventdata, handles, varToShow)
@@ -614,14 +614,14 @@ splCorObjBound = handles.splCorObjBound;
 splCorSmpBound = handles.splCorSmpBound;
 
     axes(handles.axesCor); hold on; 
-    plot(splCorSmp(:,2), splCorSmp(:,1), ':b');
+    plot(splCorSmp(:,2), splCorSmp(:,1), 'b');
     plot(splCorSmpBound(2), splCorSmpBound(1), '*b', 'LineWidth', 1.25);
     
     axes(handles.axesSag); hold on; 
-    plot(splSagSmp(:,2), splSagSmp(:,1), ':b');
+    plot(splSagSmp(:,2), splSagSmp(:,1), 'b');
     plot(splSagSmpBound(2), splSagSmpBound(1), '*b', 'LineWidth', 1.25);
     
-        splfilt = handles.splfilt;
+        splfilt = handles.splfilt; 
 
         splfiltPix = splfilt/handles.ifoCor.PixelSpacing(1);
                 
@@ -631,7 +631,7 @@ splCorSmpBound = handles.splCorSmpBound;
         plot(splfiltPix(:,2), splfiltPix(:,3), 'm', 'LineWidth', 2);
         
         axes(handles.axes3); cla; colorbar off;
-        plot3(splSclSmp(:,1), -splSclSmp(:,2), -splSclSmp(:,3), ':b'); hold on;
+        plot3(splSclSmp(:,1), -splSclSmp(:,2), -splSclSmp(:,3), 'b'); hold on;
         plot3(splfilt(:,1), -splfilt(:,2), -splfilt(:,3), 'm', 'LineWidth', 2);
         grid on; update3Dview(eventdata, handles); 
         xlim([0, size(imgSag,2)]*ifoSag.PixelSpacing(2));
@@ -640,24 +640,30 @@ splCorSmpBound = handles.splCorSmpBound;
         
             hold on;
             fhXYZ = handles.femheadsScl;
-            plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or');
+            plot3(fhXYZ(1,:), -fhXYZ(2,:), -fhXYZ(3,:), 'or', 'LineWidth', 1.5);
             
             femheadsSag = handles.femheadsSag; femheadsCor = handles.femheadsCor;
             axes(handles.axesSag); 
-            plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.25);
+            plot(femheadsSag(1,:), femheadsSag(2,:), 'ob', 'LineWidth', 1.5);
             axes(handles.axesCor); 
-            plot(femheadsCor(1,:), femheadsCor(2,:), 'ob', 'LineWidth', 1.25);
+            plot(femheadsCor(1,:), femheadsCor(2,:), 'ob', 'LineWidth', 1.5);
 
 function shownewpatient(hObject, eventdata, handles)
 set(handles.PatientNum, 'String', ...
     num2str(handles.patient_list(handles.current_patient)));
 handles.metricSelecter.Value = 1;
 
+clear handles.splSclObj handles.splSclRng handles.splSclSmp
+clear handles.imgSagFilt handles.splSagObj handles.splSagSmp handles.SagOL
+clear handles.imgCorFilt handles.splCorObj handles.splCorSmp handles.CorOL
+clear handles.splfilt handles.splfiltPix
+
 % initialize vars that may not have been set
 femheadsScl = [0,0;0,0;0,0];
 femheadsCor = [0,0;0,0];
 femheadsSag = [0,0;0,0];
 handles.splfiltNew = [];
+handles.splfilt = [0, 0, 0];
 
 % get DICOM info 
 ifoCor = dicominfo([handles.base_fp,...
@@ -706,6 +712,12 @@ fn2 = [handles.base_fp,...
     ' filtered data.mat'];
 
 if exist(fn, 'file')
+    
+    clear splSclObj splSclRng splSclSmp
+    clear imgSagFilt splSagObj splSagSmp SagOL
+    clear imgCorFilt splCorObj splCorSmp CorOL
+    clear splfilt splfiltPix
+    
     disp(['loading ',fn])
     load(fn);
     
@@ -738,7 +750,7 @@ handles.splCorSmpBound = splCorSmpBound;
         disp(['loading ',fn2])
         load(fn2);
         
-        handles.splfilt = splfilt;
+        handles.splfilt = splfilt; 
                 
     end
     
@@ -746,6 +758,7 @@ else
 clear handles.splSclObj handles.splSclRng handles.splSclSmp
 clear handles.imgSagFilt handles.splSagObj handles.splSagSmp handles.SagOL
 clear handles.imgCorFilt handles.splCorObj handles.splCorSmp handles.CorOL
+clear handles.splfilt handles.splfiltPix
 end
 
 showpatient(hObject, eventdata, handles);
