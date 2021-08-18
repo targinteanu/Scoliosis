@@ -190,28 +190,28 @@ SVA = -(p1(1)-p2(1));
 axes(handles.axesSag);
 xy = p123(:,[1,3])./flipud(ifoSag.PixelSpacing)';
 P4 = p4([1,3])./flipud(ifoSag.PixelSpacing)';
-plot(xy(:,1), xy(:,2), 'g');
+plot(xy(:,1), xy(:,2), 'r', 'LineWidth', 1);
 text(P4(1), P4(2), ...
     [num2str(SVA) ' mm'], ...
-    'VerticalAlignment', 'top', 'Color', 'g');
+    'VerticalAlignment', 'top', 'Color', 'r', 'FontSize', 14, 'FontWeight', 'bold');
 
 % y - cor
 CVA = (p1(2)-p2(2));
 axes(handles.axesCor);
 xy = p123(:,[2,3])./flipud(ifoCor.PixelSpacing)';
 P4 = p4([2,3])./flipud(ifoCor.PixelSpacing)';
-plot(xy(:,1), xy(:,2), 'g');
+plot(xy(:,1), xy(:,2), 'r', 'LineWidth', 1);
 text(P4(1), P4(2), ...
     [num2str(CVA) ' mm'], ...
-    'VerticalAlignment', 'top', 'Color', 'g');
+    'VerticalAlignment', 'top', 'Color', 'r', 'FontSize', 14, 'FontWeight', 'bold');
 
 % 3D
 VA3D = norm(p3-p2);
 axes(handles.axes3);
-plot3(p123(:,1), -p123(:,2), -p123(:,3), 'g');
+plot3(p123(:,1), -p123(:,2), -p123(:,3), 'r', 'LineWidth', 1);
 text(p4(1), -p4(2), -p4(3), ...
     [num2str(VA3D), ' mm'], ...
-    'VerticalAlignment', 'top', 'Color', 'g');
+    'VerticalAlignment', 'top', 'Color', 'r', 'FontSize', 14, 'FontWeight', 'bold');
 
 
 function [theta, n1, n2] = numericCobbAngle(R, t1, t2)
@@ -263,10 +263,10 @@ xytxt = xy3./flipud(ifoSag.PixelSpacing)';
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoSag.Width);
 axes(handles.axesSag); hold on; 
 plot([xy1(1), xy3(1), xy4(1), xy2(1)]/ifoSag.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoSag.PixelSpacing(1), 'g');
+    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoSag.PixelSpacing(1), 'r', 'LineWidth', 1);
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'r', 'FontSize', 14, 'FontWeight', 'bold');
 
 % y - cor
 xy = R(:,[2,3]); 
@@ -283,10 +283,11 @@ xytxt = xy3./flipud(ifoCor.PixelSpacing)';
 xytxt(1) = max(xytxt(1), 1); xytxt(1) = min(xytxt(1), ifoCor.Width);
 axes(handles.axesCor); hold on; 
 plot([xy1(1), xy3(1), xy4(1), xy2(1)]/ifoCor.PixelSpacing(2), ...
-    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoCor.PixelSpacing(1), 'g');
+    [xy1(2), xy3(2), xy4(2), xy2(2)]/ifoCor.PixelSpacing(1), 'r', 'LineWidth', 1);
 text(xytxt(1), xytxt(2), ...
     [num2str(thta) '\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'g');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', al, 'Color', 'r', ...
+    'FontSize', 14, 'FontWeight', 'bold');
 
 % 3d 
 [theta, n1, n2] = numericCobbAngle(R, t1, t2);
@@ -294,9 +295,9 @@ xyz1 = R(t1,:); xyz2 = R(t2,:);
 xyz1 = xyz1 + [zeros(size(n1)); n1*100]; xyz2 = xyz2 + [zeros(size(n2)); n2*100];
 xyz3 = .5*( xyz1(2,:) + xyz2(2,:) );
 axes(handles.axes3); hold on;
-plot3(xyz1(:,1), -xyz1(:,2), -xyz1(:,3), 'g');
-plot3(xyz2(:,1), -xyz2(:,2), -xyz2(:,3), 'g');
-text(xyz3(:,1), -xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'g');
+plot3(xyz1(:,1), -xyz1(:,2), -xyz1(:,3), 'r');
+plot3(xyz2(:,1), -xyz2(:,2), -xyz2(:,3), 'r');
+text(xyz3(:,1), -xyz3(:,2), -xyz3(:,3), [num2str(theta) '\circ'], 'Color', 'r');
 
 function idx = minSgn(vals, sgn)
 origIdx = 1:length(vals);
@@ -439,11 +440,12 @@ while SS > 90
 end
 xy1 = xy2 + 100*n_sacralPlate; xy3 = xy2 + 100*n2;
 plot([xy1(1), xy2(1), xy3(1)]/ifoSag.PixelSpacing(2), ...
-    [xy1(2), xy2(2), xy3(2)]/ifoSag.PixelSpacing(1), 'g');
+    [xy1(2), xy2(2), xy3(2)]/ifoSag.PixelSpacing(1), 'r', 'LineWidth', 1);
 xytxtSS = mean([xy1; xy3]);
 text(xytxtSS(1)/ifoSag.PixelSpacing(2), xytxtSS(2)/ifoSag.PixelSpacing(1), ...
     ['SS = ',num2str(SS),'\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right', 'Color', 'g');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right', 'Color', 'r', ...
+    'FontSize', 14, 'FontWeight', 'bold');
 
 % Pelvic Tilt
 a1 = fhXYZ(:,1)'; a12 = femaxis'; b = handles.splfilt(end,:) - a1; 
@@ -452,11 +454,12 @@ b0 = xy2 + b_perp;
 n3 = [0,1]; xy4 = xy2 + 100*n3;
 PT = acos(b_perp/norm(b_perp) * n3') * 180/pi;
 plot([b0(1), xy2(1), xy4(1)]/ifoSag.PixelSpacing(2), ...
-    [b0(2), xy2(2), xy4(2)]/ifoSag.PixelSpacing(1), 'g');
+    [b0(2), xy2(2), xy4(2)]/ifoSag.PixelSpacing(1), 'r', 'LineWidth', 1);
 xytxtPT = mean([b0; xy4]);
 text(xytxtPT(1)/ifoSag.PixelSpacing(2), xytxtPT(2)/ifoSag.PixelSpacing(1), ...
     ['PT = ',num2str(PT),'\circ'], ...
-    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left', 'Color', 'g');
+    'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left', 'Color', 'r', ...
+    'FontSize', 14, 'FontWeight', 'bold');
 
 
 function showLewinerQuantity(hObject, eventdata, handles, varToShow)
